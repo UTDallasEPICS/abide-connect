@@ -23,4 +23,6 @@ logs
 .env.*
 !.env.example
 
-/app/generated/prisma
+# Prisma related files
+prisma/dev.db
+prisma/migrations
