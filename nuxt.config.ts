@@ -7,13 +7,6 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss',
     '@prisma/nuxt'
   ],
-  // vite: {
-  //   resolve: {
-  //     alias: {
-  //       '.prisma/client/index-browser': './node_modules/.prisma/client/index-browser.js',
-  //     },
-  //   },
-  // },
   eslint: {
     // additional options here
   }
