@@ -20,6 +20,8 @@ yarn install
 bun install
 ```
 
+Next, make sure to create a `.env` file based on the `.env.example` file and fill in the required environment variables.
+
 ## Development Server
 
 Start the development server on `http://localhost:3000`:
