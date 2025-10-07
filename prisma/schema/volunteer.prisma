@@ -1,0 +1,47 @@
+model Volunteer {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id])
+  gender    Gender
+  phone     String?
+
+  availabilities Volunteer_Availability[]
+  certifications Certification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("volunteers")
+} 
+
+model Volunteer_Availability {
+  volunteer       Volunteer @relation(fields: [volunteerId], references: [id])
+  volunteerId     Int
+  availability    Availability
+
+  @@id([volunteerId, availability])
+  @@map("volunteer_availabilities")
+}
+
+model Certification {
+  volunteer     Volunteer @relation(fields: [volunteerId], references: [id])
+  volunteerId   Int
+  certification String
+
+  @@id([volunteerId, certification])
+  @@map("certifications")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum Availability {
+  WEEKDAY_MORNING
+  WEEKDAY_AFTERNOON
+  WEEKDAY_EVENING
+  WEEKEND_MORNING
+  WEEKEND_AFTERNOON
+}

@@ -1,0 +1,54 @@
+model User {
+  id        Int      @id @default(autoincrement())
+  firstName String
+  lastName  String
+  email     String   @unique
+  phone     String?
+
+  volunteer Volunteer?
+  Languages User_Language[]
+  events    User_Event[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("users")
+}
+
+model User_Language {
+  user User @relation(fields: [userId], references: [id])
+  userId Int
+  language Language
+
+  @@id([userId, language])
+  @@map("user_languages")
+}
+
+enum Language {
+  ENGLISH
+  SPANISH
+  FRENCH
+  GERMAN
+  CHINESE
+  JAPANESE
+  HINDI
+  ARABIC
+  RUSSIAN
+  PORTUGUESE
+  ITALIAN
+  KOREAN
+  DUTCH
+  SWEDISH
+  NORWEGIAN
+  DANISH
+  FINNISH
+  POLISH
+  TURKISH
+  GREEK
+  HEBREW
+  VIETNAMESE
+  THAI
+  INDONESIAN
+  MALAY
+  FILIPINO
+}
