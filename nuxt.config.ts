@@ -5,9 +5,10 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
     '@nuxtjs/tailwindcss',
-    '@prisma/nuxt'
+    '@prisma/nuxt',
   ],
   eslint: {
     // additional options here
-  }
+  },
+  // css: ['assets/css/main.css']
 })
