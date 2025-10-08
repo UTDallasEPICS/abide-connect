@@ -73,20 +73,8 @@ const events = [
         </Carousel>
       </div>
 
-      <!-- Services -->
-      <div class="p-4">
-        <div class="grid grid-cols-2 gap-4">
-          <div class="bg-rose-400 text-white rounded-lg flex items-center justify-center py-6">
-            Service 3
-          </div>
-          <div class="bg-rose-400 text-white rounded-lg flex items-center justify-center py-6">
-            Service 4
-          </div>
-        </div>
-      </div>
-
       <!-- Upcoming Events -->
-      <div class="px-2 pb-4">
+      <div class="px-2 pb-4 pt-4">
         <h3 class="text-2xl font-semibold text-teal-700 mb-4">UPCOMING EVENTS</h3>
         <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
           <div v-for="event in events" :key="event.id" 
@@ -136,6 +124,18 @@ const events = [
         <button class="mt-2 bg-white text-rose-700 font-semibold px-6 py-2 rounded-full">
           Sign Up
         </button>
+      </div>
+
+      <!-- Services -->
+      <div class="p-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-rose-400 text-white rounded-lg flex items-center justify-center py-6">
+            Service 3
+          </div>
+          <div class="bg-rose-400 text-white rounded-lg flex items-center justify-center py-6">
+            Service 4
+          </div>
+        </div>
       </div>
 
       <!-- Bottom nav dots -->
