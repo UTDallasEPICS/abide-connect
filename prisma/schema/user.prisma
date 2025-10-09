@@ -1,5 +1,5 @@
 model User {
-  id        Int      @id @default(autoincrement())
+  id        String      @id @default(uuid())
   firstName String
   lastName  String
   email     String   @unique
@@ -17,12 +17,13 @@ model User {
 
 model User_Language {
   user User @relation(fields: [userId], references: [id])
-  userId Int
+  userId String
   language Language
 
   @@id([userId, language])
   @@map("user_languages")
 }
+
 
 enum Language {
   ENGLISH
