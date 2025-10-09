@@ -42,6 +42,10 @@ const events = [
   },
 ];
 
+const handleSignUp = () => {
+  alert('coming soon')
+}
+
 const services = [
   {
     id: 1,
@@ -50,19 +54,19 @@ const services = [
     href: "https://www.abidewomen.org/prenatalcare"
   },
   {
-    id: 1,
+    id: 2,
     name: "Postpatrun Care",
     image: "/images/image1.jpeg",
     href: "https://www.abidewomen.org/postpartumcare"
   },
   {
-    id: 1,
+    id: 3,
     name: "Childbirth Education",
     image: "/images/image1.jpeg",
-    href: "hhttps://www.abidewomen.org/childbirthed"
+    href: "https://www.abidewomen.org/childbirthed"
   },
   {
-    id: 1,
+    id: 4,
     name: "Mobile Clinic",
     image: "/images/image1.jpeg",
     href: "https://www.abidewomen.org/mobile-clinic"
@@ -147,13 +151,29 @@ const services = [
       </div>
 
       <!-- Volunteer Sign Up -->
-      <div class="mt-auto bg-rose-700 text-center py-4">
-        <p class="text-white font-medium">Become A Volunteer</p>
-        <button class="mt-2 bg-white text-rose-700 font-semibold px-6 py-2 rounded-full">
-          Sign Up
-        </button>
-      </div>
+      <div class="bg-gradient-to-br from-rose-700 to-rose-800 text-center py-3 px-4 relative overflow-hidden items-center justify-center min-h-[100px]">
 
+          <p class="text-white font-bold text-lg mb-1 ">Become A Volunteer</p>
+          <!-- Sign up Button -->
+          <button 
+            @click="handleSignUp"
+            class="group relative bg-white text-rose-700 font-bold px-7 py-2 rounded-full shadow-lg hover:shadow-2xl transition-transform hover:scale-105 active:scale-100 duration-300 overflow-hidden"
+            >
+            <span class="absolute inset-0 z-0 opacity-0 scale-95 rounded-full group-hover:opacity-100 group-hover:scale-100 transition-transform duration-300 bg-rose-50"></span>
+              <span class="relative z-10 flex items-center justify-center gap-1 text-lg">
+              <span>Sign Up</span>
+              <svg 
+                class="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                stroke-width="3"
+                >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H5"/>
+              </svg>
+            </span>
+          </button>
+      </div>
       <!-- Services -->
       <div class="px-2 pb-4 pt-4">
         <h3 class="text-2xl font-semibold text-teal-700 mb-4">SERVICES</h3>
@@ -172,7 +192,7 @@ const services = [
                 :alt="service.name"
                 class="w-full h-full object-cover transition-transform duration-300"
               />
-              <div class="absolute insert-x-0 bottom-0 w-full bg-gradient-to-t from-black/60 to-transparent p-2">
+              <div class="absolute inset-x-0 bottom-0 w-full bg-gradient-to-t from-black/60 to-transparent p-2">
                 <p class="text-white text-sm font-semibold truncate" >{{ service.name }}</p>
               </div>
             </div>
