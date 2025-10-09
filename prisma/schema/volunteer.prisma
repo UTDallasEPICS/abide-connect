@@ -3,6 +3,7 @@ model Volunteer {
   userId    Int      @unique
   user      User     @relation(fields: [userId], references: [id])
   gender    Gender
+  ethinicity Ethinicity
   phone     String?
 
   availabilities Volunteer_Availability[]
