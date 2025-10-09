@@ -41,6 +41,34 @@ const events = [
     image: "/images/image1.jpeg"
   },
 ];
+
+const services = [
+  {
+    id: 1,
+    name: "Prenatal Care",
+    image: "/images/image1.jpeg",
+    href: "https://www.abidewomen.org/prenatalcare"
+  },
+  {
+    id: 1,
+    name: "Postpatrun Care",
+    image: "/images/image1.jpeg",
+    href: "https://www.abidewomen.org/postpartumcare"
+  },
+  {
+    id: 1,
+    name: "Childbirth Education",
+    image: "/images/image1.jpeg",
+    href: "hhttps://www.abidewomen.org/childbirthed"
+  },
+  {
+    id: 1,
+    name: "Mobile Clinic",
+    image: "/images/image1.jpeg",
+    href: "https://www.abidewomen.org/mobile-clinic"
+  },
+]
+
 </script>
 
 <template>
@@ -78,7 +106,7 @@ const events = [
         <h3 class="text-2xl font-semibold text-teal-700 mb-4">UPCOMING EVENTS</h3>
         <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
           <div v-for="event in events" :key="event.id" 
-               class="flex-shrink-0 w-[160px] bg-white rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer">
+               class="flex-shrink-0 w-[160px] rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer">
 
               <!-- Event Image Placeholder-->
               <div class="h-35 relative overflow-hidden">
@@ -127,14 +155,28 @@ const events = [
       </div>
 
       <!-- Services -->
-      <div class="p-4">
-        <div class="grid grid-cols-2 gap-4">
-          <div class="bg-rose-400 text-white rounded-lg flex items-center justify-center py-6">
-            Service 3
-          </div>
-          <div class="bg-rose-400 text-white rounded-lg flex items-center justify-center py-6">
-            Service 4
-          </div>
+      <div class="px-2 pb-4 pt-4">
+        <h3 class="text-2xl font-semibold text-teal-700 mb-4">SERVICES</h3>
+        <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+          <a 
+            v-for="service in services" 
+            :key="service.id" 
+            :href="service.href"
+            target="_blank"
+            rel="noopener noreferrer"
+
+            class="flex-shrink-0 w-[190px] rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer">
+            <div class="h-35 relative overflow-hidden">
+              <img
+                :src="service.image"
+                :alt="service.name"
+                class="w-full h-full object-cover transition-transform duration-300"
+              />
+              <div class="absolute insert-x-0 bottom-0 w-full bg-gradient-to-t from-black/60 to-transparent p-2">
+                <p class="text-white text-sm font-semibold truncate" >{{ service.name }}</p>
+              </div>
+            </div>
+          </a>
         </div>
       </div>
 
