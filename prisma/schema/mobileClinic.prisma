@@ -1,0 +1,25 @@
+model Mobile_Clinic {
+    id          String              @id @default(uuid())
+    
+    schedule    Mobile_Clinic_Schedule[]
+    timeline    Mobile_Clinic_Timeline[]
+    @@map("mobile_clinic")
+}
+
+model Mobile_Clinic_Schedule {
+    id                  Int                 @id @default(autoincrement())
+    mobile_clinic       Mobile_Clinic       @relation(fields: [mobile_clinic_id], references: [id])
+    mobile_clinic_id    String
+    location            String
+    datetime            DateTime
+    @@map("schedule")
+}
+
+model Mobile_Clinic_Timeline {
+    id                  Int                 @id @default(autoincrement())
+    mobile_clinic       Mobile_Clinic       @relation(fields: [mobile_clinic_id], references: [id])
+    mobile_clinic_id    String
+    location            String
+    datetime            DateTime
+    @@map("timeline")
+}
