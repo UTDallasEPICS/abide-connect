@@ -1,0 +1,43 @@
+model Event {
+  id              String   @id @default(uuid())
+  title           String
+  shortDesc       String?
+  description     String?
+  startTime       DateTime
+  endTime         DateTime
+  location        String
+  calendarURL     String?
+  allowVolunteers Boolean
+  allowAttendees  Boolean
+
+  mobileClinic   MobileClinic @relation(fields: [mobileClinicId], references: [id])
+  mobileClinicId String
+
+  eventAssets  Event_Asset[]
+  participants User_Event[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("events")
+}
+
+model Event_Asset {
+  event    Event  @relation(fields: [eventId], references: [id])
+  eventId  String
+  imageUrl String
+
+  @@id([eventId, imageUrl])
+  @@map("event_assets")
+}
+
+model User_Event {
+  user        User    @relation(fields: [userId], references: [id])
+  userId      String
+  event       Event   @relation(fields: [eventId], references: [id])
+  eventId     String
+  isVolunteer Boolean @default(false)
+
+  @@id([userId, eventId])
+  @@map("user_events")
+}
