@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import 'vue3-carousel/dist/carousel.css'
 import { Carousel, Slide, Pagination, Navigation } from 'vue3-carousel'
+import TopNav from '~/components/topNav.vue';
 
 const carouselConfig = {
   itemsToShow: 1,
@@ -80,12 +81,10 @@ const services = [
     <!-- Phone container -->
     <div class="w-[375px] bg-white rounded-3xl shadow-lg overflow-hidden flex flex-col max-h-[812px] overflow-y-auto">
       
+      
       <!-- Top bar -->
-      <div class="flex justify-between items-center p-4">
-        <button><span class="text-2xl">⚙️</span></button>
-        <span class="text-gray-400 text-sm">Home</span>
-        <button><span class="text-2xl">📦</span></button>
-      </div>
+      <TopNav />
+
 
       <!-- Hero / Carousel Section -->
       <div class="bg-teal-700 py-3">
