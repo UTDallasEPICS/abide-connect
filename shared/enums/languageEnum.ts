@@ -25,4 +25,16 @@ export enum languageEnum {
     INDONESIAN = "Indonesian",
     MALAY = "Malay",
     FILIPINO = "Filipino",
-  }
+}
+
+interface Language {
+    id: string;
+    value: string;
+}
+
+export const languageJSON: Language[] = Object.entries(languageEnum).map(
+    ([key, value]) => ({
+        id: value,
+        value: key,
+    })
+);
