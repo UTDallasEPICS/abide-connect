@@ -14,7 +14,7 @@ model Event {
   mobileClinicId String
 
   eventAssets  Event_Asset[]
-  participants User_Event[]
+  participants RSVP[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -31,7 +31,7 @@ model Event_Asset {
   @@map("event_assets")
 }
 
-model User_Event {
+model RSVP {
   user        User    @relation(fields: [userId], references: [id])
   userId      String
   event       Event   @relation(fields: [eventId], references: [id])
@@ -39,5 +39,5 @@ model User_Event {
   isVolunteer Boolean @default(false)
 
   @@id([userId, eventId])
-  @@map("user_events")
+  @@map("rsvps")
 }

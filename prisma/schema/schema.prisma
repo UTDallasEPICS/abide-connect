@@ -20,8 +20,8 @@ model User {
   phone String?
 
   volunteer     Volunteer?
-  Languages     User_Language[]
-  events        User_Event[]
+  Languages     Volunteer_Language[]
+  events        RSVP[]
   notifications User_Notification[]
 
   emailVerified Boolean   @default(false)

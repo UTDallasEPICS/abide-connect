@@ -17,6 +17,15 @@ model Volunteer {
   @@map("volunteers")
 }
 
+model Volunteer_Language {
+  user User @relation(fields: [userId], references: [id])
+  userId String
+  language Language
+
+  @@id([userId, language])
+  @@map("user_languages")
+}
+
 model Volunteer_Hour_Log {
   id             Int            @id @default(autoincrement())
   volunteer      Volunteer      @relation(fields: [volunteerId], references: [id])
@@ -78,4 +87,33 @@ enum ApprovalStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+enum Language {
+  ENGLISH
+  SPANISH
+  FRENCH
+  GERMAN
+  CHINESE
+  JAPANESE
+  HINDI
+  ARABIC
+  RUSSIAN
+  PORTUGUESE
+  ITALIAN
+  KOREAN
+  DUTCH
+  SWEDISH
+  NORWEGIAN
+  DANISH
+  FINNISH
+  POLISH
+  TURKISH
+  GREEK
+  HEBREW
+  VIETNAMESE
+  THAI
+  INDONESIAN
+  MALAY
+  FILIPINO
 }
