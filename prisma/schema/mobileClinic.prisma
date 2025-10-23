@@ -1,29 +1,29 @@
 model MobileClinic {
-    id String @id @default(uuid())
+  id String @id @default(uuid())
 
-    schedule Mobile_Clinic_Schedule[]
-    timeline Mobile_Clinic_Timeline[]
-    event    Event[]
+  schedule Mobile_Clinic_Schedule[]
+  timeline Mobile_Clinic_Timeline[]
+  event    Event[]
 
-    @@map("mobileClinic")
+  @@map("mobileClinic")
 }
 
 model Mobile_Clinic_Schedule {
-    id             Int          @id @default(autoincrement())
-    mobileClinic   MobileClinic @relation(fields: [mobileClinicId], references: [id])
-    mobileClinicId String
-    location       String
-    datetime       DateTime
+  id             Int          @id @default(autoincrement())
+  mobileClinic   MobileClinic @relation(fields: [mobileClinicId], references: [id])
+  mobileClinicId String
+  location       String
+  datetime       DateTime
 
-    @@map("schedule")
+  @@map("schedule")
 }
 
 model Mobile_Clinic_Timeline {
-    id             Int          @id @default(autoincrement())
-    mobile_clinic  MobileClinic @relation(fields: [mobileClinicId], references: [id])
-    mobileClinicId String
-    location       String
-    datetime       DateTime
+  id             Int          @id @default(autoincrement())
+  mobile_clinic  MobileClinic @relation(fields: [mobileClinicId], references: [id])
+  mobileClinicId String
+  location       String
+  datetime       DateTime
 
-    @@map("timeline")
+  @@map("timeline")
 }
