@@ -1,0 +1,42 @@
+[
+    {
+        "name": "Alice Wang",
+        "email": "alice@example.com",
+        "phone": "123-456-7890",
+        "languages": ["ENGLISH", "SPANISH"],
+        "events": [
+            {
+                "id": "pastEvent2",
+                "isVolunteer": false
+            },
+            {
+                "id": "event3",
+                "isVolunteer": false
+            }
+        ]
+    },
+    {
+        "name": "Bob Smith",
+        "email": "bob@example.com",
+        "phone": "987-654-3210",
+        "languages": ["ENGLISH", "FRENCH"],
+        "events": [
+            {
+                "id": "pastEvent1",
+                "isVolunteer": true
+            },
+            {
+                "id": "event1",
+                "isVolunteer": true
+            },
+            {
+                "id": "event2",
+                "isVolunteer": true
+            },
+            {
+                "id": "event3",
+                "isVolunteer": false
+            }
+        ]
+    }
+]

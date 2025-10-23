@@ -4,12 +4,11 @@ model Volunteer {
   user       User       @relation(fields: [userId], references: [id])
   gender     Gender
   ethinicity Ethinicity
-  phone      String?
   profileURL String?
 
   availabilities Volunteer_Availability[]
   certifications Volunteer_Certification[]
-  hourLog        Volunteer_Hour_Log[]
+  hourLogs        Volunteer_Hour_Log[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -21,6 +20,8 @@ model Volunteer_Hour_Log {
   id             Int            @id @default(autoincrement())
   volunteer      Volunteer      @relation(fields: [volunteerId], references: [id])
   volunteerId    String
+  event          Event          @relation(fields: [eventId], references: [id])
+  eventId        String
   clockIn        DateTime
   clockOut       DateTime?
   approvalStatus ApprovalStatus @default(PENDING)

@@ -4,9 +4,9 @@ model User {
   email     String      @unique
   phone     String?
 
-  volunteer Volunteer?
-  Languages User_Language[]
-  events    User_Event[]
+  volunteer     Volunteer?
+  languages     User_Language[]
+  events        User_Event[]
   notifications User_Notification[]
   
   createdAt DateTime @default(now())
