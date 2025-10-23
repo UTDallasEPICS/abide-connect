@@ -1,26 +1,38 @@
 model Volunteer {
-  id         String     @id @default(uuid())
-  userId     String     @unique
-  user       User       @relation(fields: [userId], references: [id])
+  id    String  @id @default(uuid())
+  name  String?
+  email String  @unique
+  phone String?
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
   gender     Gender
   ethinicity Ethinicity
-  phone      String?
-  profileURL String?
 
   availabilities Volunteer_Availability[]
   certifications Volunteer_Certification[]
   hourLog        Volunteer_Hour_Log[]
+  Languages      Volunteer_Language[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  events RSVP[]
+
+  emailVerified Boolean   @default(false)
+  imageURL      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
+  sessions      Session[]
+  accounts      Account[]
 
   @@map("volunteers")
 }
 
 model Volunteer_Language {
-  user User @relation(fields: [userId], references: [id])
-  userId String
-  language Language
+  user        User       @relation(fields: [userId], references: [id])
+  userId      String
+  language    Language
+  Volunteer   Volunteer? @relation(fields: [volunteerId], references: [id])
+  volunteerId String?
 
   @@id([userId, language])
   @@map("user_languages")
