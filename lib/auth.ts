@@ -10,7 +10,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true, 
   },
-  user: {
-    modelName: "User"
+  users:{
+    modelName: "volunteers"
   }
 });
