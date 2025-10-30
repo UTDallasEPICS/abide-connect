@@ -32,4 +32,6 @@ import EventTile from '~/components/EventTile.vue';
 const style = 'https://tiles.openfreemap.org/styles/liberty'
 const center = [-96.77049780046936, 32.772891246510596]
 const zoom = 15
+
+
 </script>
