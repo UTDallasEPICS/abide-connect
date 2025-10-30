@@ -1,20 +1,36 @@
 model Volunteer {
-  id         String     @id @default(uuid())
-  userId     String     @unique
-  user       User       @relation(fields: [userId], references: [id])
-  gender     Gender
-  ethinicity Ethinicity
-  phone      String?
-  profileURL String?
+  id    String  @id @default(uuid())
+  name  String?
+  email String  @unique
 
+  phone          String?
+  gender         Gender?
+  ethinicity     Ethinicity?
+  languages      Volunteer_Language[]
   availabilities Volunteer_Availability[]
   certifications Volunteer_Certification[]
   hourLog        Volunteer_Hour_Log[]
+  events         RSVP[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  emailVerified Boolean   @default(false)
+  imageURL      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  user          User?     @relation(fields: [userId], references: [id])
+  userId        String?   @unique
 
   @@map("volunteers")
+}
+
+model Volunteer_Language {
+  language    Language
+  Volunteer   Volunteer @relation(fields: [volunteerId], references: [id])
+  volunteerId String
+
+  @@id([volunteerId, language])
+  @@map("volunteer_languages")
 }
 
 model Volunteer_Hour_Log {
@@ -78,4 +94,33 @@ enum ApprovalStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+enum Language {
+  ENGLISH
+  SPANISH
+  FRENCH
+  GERMAN
+  CHINESE
+  JAPANESE
+  HINDI
+  ARABIC
+  RUSSIAN
+  PORTUGUESE
+  ITALIAN
+  KOREAN
+  DUTCH
+  SWEDISH
+  NORWEGIAN
+  DANISH
+  FINNISH
+  POLISH
+  TURKISH
+  GREEK
+  HEBREW
+  VIETNAMESE
+  THAI
+  INDONESIAN
+  MALAY
+  FILIPINO
 }

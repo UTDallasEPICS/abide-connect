@@ -1,9 +1,9 @@
-model Notification{
-    id          String          @id @default(uuid())
-    title       String
-    content     String
-    user        User_Notification[]
-    createdAt   DateTime        @default(now())
+model Notification {
+  id        String              @id @default(uuid())
+  title     String
+  content   String
+  user      User_Notification[]
+  createdAt DateTime            @default(now())
 
-    @@map("notifications")
+  @@map("notifications")
 }
