@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import 'vue3-carousel/dist/carousel.css'
-import { Carousel, Slide, Pagination, Navigation } from 'vue3-carousel'
+import { Carousel, Slide, Pagination } from 'vue3-carousel'
 import TopNav from '~/components/topNav.vue';
 
 const carouselConfig = {
