@@ -10,10 +10,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true, 
   },
-<<<<<<< HEAD
   users:{
     modelName: "volunteers"
   }
-=======
->>>>>>> 42-feature-create-a-basic-login-page-profile-page-for-testing-only
 });
