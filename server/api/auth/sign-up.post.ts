@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
     
     const data = await auth.api.signUpEmail({body: {name, email, password}})
 
-    await prisma.user.update({
+    await prisma.volunteer.update({
         where: {id: data.user.id},
         data: {
             phone: phone as string,
