@@ -6,9 +6,8 @@ model User {
 
   volunteer Volunteer?
 
-  RSVP               RSVP[]
-  User_Notification  User_Notification[]
-  Volunteer_Language Volunteer_Language[]
+  RSVP              RSVP[]
+  User_Notification User_Notification[]
 }
 
 model User_Notification {
