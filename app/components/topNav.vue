@@ -10,7 +10,7 @@ const getPageTitle = () => {
 </script>
 
 <template>
-    <UHeader :ui="{ toggle: 'hidden' }" class="sticky top-0 z-50 h-12 bg-white/90 backdrop-blur border-b">
+    <UHeader :ui="{ toggle: 'hidden' }" class="sticky top-0 z-50 h-12 bg-[#F2EBE3] backdrop-blur border-b">
         <!-- Left Settings -->
         <template #left>
             <div class="">
