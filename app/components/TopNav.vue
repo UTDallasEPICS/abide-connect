@@ -4,7 +4,6 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 
 const getPageTitle = () => {
-    console.log(route.name)
     return route.name || 'Default'
 }
 
