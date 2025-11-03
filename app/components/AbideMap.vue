@@ -20,6 +20,5 @@ defineProps<{
   style: string;
   center: [number, number];
   zoom: number;
-  
 }>();
 </script>
