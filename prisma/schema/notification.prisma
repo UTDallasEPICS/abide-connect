@@ -5,5 +5,5 @@ model Notification{
     users       User_Notification[]
     createdAt   DateTime        @default(now())
 
-    @@map("notifications")
+  @@map("notifications")
 }
