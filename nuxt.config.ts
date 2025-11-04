@@ -12,5 +12,10 @@ export default defineNuxtConfig({
   eslint: {
     // additional options here
   },
+  vite: {
+    optimizeDeps: {
+      include: ["maplibre-gl"],
+    },
+  },
   // css: ['assets/css/main.css']
 })
