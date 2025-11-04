@@ -3,6 +3,8 @@ import 'vue3-carousel/dist/carousel.css'
 import { Carousel, Slide, Pagination, Navigation } from 'vue3-carousel'
 import TopNav from '~/components/topNav.vue';
 
+
+
 const carouselConfig = {
   itemsToShow: 1,
   wrapAround: true,

@@ -2,9 +2,14 @@
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
+const router = useRouter()
 
 const getPageTitle = () => {
     return route.name || 'Default'
+}
+
+const goToInbox = () => {
+    router.push('/inbox')
 }
 
 </script>
@@ -14,12 +19,14 @@ const getPageTitle = () => {
         <!-- Left Settings -->
         <template #left>
             <div class="">
-                <UButton    
-                    color="neutral"
-                    variant="ghost"
-                    aria-label="Settings">
-                    <UIcon name="i-heroicons-cog-6-tooth" class="w-7 h-7" />
-                </UButton>
+                <slot name="left">
+                    <UButton    
+                        color="neutral"
+                        variant="ghost"
+                        aria-label="Settings">
+                        <UIcon name="i-heroicons-cog-6-tooth" class="w-7 h-7 text-teal-900" />
+                    </UButton>
+                </slot>
             </div>
         </template>
         <!-- Center Logo -->
@@ -32,12 +39,15 @@ const getPageTitle = () => {
         <!-- Right Inbox -->
         <template #right>
             <div class="w-10 flex items-center justify-end">
-                <UButton
-                    color="neutral"
-                    variant="ghost"
-                    aria-label="Inbox" >
-                    <UIcon name="i-heroicons-inbox" class="w-7 h-7" />
-                </UButton>
+                <slot name="right">
+                    <UButton
+                        color="neutral"
+                        variant="ghost"
+                        aria-label="Inbox" 
+                        @click="goToInbox">
+                        <UIcon name="i-heroicons-inbox" class="w-7 h-7  text-teal-900" />
+                    </UButton>
+                </slot>
             </div>
         </template>
         <template #toggle />
