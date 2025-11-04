@@ -2,7 +2,7 @@
 import 'vue3-carousel/dist/carousel.css'
 import { Carousel, Slide, Pagination, Navigation } from 'vue3-carousel'
 import TopNav from '~/components/topNav.vue';
-
+import Navbar from '~/components/Navbar.vue'
 const carouselConfig = {
   itemsToShow: 1,
   wrapAround: true,
@@ -77,9 +77,10 @@ const services = [
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-100 flex justify-center py-6">
+  <div class="min-h-screen bg-gray-100 flex justify-center py-6 pb-24">
     <!-- Phone container -->
-    <div class="w-[375px] bg-white rounded-3xl shadow-lg overflow-hidden flex flex-col max-h-[812px] overflow-y-auto">
+    <div class="w-[375px] bg-white rounded-3xl shadow-lg overflow-hidden flex flex-col max-h-[812px] overflow-y-auto relative">
+      <div class="flex-1 overflow-y-auto">
       
       
       <!-- Top bar -->
@@ -198,14 +199,8 @@ const services = [
           </a>
         </div>
       </div>
-
-      <!-- Bottom nav dots -->
-      <div class="flex justify-around items-center py-3 border-t mt-6">
-        <span class="w-4 h-4 rounded-full bg-black"></span>
-        <span class="w-4 h-4 rounded-full border border-black"></span>
-        <span class="w-4 h-4 rounded-full border border-black"></span>
-        <span class="w-4 h-4 rounded-full border border-black"></span>
-      </div>
+      <Navbar />
     </div>
+  </div>
   </div>
 </template>
