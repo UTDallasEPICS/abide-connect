@@ -26,3 +26,4 @@ logs
 # Prisma related files
 prisma/dev.db
 prisma/migrations
+.vscode/*

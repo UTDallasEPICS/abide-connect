@@ -1,0 +1,21 @@
+model User {
+  id           String  @id @default(uuid())
+  name         String?
+  contactEmail String  @unique
+  phone        String?
+
+  volunteer Volunteer?
+
+  RSVP              RSVP[]
+  User_Notification User_Notification[]
+}
+
+model User_Notification {
+  user           User         @relation(fields: [userId], references: [id])
+  userId         String
+  notification   Notification @relation(fields: [notificationId], references: [id])
+  notificationId String
+
+  @@id([userId, notificationId])
+  @@map("user_notifications")
+}
