@@ -1,9 +1,7 @@
 <template>
-    <!-- Top bar -->
-    <TopNav />
-
-    <slot />
-
-    <!-- Bottom nav -->
-    <BottomNav />
+    <div class="w-screen h-screen bg-gray-100 items-center">
+        <TopNav />
+        <slot />
+        <BottomNav />
+    </div>
 </template>

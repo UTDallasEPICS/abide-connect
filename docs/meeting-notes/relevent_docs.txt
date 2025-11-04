@@ -1,0 +1,8 @@
+MapLibre GL JS:
+
+Nominatim - Geocoding API (for street addresses to coordinates)
+https://nominatim.org/release-docs/develop/api/
+
+On event create and update, fetch coordinates using the above API:
+https://operations.osmfoundation.org/policies/nominatim/
+Results must be cached on your side. Clients sending repeatedly the same query may be classified as faulty and blocked.

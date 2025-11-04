@@ -1,6 +1,3 @@
 <script setup>
-const router = useRouter()
-onMounted(() => {
-  router.push('/home')
-})
+await navigateTo('/home')
 </script>
