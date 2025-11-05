@@ -3,6 +3,10 @@ import type { FormSubmitEvent } from "@nuxt/ui";
 import { loginFormSchema } from "#shared/types/authFormTypes";
 import type { LoginFormSchema } from "#imports";
 
+definePageMeta({
+    layout: "secondary"
+})
+
 const state = reactive<Partial<LoginFormSchema>>({
     email: undefined,
     password: undefined,

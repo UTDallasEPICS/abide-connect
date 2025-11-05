@@ -5,6 +5,10 @@ import { signUpFormSchema } from "#shared/types/authFormTypes";
 import { Language } from "@prisma/client";
 import type { InputMenuItem } from "@nuxt/ui";
 
+definePageMeta({
+    layout: "secondary"
+})
+
 const state = reactive<Partial<SignUpFormSchema>>({
     name: undefined,
     email: undefined,
