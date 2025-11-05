@@ -15,7 +15,7 @@ const getPageTitle = () => {
                     color="neutral"
                     variant="ghost"
                     aria-label="Settings">
-                    <UIcon name="i-heroicons-cog-6-tooth" class="w-7 h-7" />
+                    <UIcon name="i-lucide-settings" class="w-7 h-7" />
                 </UButton>
             </div>
         </template>
@@ -33,7 +33,7 @@ const getPageTitle = () => {
                     color="neutral"
                     variant="ghost"
                     aria-label="Inbox" >
-                    <UIcon name="i-heroicons-inbox" class="w-7 h-7" />
+                    <UIcon name="i-lucide-inbox" class="w-7 h-7" />
                 </UButton>
             </div>
         </template>
