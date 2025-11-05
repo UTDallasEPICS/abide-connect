@@ -13,7 +13,7 @@ const nav = ref([
     {
         id: 3,
         icon: "i-lucide-square-user-round",
-        to: "/auth/login",
+        to: "/auth/sign-up",
     },
     {
         id: 4,
@@ -28,7 +28,7 @@ const nav = ref([
 ]);
 </script>
 <template>
-<UFooter class="fixed bottom-0 left-0 right-0 flex justify-around items-center h-12 bg-white/90">
+<UFooter class="fixed bottom-0 left-0 right-0 flex justify-around items-center h-12 z-100 bg-white">
     <template #default>
         <UButton v-for="navItem in nav"
                 :key="navItem.id"
