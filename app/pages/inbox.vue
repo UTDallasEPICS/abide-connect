@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import TopNav from '~/components/topNav.vue';
+import TopNav from '~/components/TopNav.vue';
 import { useRouter } from 'vue-router';
 import { ref, computed } from 'vue'
 
@@ -37,7 +37,7 @@ const notifications = ref<Notification[]>([
   }
 ])
 
-const preview = (text: string, max=44) =>
+const preview = (text: string, max=100) =>
   text.length > max ? text.slice(0,max).trim() + '...' : text
 
 
@@ -50,7 +50,8 @@ const accordionItems = computed(() =>
     content: n.content,
     time: formatTime(n.createdAt),
     isRead: n.isRead,
-    preview: preview(n.content)
+    preview: preview(n.content),
+    icon: 'i-heroicons-bell',
   }))
 )
 
@@ -87,9 +88,7 @@ const goBack = async () => {
 </script>
 
 <template>
-    <!-- phone screen -->
-    <div class="min-h-screen bg-gray-100 flex justify-center py-6">
-        <div class="w-[375px] bg-white rounded-3xl shadow-lg overflow-hidden flex flex-col max-h-[812px] overflow-y-auto">
+    <div class="flex flex-col w-screen h-screen bg-white items-center">
             <!-- Top Nav Bar -->
              <TopNav>
                 <template #right>
@@ -103,14 +102,16 @@ const goBack = async () => {
              </TopNav>
 
              <!-- Notifications accordion -->
-             <div class="px-2 mt-4">
+             <div class="flex-1 w-full mx-auto mt-14">
                 <UAccordion
                     type="multiple"
+                    class="bg-white w-full px-5 mb-10"
                     :items="accordionItems"
                     :ui="{
-                        item: 'border-none py-0 px-2',
-                        content: 'border-none py-0 px-3 p-0',
-                        header: 'border-none py-0 px-3 p-0'
+                        item: 'border-b border-gray-200 last:border-none',
+                        content: 'mb-5 pr-5',
+                        header: 'pr-5',
+                        leadingIcon: 'mr-3'
                     }"
                     >
 
@@ -118,12 +119,11 @@ const goBack = async () => {
                     <template #default="{ item, open }">
                         <div 
                         @click="markAsRead(item.id)"
-                        class=" bg-white w-full">
-                            <div class="flex items-start gap-3">
-                                <UIcon name="i-heroicons-bell" 
-                                :class="!item.isRead ? 'w-5 h-5 text-teal-700 flex-shrink-0' : 'w-5 h-5 text-bold flex-shrink-0'"/>
-                                <div class="flex-1 min-w-0 flex items-start justify-between gap-35">
-                                <h3 :class="!item.isRead ? 'text-[17px] font-extrabold text-[#3a696e] leading-tight flex-1 truncate' : 'text-[17px] font-semibold text-[#3a696e] leading-tight flex-1 truncate' ">                               
+                        class="w-full">
+                            <div class="flex items-start">
+                                <div class="flex-1"> 
+                                <div class="flex items-start justify-between">
+                                <h3 :class="!item.isRead ? 'text-[20px] font-extrabold text-[#3a696e]' : 'text-[20px] font-semibold text-[#3a696e]' ">                               
                                 {{ item.label }}
                                 </h3>
                                 
@@ -131,27 +131,27 @@ const goBack = async () => {
                                     {{ item.time }}
                                 </span>
                                 </div>
+                                </div>
                             </div>
                             <p 
                                 v-show="!open"
-                                :class="!item.isRead ? 'mt-1 py-3 px-2 font-bold text-[13px] text-gray-600 leading-snug' : 'mt-1 py-2 px-2 text-[13px] text-gray-600 leading-snug'">
-                                {{ item.preview }}
+                                :class="!item.isRead ? 'mt-3 font-bold text-[13px] text-gray-600 leading-relaxed line-clamp-1' : 'mt-3 font-semibold text-[13px] text-gray-600 leading-relaxed line-clamp-1'">
+                                {{ item.content }}
                             </p>
                         </div>
                     </template>
                     <!-- body message-->
                      <template #content="{ item }">
-                        <div   
-                            class="rounded-xl border-gray-200 bg-white overflow-hidden">
+                        <div class="pl-5 ">
+
                             <div 
-                            class="py-1 px-2 font-semibold text-[13px] text-gray-600 leading-relaxed">
+                            class="bg-gray-50 rounded-lg p-4 font-semibold text-[13px] text-gray-600 leading-relaxed ">
                                 {{ item.content }}
                             </div>
-                        </div>
+                          </div>
                      </template>
                 </UAccordion>
              </div>
         </div>
-    </div>
 </template>
 
