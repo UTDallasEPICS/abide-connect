@@ -1,15 +1,14 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
+import { useRoute } from 'vue-router';
 
-const route = useRoute()
-const router = useRouter()
+const route = useRoute();
 
 const getPageTitle = () => {
     return route.name || 'Default'
 }
 
-const goToInbox = () => {
-    router.push('/inbox')
+const onInboxClick = async (_e?: MouseEvent) => {
+  await navigateTo('/inbox') 
 }
 
 </script>
@@ -44,7 +43,7 @@ const goToInbox = () => {
                         color="neutral"
                         variant="ghost"
                         aria-label="Inbox" 
-                        @click="goToInbox">
+                        @click="onInboxClick">
                         <UIcon name="i-heroicons-inbox" class="w-7 h-7  text-teal-900" />
                     </UButton>
                 </slot>

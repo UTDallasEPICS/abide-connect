@@ -80,8 +80,8 @@ const formatTime = (timestamp: string) => {
 
 
 const router = useRouter()
-const goBack = () => {
-    router.back();
+const goBack = async () => {
+  await navigateTo('/home', { replace: true }) 
 }
 
 </script>
@@ -102,7 +102,6 @@ const goBack = () => {
                 </template>
              </TopNav>
 
-
              <!-- Notifications accordion -->
              <div class="px-2 mt-4">
                 <UAccordion
@@ -119,20 +118,23 @@ const goBack = () => {
                     <template #default="{ item, open }">
                         <div 
                         @click="markAsRead(item.id)"
-                        class="max-w-full rounded-md bg-white">
-                            <div class="w-full flex justify-between items-center gap-3">
+                        class=" bg-white w-full">
+                            <div class="flex items-start gap-3">
                                 <UIcon name="i-heroicons-bell" 
-                                :class="!item.isRead ? 'w-5 h-5 text-teal-700' : 'w-5 h-5 text-bold'"/>
+                                :class="!item.isRead ? 'w-5 h-5 text-teal-700 flex-shrink-0' : 'w-5 h-5 text-bold flex-shrink-0'"/>
+                                <div class="flex-1 min-w-0 flex items-start justify-between gap-35">
                                 <h3 :class="!item.isRead ? 'text-[17px] font-extrabold text-[#3a696e] leading-tight flex-1 truncate' : 'text-[17px] font-semibold text-[#3a696e] leading-tight flex-1 truncate' ">                               
                                 {{ item.label }}
                                 </h3>
-                                <span class="text-[13px] text-right text-[#a4123f] " >
+                                
+                                <span class="text-[13px] text-[#a4123f] whitespace-nowrap flex-shrink-0" >
                                     {{ item.time }}
                                 </span>
+                                </div>
                             </div>
                             <p 
                                 v-show="!open"
-                                :class="!item.isRead ? 'py-3 px-2 font-bold text-[13px] text-gray-600 leading-snug' : 'py-2 px-2 text-[13px] text-gray-600 leading-snug'">
+                                :class="!item.isRead ? 'mt-1 py-3 px-2 font-bold text-[13px] text-gray-600 leading-snug' : 'mt-1 py-2 px-2 text-[13px] text-gray-600 leading-snug'">
                                 {{ item.preview }}
                             </p>
                         </div>
