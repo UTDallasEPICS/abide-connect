@@ -5,12 +5,19 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/ui',
     '@nuxt/eslint',
-    '@prisma/nuxt'
+    '@prisma/nuxt',
+    'nuxt-maplibre'
   ],
   css: ['~/assets/css/main.css'],
   eslint: {
     // additional options here
   },
+  vite: {
+    optimizeDeps: {
+      include: ["maplibre-gl"],
+    },
+  },
+  // css: ['assets/css/main.css']
   ui: {
     theme: {
       colors: [
