@@ -13,7 +13,7 @@ const nav = ref([
     {
         id: 3,
         icon: "i-lucide-square-user-round",
-        to: "/auth/login",
+        to: "/auth/sign-up",
     },
     {
         id: 4,
