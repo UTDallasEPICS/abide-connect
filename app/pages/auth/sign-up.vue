@@ -10,8 +10,8 @@ const state = reactive<Partial<SignUpSchema>>({
     password: "",
     phone: "",
     languages: [],
-    gender: "",
-    ethinicity: "",
+    gender: null,
+    ethinicity: null,
     availability: []
 });
 const errorMessage = ref<string | null>(null);
