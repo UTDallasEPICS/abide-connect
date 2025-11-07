@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import 'vue3-carousel/dist/carousel.css'
 import { Carousel, Slide, Pagination } from 'vue3-carousel'
-import TopNav from '~/components/TopNav.vue';
+
 
 const carouselConfig = {
   itemsToShow: 1,
@@ -17,25 +17,29 @@ const slides = [
   { id: 4, src: '/images/image1.jpeg', alt: 'Slide 4' },
 ]
 const events = [
-  { id: 1, 
+  {
+    id: 1,
     name: "Event 1",
     date: "October 07, 2025",
     location: "Location 1",
     image: "/images/image1.jpeg"
   },
-  { id: 2, 
+  {
+    id: 2,
     name: "Event 2",
     date: "October 15, 2025",
     location: "Location 2",
     image: "/images/image1.jpeg"
   },
-  { id: 3,
+  {
+    id: 3,
     name: "Event 3",
     date: "November 03, 2025",
     location: "Location 3",
     image: "/images/image1.jpeg"
   },
-  { id: 4, 
+  {
+    id: 4,
     name: "Event 4",
     date: "November 20, 2025",
     location: "Location 4",
@@ -77,9 +81,7 @@ const services = [
 </script>
 
 <template>
-  <div class="flex flex-col w-screen h-screen bg-gray-100 items-center">
-    <!-- Top bar -->
-    <TopNav />
+  <div class="flex flex-col ">
     <div class="flex-1 mt-12 mb-8 w-full h-full overflow-y-auto">
       <!-- Hero / Carousel Section -->
       <div class="bg-teal-700 w-full max-h-[600px] overflow-y-auto">
@@ -92,12 +94,12 @@ const services = [
             >
           </Slide>
 
-          <template #addons>
-            <!--<Navigation />-->
-            <Pagination />
-          </template>
-        </Carousel>
-      </div>
+      <template #addons>
+        <!--<Navigation />-->
+        <Pagination />
+      </template>
+    </Carousel>
+  </div>
 
       <!-- Upcoming Events -->
       <div class="px-2 pb-4 pt-4 w-full relative">
@@ -195,8 +197,7 @@ const services = [
         </div>
       </div>
     </div>
-    <!-- Bottom nav dots -->
-     <BottomNav />
+
   </div>
 
 </template>

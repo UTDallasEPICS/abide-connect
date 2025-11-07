@@ -27,55 +27,22 @@ async function onSubmit(event: FormSubmitEvent<LoginFormSchema>) {
 </script>
 
 <template>
-    <div
-        class="sm:w-[375px] bg-[#F2EBE3] flex flex-col justify-center h-screen px-8"
-    >
-        <h1 class="text-black font-bold text-4xl pb-6">Login</h1>
-        <UForm
-            v-bind:schema="loginFormSchema"
-            v-bind:state="state"
-            class="space-y-4"
-            @submit.prevent="onSubmit"
-        >
-            <UFormField
-                class="text-black text-2xl font-bold"
-                label="Email"
-                name="email"
-                required
-            >
-                <UInput
-                    v-model="state.email"
-                    leading-icon="i-lucide-at-sign"
-                    color="secondary"
-                    variant="soft"
-                    size="xl"
-                    class="w-full"
-                />
-            </UFormField>
 
-            <UFormField
-                class="text-black text-2xl font-bold"
-                label="Password"
-                name="password"
-                size="xl"
-            >
-                <UInput
-                    v-model="state.password"
-                    type="password"
-                    class="w-full"
-                    variant="soft"
-                />
-            </UFormField>
+    <h1 class="text-black font-bold text-4xl pb-6">Login</h1>
+    <UForm v-bind:schema="loginFormSchema" v-bind:state="state" class="space-y-4" @submit.prevent="onSubmit">
+        <UFormField class="text-black text-2xl font-bold" label="Email" name="email" required>
+            <UInput v-model="state.email" leading-icon="i-lucide-at-sign" color="secondary" variant="soft" size="xl"
+                class="w-full" />
+        </UFormField>
 
-            <UButton
-                type="submit"
-                class="bg-[#a26b61] w-[25%] justify-center"
-                size="xl"
-                :loading="isLoading"
-                :disabled="isLoading"
-            >
-                <span class="font-bold text-[#a26b61/50]">Login</span>
-            </UButton>
-        </UForm>
-    </div>
+        <UFormField class="text-black text-2xl font-bold" label="Password" name="password" size="xl">
+            <UInput v-model="state.password" type="password" class="w-full" variant="soft" />
+        </UFormField>
+
+        <UButton type="submit" class="bg-[#a26b61] w-[25%] justify-center" size="xl" :loading="isLoading"
+            :disabled="isLoading">
+            <span class="font-bold text-[#a26b61/50]">Login</span>
+        </UButton>
+    </UForm>
+
 </template>
