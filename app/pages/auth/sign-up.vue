@@ -30,11 +30,14 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
                 password: payload.data.password,
                 phone: payload.data.phone,
                 languages: payload.data.language,
+                gender: payload.data.gender,
+                ethinicity: payload.data.ethinicity,
+                availability: payload.data.availability,
             },
         });
     } catch (error: any) {
         console.log(error);
-        errorMessage.value = error?.message || "Error signing in";
+        errorMessage.value = error?.message;
     } finally {
         isLoading.value = false;
     }

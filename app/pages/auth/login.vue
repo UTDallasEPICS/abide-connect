@@ -25,7 +25,7 @@ async function onSubmit(event: FormSubmitEvent<LoginSchema>) {
         });
     } catch (error: any) {
       console.log(error);
-      errorMessage.value = error?.message || "Error signing in";
+      errorMessage.value = error?.message;
     } finally {
         isLoading.value = false;
     }
