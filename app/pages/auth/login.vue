@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import type { FormSubmitEvent } from "@nuxt/ui";
-import { loginFormSchema, loginFormFields, providers } from "#shared/types/authFormTypes";
-import type { LoginFormSchema } from "#imports";
+import type { LoginSchema } from "~~/shared/types/auth/loginTypes";
+import { loginFields, loginSchema } from "~~/shared/types/auth/loginTypes";
+import { authProviders } from "~~/shared/types/auth/providers";
 
 
-const state = reactive<Partial<LoginFormSchema>>({
+const state = reactive<Partial<LoginSchema>>({
     email: undefined,
     password: undefined,
 });
 
 const isLoading = ref(false);
 
-async function onSubmit(event: FormSubmitEvent<LoginFormSchema>) {
+async function onSubmit(event: FormSubmitEvent<LoginSchema>) {
     isLoading.value = true;
     try {
         await $fetch("/api/auth/login", {
@@ -29,18 +30,21 @@ async function onSubmit(event: FormSubmitEvent<LoginFormSchema>) {
 
 <template>
     <div
-        class="sm:w-[375px] bg-[#F2EBE3] flex flex-col justify-center h-screen px-8"
+        class="flex flex-col items-center justify-center h-screen p-8 mt-8"
     >
-    <UAuthForm
-        :schema="loginFormSchema"
-        :fields="loginFormFields"
-        :providers="providers"
+    <UAuthForm class="w-full max-w-md"
+        :schema="loginSchema"
+        :fields="loginFields"
+        :providers="authProviders"
         title="Welcome back!"
         icon="i-lucide-lock"
+        :separator="{
+            icon: 'i-lucide-user'
+        }"
         @submit="onSubmit"
       >
         <template #description>
-          Don't have an account? <ULink to="#" class="text-primary font-medium">Sign up</ULink>.
+          Don't have an account? <ULink to="/auth/sign-up" class="text-primary font-medium">Sign up</ULink>.
         </template>
         <template #password-hint>
           <ULink to="#" class="text-primary font-medium" tabindex="-1">Forgot password?</ULink>

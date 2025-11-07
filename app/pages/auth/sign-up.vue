@@ -1,40 +1,34 @@
 <script setup lang="ts">
 import type { FormSubmitEvent } from "@nuxt/ui";
-import type { SignUpFormSchema } from "#shared/types/authFormTypes";
-import { signUpFormSchema } from "#shared/types/authFormTypes";
-import { Language } from "@prisma/client";
-import type { InputMenuItem } from "@nuxt/ui";
+import type { SignUpSchema } from "~~/shared/types/auth/signUpTypes";
+import { signUpFields, signUpSchema } from "~~/shared/types/auth/signUpTypes";
+import { authProviders } from "~~/shared/types/auth/providers";
 
-const state = reactive<Partial<SignUpFormSchema>>({
-    name: undefined,
-    email: undefined,
-    password: undefined,
-    phone: undefined,
+const state = reactive<Partial<SignUpSchema>>({
+    name: "",
+    email: "",
+    password: "",
+    phone: "",
     language: [],
+    gender: "",
+    ethinicity: "",
+    availability: []
 });
 
 const isLoading = ref(false);
-const languageItems = ref<InputMenuItem[]>(
-    Object.keys(Language).map((language) => ({
-        id: language,
-        label:
-            language.toString().charAt(0).toUpperCase() +
-            language.toString().slice(1).toLowerCase(),
-    }))
-);
 
-async function onSubmit(event: FormSubmitEvent<SignUpFormSchema>) {
+async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
     isLoading.value = true;
-    console.log(event.data);
+    console.log(payload.data);
     try {
         await $fetch("/api/auth/sign-up", {
             method: "POST",
             body: {
-                name: event.data.name,
-                email: event.data.email,
-                password: event.data.password,
-                phone: event.data.phone,
-                languages: event.data.language,
+                name: payload.data.name,
+                email: payload.data.email,
+                password: payload.data.password,
+                phone: payload.data.phone,
+                languages: payload.data.language,
             },
         });
     } finally {
@@ -44,106 +38,27 @@ async function onSubmit(event: FormSubmitEvent<SignUpFormSchema>) {
 </script>
 
 <template>
-    <div
-        class="sm:w-[375px] bg-[#F2EBE3] flex flex-col justify-center h-screen px-8"
-    >
-        <h1 class="text-black font-bold text-4xl pb-6">Sign Up</h1>
-        <UForm
-            v-bind:schema="signUpFormSchema"
-            v-bind:state="state"
-            class="space-y-4"
-            @submit.prevent="onSubmit"
+    <div class="flex flex-col items-center justify-center p-8 mt-8">
+        <UAuthForm class="w-full max-w-md"
+            :schema="signUpSchema"
+            :fields="signUpFields"
+            :providers="authProviders"
+            title="Let's get you started to be a Volunteer!"
+            icon="i-lucide-user"
+            :separator="{
+                icon: 'i-lucide-mail'
+            }"  
+            @submit="onSubmit"
         >
-            <UFormField
-                class="text-black text-2xl font-bold"
-                label="Name"
-                name="name"
-            >
-                <UInput
-                    v-model="state.name"
-                    leading-icon="i-lucide-circle-user"
-                    color="secondary"
-                    variant="soft"
-                    size="xl"
-                    class="w-full"
-                />
-            </UFormField>
-
-            <UFormField
-                class="text-black text-2xl font-bold"
-                label="Email"
-                name="email"
-                required
-            >
-                <UInput
-                    v-model="state.email"
-                    leading-icon="i-lucide-at-sign"
-                    color="secondary"
-                    variant="soft"
-                    size="xl"
-                    class="w-full"
-                />
-            </UFormField>
-
-            <UFormField
-                class="text-black text-2xl font-bold"
-                label="Password"
-                name="password"
-                size="xl"
-                required
-            >
-                <UInput
-                    v-model="state.password"
-                    leading-icon="i-lucide-lock-keyhole"
-                    type="password"
-                    class="w-full"
-                    variant="soft"
-                />
-            </UFormField>
-
-            <UFormField
-                class="text-black text-2xl font-bold"
-                label="Phone"
-                name="phone"
-            >
-                <UInput
-                    v-model="state.phone"
-                    leading-icon="i-lucide-phone"
-                    color="secondary"
-                    variant="soft"
-                    size="xl"
-                    class="w-full"
-                />
-            </UFormField>
-
-            <UFormField
-                class="text-black text-2xl font-bold"
-                label="Language"
-                name="language-multi"
-                required
-            >
-                <UInputMenu
-                    v-model="state.language"
-                    leading-icon="i-lucide-languages"
-                    multiple
-                    :items="languageItems"
-                    value-key="id"
-                    color="secondary"
-                    variant="soft"
-                    size="xl"
-                    class="w-full"
-                />
-            </UFormField>
-
-            <UButton
-                type="submit"
-                class="bg-[#a26b61] w-[25%] justify-center"
-                size="xl"
-                :loading="isLoading"
-                :disabled="isLoading"
-            >
-                <span class="font-bold text-[#a26b61/50]">Sign Up</span>
-            </UButton>
-        </UForm>
+        <template #description>
+          Already a Volunteer? <ULink to="/auth/login" class="text-primary font-medium">Log In</ULink>.
+        </template>
+        <template #password-hint>
+          <ULink to="#" class="text-primary font-medium" tabindex="-1">Forgot password?</ULink>
+        </template>
+        <template #footer>
+          By signing in, you agree to our <ULink to="#" class="text-primary font-medium">Terms of Service</ULink>.
+        </template>
+        </UAuthForm>
     </div>
 </template>
