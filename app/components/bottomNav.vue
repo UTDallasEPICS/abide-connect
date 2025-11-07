@@ -9,22 +9,18 @@ const nav = ref([
         id: 2,
         icon: "i-lucide-calendar-days",
         to: "/home",
-    },
-    {
+    },{
         id: 3,
-        icon: "i-lucide-square-user-round",
-        to: "/auth/sign-up",
-    },
-    {
-        id: 4,
         icon: "i-lucide-hospital",
         to: "/mobileClinic",
     },
     {
-        id: 5,
-        icon: "i-lucide-hand-heart",
-        to: "/home",
+        id: 4,
+        icon: "i-lucide-square-user-round",
+        to: "/volunteer",
     },
+    
+    
 ]);
 </script>
 <template>
