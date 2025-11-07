@@ -3,46 +3,57 @@ import { Language, Ethinicity, Gender, Availability } from "@prisma/client"
 import type { InputMenuItem } from "@nuxt/ui"
 import type { AuthFormField } from "@nuxt/ui"
 
+
+
 export const signUpSchema = z.object({
     name: z.string().optional(),
-    email: z.string().email('Invalid email'),
+    email: z.email('Invalid email'),
     password: z.string().min(8, "Must be at least 8 characters"),
-    phone: z.string().regex(/^\+1\d{10}$/, "Invalid US phone number").optional(),
-    languages: z.array(z.enum(Language)),
-    gender: z.enum(Gender),
-    ethinicity: z.enum(Ethinicity),
-    availability: z.enum(Availability).array()
+    phone: z.e164('Invalid phone number').optional().nullable(),
+    languages: z.array(z.enum(Language)).nullable(),
+    gender: z.enum(Gender).nullable(),
+    ethinicity: z.enum(Ethinicity).nullable(),
+    availability: z.enum(Availability).array().nullable()
 })
 
 export type SignUpSchema = z.output<typeof signUpSchema>
 
+function formatEnumLabel(value: string): string {
+  const minorWords = new Set(["and", "or", "of", "the", "a", "an", "to", "in", "on"])
+  const words = value
+    .toString()
+    .toLowerCase()
+    .split("_")
+    .map((word, index) => {
+      if (index !== 0 && minorWords.has(word)) return word
+      return word.charAt(0).toUpperCase() + word.slice(1)
+    })
+  return words.join(" ")
+}
+
 const languageItems: InputMenuItem[] = Object.keys(Language).map((language) => ({
   id: language,
-  label:
-      language.toString().charAt(0).toUpperCase() +
-      language.toString().slice(1).toLowerCase(),
+  label: formatEnumLabel(language),
 }))
 const genderItems: InputMenuItem[] = Object.keys(Gender).map((gender) => ({
   id: gender,
-  label:
-      gender.toString().charAt(0).toUpperCase() + gender.toString().slice(1).toLowerCase()
+  label: formatEnumLabel(gender),
 }))
 const ethinicityItems: InputMenuItem[] = Object.keys(Ethinicity).map((ethinicity) => ({
   id: ethinicity,
-  label:
-      ethinicity.toString().charAt(0).toUpperCase() + ethinicity.toString().slice(1).toLowerCase()
+  label: formatEnumLabel(ethinicity),
 }))
 const availabilityItems: InputMenuItem[] = Object.keys(Availability).map((availability) => ({
   id: availability,
-  label:
-      availability.toString().charAt(0).toUpperCase() + availability.toString().slice(1).toLowerCase()
+  label: formatEnumLabel(availability),
 }))
 
-export const signUpFields: AuthFormField[] = [{
+export const signUpFields: AuthFormField[] = ([{
   name: 'name',
   type: 'text',
   label: 'Name',
   placeholder: 'Enter your full name',
+  required: false
 },{
   name: 'email',
   type: 'email',
@@ -91,7 +102,7 @@ export const signUpFields: AuthFormField[] = [{
   items: availabilityItems,
   required: true,
   multiple: true
-},]
+},] as unknown) as AuthFormField[]
 
 
 

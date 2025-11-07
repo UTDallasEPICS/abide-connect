@@ -9,7 +9,7 @@ const state = reactive<Partial<SignUpSchema>>({
     email: "",
     password: "",
     phone: "",
-    language: [],
+    languages: [],
     gender: "",
     ethinicity: "",
     availability: []
@@ -29,7 +29,7 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
                 email: payload.data.email,
                 password: payload.data.password,
                 phone: payload.data.phone,
-                languages: payload.data.language,
+                languages: payload.data.languages,
                 gender: payload.data.gender,
                 ethinicity: payload.data.ethinicity,
                 availability: payload.data.availability,
