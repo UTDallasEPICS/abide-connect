@@ -3,7 +3,7 @@ import { Language, Ethinicity, Gender, Availability } from "@prisma/client"
 import type { InputMenuItem } from "@nuxt/ui"
 import type { AuthFormField } from "@nuxt/ui"
 
-export const signUpFormSchema = z.object({
+export const signUpSchema = z.object({
     name: z.string().optional(),
     email: z.string().email('Invalid email'),
     password: z.string().min(8, "Must be at least 8 characters"),
@@ -11,15 +11,10 @@ export const signUpFormSchema = z.object({
     languages: z.array(z.enum(Language)),
     gender: z.enum(Gender),
     ethinicity: z.enum(Ethinicity),
-    availability: z.enum(Availability)
+    availability: z.enum(Availability).array()
 })
 
-export type SignUpFormSchema = z.output<typeof signUpFormSchema>
-
-export const loginFormSchema = z.object({
-    email: z.email('Invalid email'),
-    password: z.string().min(8, "Must be at least 8 characters")
-})
+export type SignUpSchema = z.output<typeof signUpSchema>
 
 const languageItems: InputMenuItem[] = Object.keys(Language).map((language) => ({
   id: language,
@@ -43,25 +38,12 @@ const availabilityItems: InputMenuItem[] = Object.keys(Availability).map((availa
       availability.toString().charAt(0).toUpperCase() + availability.toString().slice(1).toLowerCase()
 }))
 
-export const loginFormFields: AuthFormField[] = [{
-    name: 'email',
-    type: 'email',
-    label: 'Email',
-    placeholder: 'Enter your email',
-    required: true
-  }, {
-    name: 'password',
-    label: 'Password',
-    type: 'password',
-    placeholder: 'Enter your password',
-    required: true
-  }, {
-    name: 'remember',
-    label: 'Remember me',
-    type: 'checkbox'
-  }]
-
-export const signUpFormFields: AuthFormField[] = [{
+export const signUpFields: AuthFormField[] = [{
+  name: 'name',
+  type: 'text',
+  label: 'Name',
+  placeholder: 'Enter your full name',
+},{
   name: 'email',
   type: 'email',
   label: 'Email',
@@ -86,7 +68,7 @@ export const signUpFormFields: AuthFormField[] = [{
   placeholder: 'What languages do you speak?',
   required: true,
   items: languageItems,
-  multiple: true
+  multiple: true        
 }, {
   name: "gender",
   label: 'Gender',
@@ -111,15 +93,5 @@ export const signUpFormFields: AuthFormField[] = [{
   multiple: true
 },]
 
- export const providers = [{
-    label: 'Google',
-    icon: 'i-simple-icons-google',
-    onClick: () => {}
-  }, {
-    label: 'Apple',
-    icon: 'i-simple-icons-apple',
-    onClick: () => {}
-  }]
-  
 
 

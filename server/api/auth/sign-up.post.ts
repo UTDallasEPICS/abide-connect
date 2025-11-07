@@ -16,18 +16,18 @@ export default defineEventHandler(async (event) => {
             },
         })
 
-        // await tx.volunteer.update({
-        //     where: { id: data.user.id },
-        //     data: {
-        //         phone: phone as string,
-        //         userId: createdUser.id,
-        //         languages: {
-        //             create: languageArray.map((language: Language) => ({
-        //                     language: language,
-        //                 })),
-        //             },
-        //         },
-        //     })
+        await tx.volunteer.update({
+            where: { id: data.user.id },
+            data: {
+                phone: phone as string,
+                userId: createdUser.id,
+                languages: {
+                    create: languages.map((language: Language) => ({
+                            language: language,
+                        })),
+                    },
+                },
+            })
     });
     return { success: true }
 })
