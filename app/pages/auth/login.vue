@@ -11,6 +11,7 @@ const state = reactive<Partial<LoginSchema>>({
 });
 
 const isLoading = ref(false);
+const errorMessage = ref<string | null>(null);
 
 async function onSubmit(event: FormSubmitEvent<LoginSchema>) {
     isLoading.value = true;
@@ -22,6 +23,9 @@ async function onSubmit(event: FormSubmitEvent<LoginSchema>) {
                 password: event.data.password,
             },
         });
+    } catch (error: any) {
+      console.log(error);
+      errorMessage.value = error?.message || "Error signing in";
     } finally {
         isLoading.value = false;
     }
@@ -30,7 +34,7 @@ async function onSubmit(event: FormSubmitEvent<LoginSchema>) {
 
 <template>
     <div
-        class="flex flex-col items-center justify-center h-screen p-8 mt-8"
+        class="flex flex-col items-center justify-center p-8 mt-8"
     >
     <UAuthForm class="w-full max-w-md"
         :schema="loginSchema"
@@ -41,6 +45,7 @@ async function onSubmit(event: FormSubmitEvent<LoginSchema>) {
         :separator="{
             icon: 'i-lucide-user'
         }"
+        :submit="{ label: 'Sign in', block: true, color: 'neutral' }"
         @submit="onSubmit"
       >
         <template #description>
@@ -50,7 +55,7 @@ async function onSubmit(event: FormSubmitEvent<LoginSchema>) {
           <ULink to="#" class="text-primary font-medium" tabindex="-1">Forgot password?</ULink>
         </template>
         <template #validation>
-          <UAlert color="error" icon="i-lucide-info" title="Error signing in" />
+          <UAlert v-if="errorMessage" color="error" icon="i-lucide-info" :title="errorMessage" />
         </template>
         <template #footer>
           By signing in, you agree to our <ULink to="#" class="text-primary font-medium">Terms of Service</ULink>.

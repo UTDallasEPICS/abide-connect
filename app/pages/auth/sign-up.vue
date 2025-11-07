@@ -14,6 +14,7 @@ const state = reactive<Partial<SignUpSchema>>({
     ethinicity: "",
     availability: []
 });
+const errorMessage = ref<string | null>(null);
 
 const isLoading = ref(false);
 
@@ -31,6 +32,9 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
                 languages: payload.data.language,
             },
         });
+    } catch (error: any) {
+        console.log(error);
+        errorMessage.value = error?.message || "Error signing in";
     } finally {
         isLoading.value = false;
     }
@@ -48,6 +52,8 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
             :separator="{
                 icon: 'i-lucide-mail'
             }"  
+            :submit="{ label: 'Sign up', block: true, color: 'neutral' }"
+
             @submit="onSubmit"
         >
         <template #description>
@@ -55,6 +61,9 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
         </template>
         <template #password-hint>
           <ULink to="#" class="text-primary font-medium" tabindex="-1">Forgot password?</ULink>
+        </template>
+        <template #validation>
+          <UAlert v-if="errorMessage" color="error" icon="i-lucide-info" :title="errorMessage" />
         </template>
         <template #footer>
           By signing in, you agree to our <ULink to="#" class="text-primary font-medium">Terms of Service</ULink>.
