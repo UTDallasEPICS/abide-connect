@@ -1,5 +1,5 @@
 <template>
-    <div class="w-screen h-screen bg-gray-100 items-center">
+    <div class="w-screen h-full bg-gray-100 items-center">
         <TopNav />
         <slot />
         <BottomNav />

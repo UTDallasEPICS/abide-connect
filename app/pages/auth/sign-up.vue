@@ -45,7 +45,7 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
 </script>
 
 <template>
-    <div class="flex flex-col items-center justify-center p-8 mt-8">
+    <div class="flex flex-col items-center justify-center p-8 my-8 ">
         <UAuthForm class="w-full max-w-md"
             :schema="signUpSchema"
             :fields="signUpFields"
