@@ -14,7 +14,11 @@ const onInboxClick = async (_e?: MouseEvent) => {
 </script>
 
 <template>
-    <UHeader :ui="{ toggle: 'hidden' }" class="fixed top-0 z-50 h-12 w-full bg-white backdrop-blur border-b">
+    <UHeader 
+        :ui="{ toggle: 'hidden',
+                center: 'flex-1 min-w-0 flex items-center justify-center'
+         }" 
+        class="fixed top-0 z-50 h-12 w-full bg-white backdrop-blur border-b">
         <!-- Left Settings -->
         <template #left>
             <div class="">
@@ -28,7 +32,7 @@ const onInboxClick = async (_e?: MouseEvent) => {
                 </slot>
             </div>
         </template>
-        <!-- Center Logo -->
+        <!-- Center -->
         <template #default>
             <div class="flex items-center justify-center flex-1">
                 <h1 class="text-xl font-semibold text-transform: capitalize">{{ getPageTitle() }}</h1>

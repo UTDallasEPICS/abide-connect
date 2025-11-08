@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import TopNav from '~/components/TopNav.vue';
-import { useRouter } from 'vue-router';
 import { ref, computed } from 'vue'
 
 // type for API 
@@ -37,10 +36,6 @@ const notifications = ref<Notification[]>([
   }
 ])
 
-const preview = (text: string, max=100) =>
-  text.length > max ? text.slice(0,max).trim() + '...' : text
-
-
 
 // map to uaccordion items
 const accordionItems = computed(() => 
@@ -50,8 +45,6 @@ const accordionItems = computed(() =>
     content: n.content,
     time: formatTime(n.createdAt),
     isRead: n.isRead,
-    preview: preview(n.content),
-    icon: 'i-heroicons-bell',
   }))
 )
 
@@ -88,7 +81,7 @@ const goBack = async () => {
 </script>
 
 <template>
-    <div class="flex flex-col w-screen h-screen bg-white items-center">
+    <div class="flex flex-col w-screen h-screen bg-white items-stretch">
             <!-- Top Nav Bar -->
              <TopNav>
                 <template #right>
@@ -102,16 +95,16 @@ const goBack = async () => {
              </TopNav>
 
              <!-- Notifications accordion -->
-             <div class="flex-1 w-full mx-auto mt-14">
+             <div class="flex-1 w-full mx-auto mt-15">
                 <UAccordion
                     type="multiple"
                     class="bg-white w-full px-5 mb-10"
                     :items="accordionItems"
                     :ui="{
-                        item: 'border-b border-gray-200 last:border-none',
-                        content: 'mb-5 pr-5',
+                        item: 'border-none pr-2 mt-5',
                         header: 'pr-5',
-                        leadingIcon: 'mr-3'
+                        trigger: 'block w-full text-left p-0',
+                        trailingIcon: 'hidden pointer-events-none'
                     }"
                     >
 
@@ -120,35 +113,42 @@ const goBack = async () => {
                         <div 
                         @click="markAsRead(item.id)"
                         class="w-full">
-                            <div class="flex items-start">
-                                <div class="flex-1"> 
-                                <div class="flex items-start justify-between">
-                                <h3 :class="!item.isRead ? 'text-[20px] font-extrabold text-[#3a696e]' : 'text-[20px] font-semibold text-[#3a696e]' ">                               
+                            <div class="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-x-3 w-full">
+                              <UIcon name="i-heroicons-bell" class="w-5 h-5 text-[#3a696e]" />
+                                <h3 class="min-w-0 line-clamp-1 truncate leading-tight"
+                                :class="!item.isRead ? 'text-[20px] font-extrabold text-[#3a696e]' : 'text-[20px] font-semibold text-[#3a696e]' ">                               
                                 {{ item.label }}
                                 </h3>
                                 
-                                <span class="text-[13px] text-[#a4123f] whitespace-nowrap flex-shrink-0" >
+                                <span class="whitespace-nowrap text-[13px] text-[#a4123f] leading-tight" >
                                     {{ item.time }}
                                 </span>
-                                </div>
-                                </div>
+                                <UIcon
+                                  name="i-heroicons-chevron-down-20-solid"
+                                  class="w-5 h-5 transition-transform duration-200"
+                                  :class="open ? 'rotate-180' : ''"
+                                />
                             </div>
                             <p 
                                 v-show="!open"
-                                :class="!item.isRead ? 'mt-3 font-bold text-[13px] text-gray-600 leading-relaxed line-clamp-1' : 'mt-3 font-semibold text-[13px] text-gray-600 leading-relaxed line-clamp-1'">
+                                class="pl-7 mt-5"
+                                :class="!item.isRead ? 'font-bold text-[13px] text-gray-600 leading-relaxed line-clamp-1' : 'font-semibold text-[13px] text-gray-600 leading-relaxed line-clamp-1'">
                                 {{ item.content }}
                             </p>
                         </div>
                     </template>
                     <!-- body message-->
-                     <template #content="{ item }">
-                        <div class="pl-5 ">
-
-                            <div 
-                            class="bg-gray-50 rounded-lg p-4 font-semibold text-[13px] text-gray-600 leading-relaxed ">
-                                {{ item.content }}
+                     <template #content="{ item, open }">
+                        <div 
+                          class="mt-5 pl-7"
+                          :class="open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'" >
+                            <div class="overflow-hidden"> 
+                              <div 
+                              class="font-semibold text-[13px] text-gray-600 leading-relaxed ">
+                                  {{ item.content }}
+                              </div>
                             </div>
-                          </div>
+                        </div> 
                      </template>
                 </UAccordion>
              </div>
