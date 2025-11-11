@@ -1,16 +1,13 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
-
 const route = useRoute()
-
 const getPageTitle = () => {
     return route.name || 'Default'
 }
-
 </script>
 
 <template>
-    <UHeader :ui="{ toggle: 'hidden' }" class="sticky top-0 z-50 h-12 bg-white/90 backdrop-blur border-b">
+    <UHeader :ui="{ toggle: 'hidden' }" class="fixed top-0 z-50 h-12 w-full bg-white backdrop-blur ">
         <!-- Left Settings -->
         <template #left>
             <div class="">

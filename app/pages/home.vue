@@ -17,25 +17,29 @@ const slides = [
   { id: 4, src: '/images/image1.jpeg', alt: 'Slide 4' },
 ]
 const events = [
-  { id: 1, 
+  {
+    id: 1,
     name: "Event 1",
     date: "October 07, 2025",
     location: "Location 1",
     image: "/images/image1.jpeg"
   },
-  { id: 2, 
+  {
+    id: 2,
     name: "Event 2",
     date: "October 15, 2025",
     location: "Location 2",
     image: "/images/image1.jpeg"
   },
-  { id: 3,
+  {
+    id: 3,
     name: "Event 3",
     date: "November 03, 2025",
     location: "Location 3",
     image: "/images/image1.jpeg"
   },
-  { id: 4, 
+  {
+    id: 4,
     name: "Event 4",
     date: "November 20, 2025",
     location: "Location 4",
@@ -77,40 +81,34 @@ const services = [
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-100 flex justify-center py-6 pb-24">
-    <!-- Phone container -->
-    <div class="w-[375px] bg-white rounded-3xl shadow-lg overflow-hidden flex flex-col max-h-[812px] overflow-y-auto relative">
-      <div class="flex-1 overflow-y-auto">
-      
-      
-      <!-- Top bar -->
-      <TopNav />
-
-
+  <div class="flex flex-col ">
+    <div class="flex-1 mt-12 mb-8 w-full h-full overflow-y-auto">
       <!-- Hero / Carousel Section -->
-      <div class="bg-teal-700 py-3">
-        <Carousel v-bind="carouselConfig">
-          <Slide v-for="slide in slides" :key="slide.id">
+      <div class="bg-teal-700 w-full max-h-[600px] overflow-y-auto">
+        <Carousel v-bind="carouselConfig" class="flex-1 max-h-full overflow-y-auto">
+          <Slide v-for="slide in slides" :key="slide.id" class="max-h-full overflow-y-hidden">
             <img
               :src="slide.src"
               :alt="slide.alt"
-              class="w-full h-48 object-cover"
-            />
+              class="max-h-full object-cover"
+            >
           </Slide>
 
-          <template #addons>
-            <!--<Navigation />-->
-            <Pagination />
-          </template>
-        </Carousel>
-      </div>
+      <template #addons>
+        <!--<Navigation />-->
+        <Pagination />
+      </template>
+    </Carousel>
+  </div>
 
       <!-- Upcoming Events -->
-      <div class="px-2 pb-4 pt-4">
+      <div class="px-2 pb-4 pt-4 w-full relative">
         <h3 class="text-2xl font-semibold text-teal-700 mb-4">UPCOMING EVENTS</h3>
         <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-          <div v-for="event in events" :key="event.id" 
-               class="flex-shrink-0 w-[160px] rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer">
+          <div 
+              v-for="event in events" 
+              :key="event.id" 
+              class="flex-shrink-0 w-[160px] rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer">
 
               <!-- Event Image Placeholder-->
               <div class="h-35 relative overflow-hidden">
@@ -118,7 +116,7 @@ const services = [
                   :src="event.image"
                   :alt="event.name"
                   class="w-full h-full object-cover"
-                />
+                >
               </div>
               
               <!-- Event Content -->
@@ -149,31 +147,30 @@ const services = [
           </div>
         </div>
       </div>
-
-      <!-- Volunteer Sign Up -->
+      <!-- Volunteer Sign Up -->`
       <div class="bg-gradient-to-br from-rose-700 to-rose-800 text-center py-3 px-4 relative overflow-hidden items-center justify-center min-h-[100px]">
-
-          <p class="text-white font-bold text-lg mb-1 ">Become A Volunteer</p>
-          <!-- Sign up Button -->
-          <button 
-            @click="handleSignUp"
-            class="group relative bg-white text-rose-700 font-bold px-7 py-2 rounded-full shadow-lg hover:shadow-2xl transition-transform hover:scale-105 active:scale-100 duration-300 overflow-hidden"
-            >
-            <span class="absolute inset-0 z-0 opacity-0 scale-95 rounded-full group-hover:opacity-100 group-hover:scale-100 transition-transform duration-300 bg-rose-50"></span>
-              <span class="relative z-10 flex items-center justify-center gap-1 text-lg">
-              <span>Sign Up</span>
-              <svg 
-                class="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                stroke-width="3"
-                >
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H5"/>
-              </svg>
-            </span>
-          </button>
+        <p class="text-white font-bold text-lg mb-1 ">Become A Volunteer</p>
+        <!-- Sign up Button -->
+        <button 
+          class="group relative bg-white text-rose-700 font-bold px-7 py-2 rounded-full shadow-lg hover:shadow-2xl transition-transform hover:scale-105 active:scale-100 duration-300 overflow-hidden"
+          @click="handleSignUp"
+          >
+          <span class="absolute inset-0 z-0 opacity-0 scale-95 rounded-full group-hover:opacity-100 group-hover:scale-100 transition-transform duration-300 bg-rose-50"/>
+            <span class="relative z-10 flex items-center justify-center gap-1 text-lg">
+            <span>Sign Up</span>
+            <svg 
+              class="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              stroke-width="3"
+              >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H5"/>
+            </svg>
+          </span>
+        </button>
       </div>
+      
       <!-- Services -->
       <div class="px-2 pb-4 pt-4">
         <h3 class="text-2xl font-semibold text-teal-700 mb-4">SERVICES</h3>
@@ -191,7 +188,7 @@ const services = [
                 :src="service.image"
                 :alt="service.name"
                 class="w-full h-full object-cover transition-transform duration-300"
-              />
+              >
               <div class="absolute inset-x-0 bottom-0 w-full bg-gradient-to-t from-black/60 to-transparent p-2">
                 <p class="text-white text-sm font-semibold truncate" >{{ service.name }}</p>
               </div>
@@ -199,8 +196,11 @@ const services = [
           </a>
         </div>
       </div>
+    </div>
+    <!-- Navbar fixed to bottom of the phone container -->
+    <div class="sticky bottom-0 w-full">
       <Navbar />
     </div>
   </div>
-  </div>
+
 </template>
