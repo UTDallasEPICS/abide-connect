@@ -3,15 +3,16 @@ import '@progress/kendo-theme-default/dist/all.css'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { BottomNavigation } from '@progress/kendo-vue-layout'
-import { inboxIcon, calendarIcon, userIcon } from '@progress/kendo-svg-icons'
+import { inboxIcon, calendarIcon, userIcon, mapMarkerTargetIcon } from '@progress/kendo-svg-icons'
 
 const router = useRouter()
 const selected = ref(0)
 
 const items = ref([
   { text: 'Home', id: 1, svgIcon: inboxIcon, data: { path: '/' }, selected: true },
-  { text: 'Calendar', id: 2, svgIcon: calendarIcon, data: { path: '/' } },
-  { text: 'Profile', id: 3, svgIcon: userIcon, data: { path: '/' } },
+  { text: 'Events', id: 2, svgIcon: calendarIcon, data: { path: '/' } },
+  { text: 'Locator', id: 3, svgIcon: mapMarkerTargetIcon, data: { path: '/' } },
+  { text: 'Profile', id: 4, svgIcon: userIcon, data: { path: '/' } },
 ])
 
 const computedItems = computed(() =>
