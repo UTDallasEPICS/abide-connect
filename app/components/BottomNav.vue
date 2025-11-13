@@ -8,7 +8,7 @@ const nav = ref([
     {
         id: 2,
         icon: "i-lucide-calendar-days",
-        to: "/home",
+        to: "/events",
     },{
         id: 3,
         icon: "i-lucide-hospital",

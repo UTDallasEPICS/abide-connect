@@ -83,7 +83,7 @@ const services = ref([
 </script>
 
 <template>
-  <div class="flex flex-col ">
+  <div class="flex flex-col bg-white">
     <div class="flex-1 mt-12 mb-8 w-full h-full overflow-y-auto">
       <!-- Hero / Carousel Section -->
       <div class="bg-teal-700 w-full max-h-[600px] overflow-y-auto">

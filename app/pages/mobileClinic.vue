@@ -1,6 +1,6 @@
 <template>
     <!-- Map Section -->
-    <div id="mapbox" class="pt-12 pb-8 h-full w-full">
+    <div id="mapbox" class="pt-12 pb-12 h-full w-full">
       <div id="map" class="h-full w-full relative overflow-hidden">
         <AbideMap :style="style" :center="center" :zoom="zoom" />
         <UDrawer
@@ -28,7 +28,6 @@
 
 <script setup>
 import 'maplibre-gl/dist/maplibre-gl.css';
-import EventTile from '~/components/EventTile.vue';
 
 const style = '/mapstyles.json'
 const center = [-96.77049780046936, 32.772891246510596]
