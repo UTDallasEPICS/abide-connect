@@ -1,7 +1,4 @@
 <template>
-  <div class="w-screen h-screen bg-gray-100 items-center">
-    <TopNav />
-
     <!-- Map Section -->
     <div id="mapbox" class="pt-12 pb-8 h-full w-full">
       <div id="map" class="h-full w-full relative overflow-hidden">
@@ -27,9 +24,6 @@
         </UDrawer>
       </div>
     </div>
-
-    <BottomNav />
-  </div>
 </template>
 
 <script setup>

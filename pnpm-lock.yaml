@@ -47,6 +47,9 @@ importers:
       vue3-carousel:
         specifier: ^0.16.0
         version: 0.16.0(vue@3.5.21(typescript@5.9.3))
+      zod:
+        specifier: ^4.1.12
+        version: 4.1.12
     devDependencies:
       '@nuxt/eslint':
         specifier: ^1.9.0
@@ -5824,9 +5827,15 @@ snapshots:
       '@iconify/types': 2.0.0
       vue: 3.5.21(typescript@5.9.3)
 
+<<<<<<< HEAD
+  '@indoorequal/vue-maplibre-gl@8.4.2(maplibre-gl@5.9.0)(vue@3.5.21(typescript@5.9.3))':
+    dependencies:
+      maplibre-gl: 5.9.0
+=======
   '@indoorequal/vue-maplibre-gl@8.4.2(maplibre-gl@5.11.0)(vue@3.5.21(typescript@5.9.3))':
     dependencies:
       maplibre-gl: 5.11.0
+>>>>>>> 27-integrate-with-google-maps
       vue: 3.5.21(typescript@5.9.3)
 
   '@internationalized/date@3.10.0':
