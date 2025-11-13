@@ -1,25 +1,38 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
-const route = useRoute()
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
+
 const getPageTitle = () => {
     return route.name || 'Default'
 }
+
+const onInboxClick = async (_e?: MouseEvent) => {
+  await navigateTo('/inbox') 
+}
+
 </script>
 
 <template>
-    <UHeader :ui="{ toggle: 'hidden' }" class="fixed top-0 z-50 h-12 w-full bg-white ">
+    <UHeader 
+        :ui="{ toggle: 'hidden',
+                center: 'flex-1 min-w-0 flex items-center justify-center'
+         }" 
+        class="fixed top-0 z-50 h-12 w-full bg-white backdrop-blur border-b">
         <!-- Left Settings -->
         <template #left>
             <div class="">
-                <UButton    
-                    color="neutral"
-                    variant="ghost"
-                    aria-label="Settings">
-                    <UIcon name="i-heroicons-cog-6-tooth" class="w-7 h-7" />
-                </UButton>
+                <slot name="left">
+                    <UButton    
+                        color="neutral"
+                        variant="ghost"
+                        aria-label="Settings">
+                        <UIcon name="i-heroicons-cog-6-tooth" class="w-7 h-7 text-teal-900" />
+                    </UButton>
+                </slot>
             </div>
         </template>
-        <!-- Center Logo -->
+        <!-- Center -->
         <template #default>
             <div class="flex items-center justify-center flex-1">
                 <h1 class="text-xl font-semibold text-transform: capitalize">{{ getPageTitle() }}</h1>
@@ -29,12 +42,15 @@ const getPageTitle = () => {
         <!-- Right Inbox -->
         <template #right>
             <div class="w-10 flex items-center justify-end">
-                <UButton
-                    color="neutral"
-                    variant="ghost"
-                    aria-label="Inbox" >
-                    <UIcon name="i-heroicons-inbox" class="w-7 h-7" />
-                </UButton>
+                <slot name="right">
+                    <UButton
+                        color="neutral"
+                        variant="ghost"
+                        aria-label="Inbox" 
+                        @click="onInboxClick">
+                        <UIcon name="i-heroicons-inbox" class="w-7 h-7  text-teal-900" />
+                    </UButton>
+                </slot>
             </div>
         </template>
         <template #toggle />
