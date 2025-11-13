@@ -35,6 +35,8 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
                 availability: payload.data.availability,
             },
         });
+        await nextTick();
+        await navigateTo("/volunteer/");
     } catch (error: any) {
         console.log(error);
         errorMessage.value = error?.message;

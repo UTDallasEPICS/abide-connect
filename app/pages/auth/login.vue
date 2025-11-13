@@ -22,6 +22,10 @@ async function onSubmit(event: FormSubmitEvent<LoginSchema>) {
                 password: event.data.password,
             },
         });
+        
+        // Wait for the next tick to ensure cookies are set
+        await nextTick();  
+        await navigateTo("/volunteer/");
     } catch (error: any) {
         console.log(error);
         errorMessage.value = error?.message;

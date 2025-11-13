@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import 'vue3-carousel/dist/carousel.css'
 import { Carousel, Slide, Pagination } from 'vue3-carousel'
-
+import { authClient } from "~/../lib/auth-client";
 
 const carouselConfig = {
   itemsToShow: 1,
@@ -10,13 +10,13 @@ const carouselConfig = {
   touchDrag: true,
   autoplay: 6000,
 }
-const slides = [
+const slides = ref([
   { id: 1, src: '/images/image1.jpeg', alt: 'Slide 1' },
   { id: 2, src: '/images/image1.jpeg', alt: 'Slide 2' },
   { id: 3, src: '/images/image1.jpeg', alt: 'Slide 3' },
   { id: 4, src: '/images/image1.jpeg', alt: 'Slide 4' },
-]
-const events = [
+])
+const events = ref([
   {
     id: 1,
     name: "Event 1",
@@ -45,13 +45,15 @@ const events = [
     location: "Location 4",
     image: "/images/image1.jpeg"
   },
-];
+])
+
+const session = authClient.useSession();
 
 const handleSignUp = () => {
-  alert('coming soon')
+  navigateTo("/auth/sign-up");
 }
 
-const services = [
+const services = ref([
   {
     id: 1,
     name: "Prenatal Care",
@@ -76,7 +78,7 @@ const services = [
     image: "/images/image1.jpeg",
     href: "https://www.abidewomen.org/mobile-clinic"
   },
-]
+])
 
 </script>
 
@@ -148,7 +150,7 @@ const services = [
         </div>
       </div>
       <!-- Volunteer Sign Up -->`
-      <div class="bg-gradient-to-br from-rose-700 to-rose-800 text-center py-3 px-4 relative overflow-hidden items-center justify-center min-h-[100px]">
+      <div v-if="!session.data" class="bg-gradient-to-br from-rose-700 to-rose-800 text-center py-3 px-4 relative overflow-hidden items-center justify-center min-h-[100px]">
         <p class="text-white font-bold text-lg mb-1 ">Become A Volunteer</p>
         <!-- Sign up Button -->
         <button 
