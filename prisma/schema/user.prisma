@@ -1,63 +1,21 @@
 model User {
-  id        String      @id @default(uuid())
-  name      String
-  email     String      @unique
-  phone     String?
+  id           String  @id @default(uuid())
+  name         String?
+  contactEmail String  @unique
+  phone        String?
 
-  volunteer     Volunteer?
-  languages     User_Language[]
-  events        User_Event[]
-  notifications User_Notification[]
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  volunteer Volunteer?
 
-  @@map("users")
-}
-
-model User_Language {
-  user User @relation(fields: [userId], references: [id])
-  userId String
-  language Language
-
-  @@id([userId, language])
-  @@map("user_languages")
+  RSVP              RSVP[]
+  User_Notification User_Notification[]
 }
 
 model User_Notification {
-  user  User      @relation(fields: [userId], references: [id])
-  userId String
-  notification  Notification  @relation(fields: [notificationId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+  userId         String
+  notification   Notification @relation(fields: [notificationId], references: [id])
   notificationId String
+
   @@id([userId, notificationId])
   @@map("user_notifications")
-}
-
-enum Language {
-  ENGLISH
-  SPANISH
-  FRENCH
-  GERMAN
-  CHINESE
-  JAPANESE
-  HINDI
-  ARABIC
-  RUSSIAN
-  PORTUGUESE
-  ITALIAN
-  KOREAN
-  DUTCH
-  SWEDISH
-  NORWEGIAN
-  DANISH
-  FINNISH
-  POLISH
-  TURKISH
-  GREEK
-  HEBREW
-  VIETNAMESE
-  THAI
-  INDONESIAN
-  MALAY
-  FILIPINO
 }

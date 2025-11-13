@@ -1,3 +1,3 @@
-<template>
-  <UButton>Button</UButton>
-</template>
+<script setup>
+await navigateTo('/home')
+</script>
