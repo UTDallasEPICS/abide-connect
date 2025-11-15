@@ -5,7 +5,6 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/ui',
     '@nuxt/eslint',
-    '@prisma/nuxt',
     'nuxt-maplibre'
   ],
   css: ['~/assets/css/main.css'],

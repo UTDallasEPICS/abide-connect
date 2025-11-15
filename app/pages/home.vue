@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import 'vue3-carousel/dist/carousel.css'
 import { Carousel, Slide, Pagination } from 'vue3-carousel'
-import { authClient } from "~/../lib/auth-client";
+import { authClient } from '~~/server/utils/auth-client';
 
 const carouselConfig = {
   itemsToShow: 1,

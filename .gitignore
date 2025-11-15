@@ -27,3 +27,4 @@ logs
 prisma/dev.db
 prisma/migrations
 .vscode/*
+server/utils/prisma

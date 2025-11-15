@@ -1,7 +1,6 @@
 import fs  from 'fs';
-import type { Language, Gender, Availability, Ethinicity, ApprovalStatus } from "@prisma/client";
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
+import type { Language, Gender, Availability, Ethinicity, ApprovalStatus } from "./prisma/client";
+import prisma from 'prisma'
 
 type RawEvent = {
   id: string,

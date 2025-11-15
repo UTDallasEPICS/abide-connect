@@ -1,7 +1,6 @@
-import {auth} from "~/../lib/auth"
-import prisma from "~/../lib/prisma"
-import { Language, Availability, Gender, Ethinicity } from "@prisma/client"
-import { APIError } from "better-auth/api"
+import {auth} from "~~/server/utils/auth"
+import prisma from "~~/server/utils/prisma"
+import type { Language, Availability, Gender, Ethinicity } from '~~/server/utils/prisma/client'
 
 export default defineEventHandler(async (event) => {
     try {
