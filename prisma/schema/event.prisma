@@ -10,8 +10,8 @@ model Event {
   allowVolunteers Boolean
   allowAttendees  Boolean
 
-  mobileClinic   MobileClinic @relation(fields: [mobileClinicId], references: [id])
-  mobileClinicId String
+  mobileClinic   MobileClinic? @relation(fields: [mobileClinicId], references: [id])
+  mobileClinicId String?
 
   eventAssets  Event_Asset[]
   participants RSVP[]
