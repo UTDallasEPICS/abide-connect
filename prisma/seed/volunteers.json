@@ -1,0 +1,32 @@
+[
+    {
+        "id": "volunteer-001",
+        "user": {
+            "contactEmail": "bob@example.com"
+        },
+        "email": "bob@example.com",
+        "languages": ["ENGLISH", "FRENCH"],
+        "gender": "MALE",
+        "ethinicity": "ASIAN",
+        "imageURL": "https://example.com/profiles/bob.jpg",
+        "availabilities": [
+            "WEEKDAY_MORNING",
+            "WEEKEND_AFTERNOON"
+        ],
+        "certifications": [
+            "CPR",
+            "FIRST_AID"
+        ],
+        "hourLogs": [
+            {
+                "event": {
+                    "id": "pastEvent1"
+                },
+                "clockIn": "2025-08-21T10:00:00.000Z",
+                "clockOut": "2025-08-21T15:00:00.000Z",
+                "approvalStatus": "PENDING",
+                "comment": "Good work Bob."
+            }
+        ]
+    }
+]

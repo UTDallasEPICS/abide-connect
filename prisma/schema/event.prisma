@@ -10,11 +10,12 @@ model Event {
   allowVolunteers Boolean
   allowAttendees  Boolean
 
-  mobileClinic   MobileClinic @relation(fields: [mobileClinicId], references: [id])
-  mobileClinicId String
+  mobileClinic   MobileClinic? @relation(fields: [mobileClinicId], references: [id])
+  mobileClinicId String?
 
-  eventAssets  Event_Asset[]
-  participants RSVP[]
+  eventAssets     Event_Asset[]
+  participants    RSVP[]
+  volunteerHours  Volunteer_Hour_Log[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
