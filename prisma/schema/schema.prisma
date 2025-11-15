@@ -2,13 +2,19 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider        = "prisma-client-js"
+  provider        = "prisma-client"
+  output   = "../../server/utils/generated/prisma"
+  engineType             = "client"
+  runtime                = "nodejs"
+  moduleFormat           = "esm"
+  generatedFileExtension = "ts"
+  importFileExtension    = "ts"
   previewFeatures = []
 }
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url      =  "file:../dev.db"
 }
 
 // Better Auth Models

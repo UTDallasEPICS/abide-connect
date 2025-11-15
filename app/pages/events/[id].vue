@@ -77,7 +77,7 @@ const fileUpload = async (file: File | null | undefined) => {
         <UCarousel v-slot="{ item }" dots :items="items" class="h-80 max-w-xs mx-auto">
           <img :src="item" class="h-80 w-auto rounded-lg mx-auto">
         </UCarousel>
-        <div class="flex-1 mt-4 mb-10 w-full h-full overflow-y-auto"></div>
+        <div class="flex-1 mt-4 mb-10 w-full h-full overflow-y-auto"/>
 
         <p class="text-gray-600 font-poppins mb-4">{{ event.description }}</p>
 
@@ -89,7 +89,7 @@ const fileUpload = async (file: File | null | undefined) => {
 
         <p class="text-gray-600 font-poppins mb-4">
           📍 {{ event.location }}  
-          <br />
+          <br >
           🕒 {{ new Date(event.startTime).toLocaleString() }} → {{ new Date(event.endTime).toLocaleString() }}
         </p>
         
@@ -97,7 +97,7 @@ const fileUpload = async (file: File | null | undefined) => {
           <AbideMap :style="style" :center="center" :zoom="zoom" />
         </div>
 
-        <div class="flex-1 mt-4 mb-2 w-full h-full overflow-y-auto"></div>
+        <div class="flex-1 mt-4 mb-2 w-full h-full overflow-y-auto"/>
 
         <UContainer>
           <div class="mt-4 text-center">
@@ -132,7 +132,7 @@ const fileUpload = async (file: File | null | undefined) => {
             @update:model-value="fileUpload"/>
         </UContainer>
 
-        <div class="flex-1 mt-4 mb-8 w-full h-full overflow-y-auto"></div>
+        <div class="flex-1 mt-4 mb-8 w-full h-full overflow-y-auto"/>
       
       </UContainer>            
           

@@ -4,10 +4,10 @@ import type { LoginSchema } from "~~/shared/types/auth/loginTypes";
 import { loginFields, loginSchema } from "~~/shared/types/auth/loginTypes";
 import { authProviders } from "~~/shared/types/auth/providers";
 
-const state = reactive<Partial<LoginSchema>>({
-    email: undefined,
-    password: undefined,
-});
+// const state = reactive<Partial<LoginSchema>>({
+//     email: undefined,
+//     password: undefined,
+// });
 
 const isLoading = ref(false);
 const errorMessage = ref<string | null>(null);
@@ -26,9 +26,9 @@ async function onSubmit(event: FormSubmitEvent<LoginSchema>) {
         // Wait for the next tick to ensure cookies are set
         await nextTick();  
         await navigateTo("/volunteer/");
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.log(error);
-        errorMessage.value = error?.message;
+        errorMessage.value = (error as { message: string }).message;
     } finally {
         isLoading.value = false;
     }

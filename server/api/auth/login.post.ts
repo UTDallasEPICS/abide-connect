@@ -1,4 +1,4 @@
-import { auth } from "~/../lib/auth";
+import { auth } from "~~/server/utils/auth";
 
 export default defineEventHandler(async (event) => {
     try {
@@ -7,11 +7,11 @@ export default defineEventHandler(async (event) => {
         await auth.api.signInEmail({ body: { email, password }, headers: event.headers });
         
         return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.log(error);
         throw createError({
-            statusCode: error.statusCode,
-            statusMessage: error.body?.message || "An unexpected error occurred",
+            statusCode: (error as { statusCode: number }).statusCode,
+            statusMessage: (error as { body: { message: string} }).body?.message || "An unexpected error occurred",
         });
     }
 });
