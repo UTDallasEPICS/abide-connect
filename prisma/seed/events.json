@@ -9,9 +9,7 @@
       "location": "754 Colors Ct. Fort Worth, TX",
       "allowVolunteers": true,
       "allowAttendees": true,
-      "eventAssets": [
-        "tba"
-      ]
+      "eventAssets": []
     },
     {
       "id": "event2",
@@ -23,9 +21,7 @@
       "location": "321 Adieu Ave. Richardson, TX",
       "allowVolunteers": true,
       "allowAttendees": false,
-      "eventAssets": [
-        "tba"
-      ]
+      "eventAssets": []
     },
     {
       "id": "event3",
@@ -37,9 +33,7 @@
       "location": "123 State St. Dallas, TX",
       "allowVolunteers": false,
       "allowAttendees": true,
-      "eventAssets": [
-        "tba"
-      ]
+      "eventAssets": []
     },
     {
       "id": "pastEvent1",
@@ -51,9 +45,7 @@
       "location": "123 State St. Dallas, TX",
       "allowVolunteers": true,
       "allowAttendees": false,
-      "eventAssets": [
-        "tba"
-      ]
+      "eventAssets": []
     },
     {
         "id": "pastEvent2",
@@ -65,8 +57,6 @@
         "location": "777 Forza St. Coppell, TX",
         "allowVolunteers": false,
         "allowAttendees": true,
-        "eventAssets": [
-        "tba"
-      ]
+        "eventAssets": []
     }
 ]
