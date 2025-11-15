@@ -1,8 +1,15 @@
 <script setup lang="ts">
+import 'maplibre-gl/dist/maplibre-gl.css';
 const route = useRoute()
 const { data: event, error } = await useFetch(`/api/events/${route.params.id}`)
 
-if (error.value) console.error(error.value)
+if (error.value) {
+  console.error(error.value)
+  showError({
+    statusCode: error.value.statusCode,
+    statusMessage: "The requested event could not be fetched."
+  })
+}
 
 const items = [
   'https://picsum.photos/640/640?random=1',
@@ -13,14 +20,9 @@ const items = [
   'https://picsum.photos/640/640?random=6'
 ]
 
-import 'maplibre-gl/dist/maplibre-gl.css';
-
 const style = '/mapstyles.json'
 const center = [-96.77049780046936, 32.772891246510596]
 const zoom = 15
-
-// Pixel values
-const snapPoints = ["230", "340", "450"]
 
 </script>
 

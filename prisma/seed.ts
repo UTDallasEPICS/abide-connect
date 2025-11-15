@@ -18,10 +18,9 @@ type RawEvent = {
 
 type RawUser = {
   name: string,
-  email: string,
+  contactEmail: string,
   phone: string,
-  languages: string[],
-  events: {
+  RSVPs: {
     isVolunteer?: boolean,
     id: string
   }[]
@@ -30,8 +29,10 @@ type RawUser = {
 type RawVolunteer = {
   id: string,
   user: {
-    email: string,
+    contactEmail: string,
   },
+  email: string,
+  languages: string[],
   gender: string,
   ethinicity: string,
   profileURL: string,
@@ -49,7 +50,6 @@ type RawVolunteer = {
 }
 
 type RawNotification = {
-  
   id: string,
   title: string,
   content: string,
@@ -95,15 +95,8 @@ async function main() {
   const users = rawUsers.map((user) => {
     return {
       ...user,
-      languages: {
-        create: user.languages.map((lang) => {
-            return {
-            language: lang as Language
-          }
-        })
-      },
-      events: {
-        create: user.events.map((event) => {
+      RSVPs: {
+        create: user.RSVPs.map((event) => {
         return {
             isVolunteer: event.isVolunteer || false,
             event: {
@@ -118,7 +111,7 @@ async function main() {
   // Upsert each user
   for(const user of users) {
     const userResult = await prisma.user.upsert({
-      where: { email: user.email },
+      where: { contactEmail: user.contactEmail },
       update: {},
       create: user
     })
@@ -134,6 +127,13 @@ async function main() {
       ...volunteer,
       gender: volunteer.gender as Gender,
       ethinicity: volunteer.ethinicity as Ethinicity,
+      languages: {
+        create: volunteer.languages.map((lang) => {
+            return {
+            language: lang as Language
+          }
+        })
+      },
       availabilities: {
         create: volunteer.availabilities.map((avail) => {
           return {
@@ -165,7 +165,7 @@ async function main() {
       },
       user: {
         connect: {
-          email: volunteer.user.email
+          contactEmail: volunteer.user.contactEmail
         }
       },
     }
@@ -180,30 +180,30 @@ async function main() {
     console.log(volunteerResult)
   }
 
-  // Seed six notifications
-  const rawNotifications: RawNotification[] = JSON.parse(fs.readFileSync('prisma/seed/notifications.json').toString());
-  // Convert each notification into an upsertable format
-  const notifications = rawNotifications.map((notification) => {
-    return {
-      ...notification,
-      user: {
-        connect: notification.user.map((notificationUser) => {
-          return {
-            email: notificationUser.email
-          }
-        }),
-      }
-    }
-  })
-  // Upsert each notification
-  for(const notification of notifications) {
-    const notificationResult = await prisma.notification.upsert({
-      where: { id: notification.id },
-      update: {},
-      create: notification
-    })
-    console.log(notificationResult)
-  }
+  // Seed six notifications - UNFINISHED
+  // const rawNotifications: RawNotification[] = JSON.parse(fs.readFileSync('prisma/seed/notifications.json').toString());
+  // // Convert each notification into an upsertable format
+  // const notifications = rawNotifications.map((notification) => {
+  //   return {
+  //     ...notification,
+  //     user: {
+  //       connect: notification.user.map((notificationUser) => {
+  //         return {
+  //           email: notificationUser.email
+  //         }
+  //       }),
+  //     }
+  //   }
+  // })
+  // // Upsert each notification
+  // for(const notification of notifications) {
+  //   const notificationResult = await prisma.notification.upsert({
+  //     where: { id: notification.id },
+  //     update: {},
+  //     create: notification
+  //   })
+  //   console.log(notificationResult)
+  // }
 }
 
 main()

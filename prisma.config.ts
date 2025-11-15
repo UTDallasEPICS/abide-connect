@@ -8,6 +8,6 @@ export default {
   schema: path.join("prisma", "schema"),
   migrations: {
     path: path.join("prisma", "migrations"),
-    seed: path.join("prisma", "seed.ts")
+    seed: "ts-node ./prisma/seed.ts",
   }
 } satisfies PrismaConfig;

@@ -2,11 +2,13 @@
     {
         "id": "volunteer-001",
         "user": {
-            "email": "bob@example.com"
+            "contactEmail": "bob@example.com"
         },
+        "email": "bob@example.com",
+        "languages": ["ENGLISH", "FRENCH"],
         "gender": "MALE",
         "ethinicity": "ASIAN",
-        "profileURL": "https://example.com/profiles/bob.jpg",
+        "imageURL": "https://example.com/profiles/bob.jpg",
         "availabilities": [
             "WEEKDAY_MORNING",
             "WEEKEND_AFTERNOON"
