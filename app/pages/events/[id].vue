@@ -11,6 +11,24 @@ if (error.value) {
   })
 }
 
+const toast = useToast()
+
+const showToast = (success: boolean) => {
+  if(success) {
+    toast.add({
+      title: "Successfully uploaded image.",
+      icon: "i-lucide-image-up",
+      color: "success"
+    })
+  } else {
+    toast.add({
+      title: "Error uploading image.",
+      icon: "i-lucide-circle-x",
+      color: "error"
+    })
+  }
+}
+
 const placeholders = [
   'https://picsum.photos/640/640?random=1',
   'https://picsum.photos/640/640?random=2',
@@ -36,12 +54,13 @@ const fileUpload = async (file: File | null | undefined) => {
   const formData = new FormData()
   formData.append("file", file)
 
-  const res = await $fetch(`/api/events/${route.params.id}/uploadImage`, {
+  const res = await $fetch.raw(`/api/events/${route.params.id}/uploadImage`, {
     method: 'POST',
-    body: formData
+    body: formData,
+    ignoreResponseError: true
   })
 
-  console.log('Uploaded image', res)
+  showToast(res.status === 201)
 }
 
 </script>
@@ -55,8 +74,8 @@ const fileUpload = async (file: File | null | undefined) => {
 
         <h1 class="text-3xl font-hornbill font-bold mb-2 text-brand4 text-center">{{ event.title }}</h1>
         <p class="text-gray-600 text-xl font-poppins mb-4 text-center">{{ event.shortDesc }}</p>
-        <UCarousel v-slot="{ item }" dots :items="items" class="w-full max-w-xs mx-auto">
-          <img :src="item" width="screen" height="320" class="rounded-lg">
+        <UCarousel v-slot="{ item }" dots :items="items" class="h-80 max-w-xs mx-auto">
+          <img :src="item" class="h-80 w-auto rounded-lg mx-auto">
         </UCarousel>
         <div class="flex-1 mt-4 mb-10 w-full h-full overflow-y-auto"></div>
 
