@@ -1,6 +1,12 @@
 import fs  from 'fs';
-import type { Language, Gender, Availability, Ethinicity, ApprovalStatus } from "./prisma/client";
-import prisma from 'prisma'
+import type { Language, Gender, Availability, Ethinicity, ApprovalStatus } from "./generated/prisma/client.ts";
+import { PrismaClient } from './generated/prisma/client.ts';
+import { PrismaBetterSQLite3 } from '@prisma/adapter-better-sqlite3';
+
+const adapter = new PrismaBetterSQLite3({
+    url: process.env.DATABASE_URL
+  })
+  const prisma = new PrismaClient({ adapter })
 
 type RawEvent = {
   id: string,
@@ -48,15 +54,15 @@ type RawVolunteer = {
   }[]
 }
 
-type RawNotification = {
-  id: string,
-  title: string,
-  content: string,
-  isRead: boolean,
-  user: {
-    email: string
-  }[]
-}
+// type RawNotification = {
+//   id: string,
+//   title: string,
+//   content: string,
+//   isRead: boolean,
+//   user: {
+//     email: string
+//   }[]
+// }
 
 async function main() {
   // Seed 5 events (3 future, 2 past) + images

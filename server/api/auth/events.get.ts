@@ -1,6 +1,6 @@
 import prisma from '~~/server/utils/prisma'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (_event) => {
   try {
     const events = await prisma.event.findMany({
       include: {

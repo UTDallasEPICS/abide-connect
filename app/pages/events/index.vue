@@ -1,20 +1,11 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import type { DateValue } from '@internationalized/date'
-import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
+import { CalendarDate, getLocalTimeZone } from '@internationalized/date'
 
 const tz = getLocalTimeZone()
 
 const value = ref<DateValue>(new CalendarDate(2022, 2, 3))
-
-const fmt = new Intl.DateTimeFormat('en-US', {
-  weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
-})
-const selectedText = computed(() =>
-  value.value ? value.value.toDate(tz).toLocaleDateString('en-US', {
-    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
-  }) : '—'
-)
 
 const eventClick = () => {
   navigateTo('/events/event1')

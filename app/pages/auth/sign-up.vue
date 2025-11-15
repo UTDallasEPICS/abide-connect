@@ -4,16 +4,17 @@ import type { SignUpSchema } from "~~/shared/types/auth/signUpTypes";
 import { signUpFields } from "~~/shared/types/auth/signUpTypes";
 import { authProviders } from "~~/shared/types/auth/providers";
 
-const state = reactive<Partial<SignUpSchema>>({
-    name: "",
-    email: "",
-    password: "",
-    phone: "",
-    languages: [],
-    gender: null,
-    ethinicity: null,
-    availability: []
-});
+// const state = reactive<Partial<SignUpSchema>>({
+//     name: "",
+//     email: "",
+//     password: "",
+//     phone: "",
+//     languages: [],
+//     gender: null,
+//     ethinicity: null,
+//     availability: []
+// });
+
 const errorMessage = ref<string | null>(null);
 
 const isLoading = ref(false);
@@ -37,9 +38,9 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
         });
         await nextTick();
         await navigateTo("/volunteer/");
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.log(error);
-        errorMessage.value = error?.message;
+        errorMessage.value = (error as { message: string }).message;
     } finally {
         isLoading.value = false;
     }
@@ -48,7 +49,8 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
 
 <template>
     <div class="flex flex-col items-center justify-center p-8 my-8 ">
-        <UAuthForm class="w-full max-w-md"
+        <UAuthForm
+class="w-full max-w-md"
             :schema="signUpSchema"
             :fields="signUpFields"
             :providers="authProviders"
