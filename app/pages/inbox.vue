@@ -1,6 +1,10 @@
 <script setup lang="ts">
-import TopNav from '~/components/TopNav.vue';
+definePageMeta({
+  layout: 'secondary',
+})
+
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 
 // type for API 
 type Notification = {
@@ -16,7 +20,7 @@ const notifications = ref<Notification[]>([
   {
     id: '1',
     title: 'Notification 1',
-    content: 'This is a single-paragraph, extra-long message intended to test truncation, line-clamping, and overflow behaviors in your accordion header preview; it includes numbers (1234567890), punctuation (.,;:!?—), mixed casing, and a few repeat phrases to extend length: please arrive early, bring identification, confirm your insurance, hydrate beforehand, and contact us if you have any questions or need to reschedule; we appreciate your patience as we finalize your appointment details and look forward to seeing you soon at Abide Women’s Health for your upcoming visit on Monday, November 17, 2025 at 10:00 AM; ',
+    content: 'Thank you for choosing Abide Women’s Health. This message contains several important reminders and helpful instructions to ensure your upcoming visit goes as smoothly as possible. Please plan to arrive 10–15 minutes early to allow time for check-in and any necessary paperwork. If you have recently experienced changes in your medical history, medications, or insurance coverage, bring any updated documents with you so our team can review them before your appointment begins.',
     createdAt: '2025-10-27T10:30:00Z',
     isRead: false
   },
@@ -74,26 +78,11 @@ const formatTime = (timestamp: string) => {
 
 
 const router = useRouter()
-const goBack = async () => {
-  await navigateTo('/home', { replace: true }) 
-}
 
 </script>
 
 <template>
     <div class="flex flex-col w-screen h-screen bg-white items-stretch">
-            <!-- Top Nav Bar -->
-             <TopNav>
-                <template #right>
-                    <UButton 
-                        color="neutral"
-                        variant="ghost"
-                        @click="goBack">
-                        <UIcon name="i-heroicons-arrow-left" class="w-7 h-7 text-teal-900"/>
-                    </UButton>
-                </template>
-             </TopNav>
-
              <!-- Notifications accordion -->
              <div class="flex-1 w-full mx-auto mt-15">
                 <UAccordion
