@@ -1,12 +1,5 @@
 <script setup lang="ts">
-type AdminFeature = {
-    id: string
-    label: string
-    description?: string
-    icon: string
-    iconBg: string
-    bg: string
-}
+import type { AdminFeature } from "~/../shared/types/adminTypes"
 
 const features: AdminFeature[] = [
     {
@@ -47,7 +40,7 @@ const features: AdminFeature[] = [
 
 <template>
     <div class="flex flex-col w-screen min-h-screen bg-slate-50 items-stretch pb-20">
-        <section class="mt-20 px-6">
+        <section id="overview" class="mt-20 px-6">
             <div class="overflow-hidden rounded-3xl h-40 border border-slate-300 shadow-lg bg-slate-200">
                 <div class="flex items-start justify-start text-left px-5 py-5 ">
                     <p class="text-2xl font-semibold text-[#313131] ">Welcome back!</p>
