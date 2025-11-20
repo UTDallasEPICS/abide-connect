@@ -8,35 +8,32 @@ const nav = ref([
     {
         id: 2,
         icon: "i-lucide-calendar-days",
-        to: "/home",
-    },
-    {
+        to: "/events",
+    },{
         id: 3,
-        icon: "i-lucide-square-user-round",
-        to: "/auth/login",
-    },
-    {
-        id: 4,
         icon: "i-lucide-hospital",
         to: "/mobileClinic",
     },
     {
-        id: 5,
-        icon: "i-lucide-hand-heart",
-        to: "/home",
+        id: 4,
+        icon: "i-lucide-square-user-round",
+        to: "/volunteer",
     },
+    
+    
 ]);
 </script>
 <template>
-<UFooter class="fixed bottom-0 left-0 right-0 flex justify-around items-center h-12 bg-white/90">
+<UFooter class="fixed bottom-0 left-0 right-0 z-60 flex **justify-between** items-center **px-4** h-12 border-t border-gray-200 bg-white">
     <template #default>
-        <UButton v-for="navItem in nav"
+        <UButton
+v-for="navItem in nav"
                 :key="navItem.id"
                 :icon="navItem.icon"
                 :to="navItem.to"
                 color="neutral"
                 variant="ghost"
-                class="w-full h-full mx-7"
+                class="**flex-1** **min-w-0** h-full mx-auto lg:mx-14"
                 />
     </template>
 </UFooter>
