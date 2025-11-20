@@ -1,4 +1,7 @@
 <script setup lang="ts">
+definePageMeta({
+  layout: 'secondary',
+})
 import { ref } from 'vue'
 
 // type for the select
