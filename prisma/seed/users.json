@@ -1,0 +1,40 @@
+[
+    {
+        "name": "Alice Wang",
+        "contactEmail": "alice@example.com",
+        "phone": "123-456-7890",
+        "RSVPs": [
+            {
+                "id": "pastEvent2",
+                "isVolunteer": false
+            },
+            {
+                "id": "event3",
+                "isVolunteer": false
+            }
+        ]
+    },
+    {
+        "name": "Bob Smith",
+        "contactEmail": "bob@example.com",
+        "phone": "987-654-3210",
+        "RSVPs": [
+            {
+                "id": "pastEvent1",
+                "isVolunteer": true
+            },
+            {
+                "id": "event1",
+                "isVolunteer": true
+            },
+            {
+                "id": "event2",
+                "isVolunteer": true
+            },
+            {
+                "id": "event3",
+                "isVolunteer": false
+            }
+        ]
+    }
+]
