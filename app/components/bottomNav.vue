@@ -37,7 +37,7 @@ const nav = ref([
        :key="item.id"
        class="flex flex-col items-center justify-center w-full"
      >
-       <!-- your existing button, unchanged -->
+       
        <UButton
          :icon="item.icon"
          :to="item.to"
