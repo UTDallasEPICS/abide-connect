@@ -9,7 +9,7 @@ model Volunteer {
   languages      Volunteer_Language[]
   availabilities Volunteer_Availability[]
   certifications Volunteer_Certification[]
-  hourLog        Volunteer_Hour_Log[]
+  hourLogs       Volunteer_Hour_Log[]
   events         RSVP[]
 
   emailVerified Boolean   @default(false)
@@ -37,6 +37,8 @@ model Volunteer_Hour_Log {
   id             Int            @id @default(autoincrement())
   volunteer      Volunteer      @relation(fields: [volunteerId], references: [id])
   volunteerId    String
+  event          Event          @relation(fields: [eventId], references: [id])
+  eventId        String
   clockIn        DateTime
   clockOut       DateTime?
   approvalStatus ApprovalStatus @default(PENDING)
