@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import 'vue3-carousel/dist/carousel.css'
 import { Carousel, Slide, Pagination } from 'vue3-carousel'
-import { authClient } from "~/../lib/auth-client";
+import { authClient } from '~~/server/utils/auth-client';
 
 
 
@@ -85,8 +85,8 @@ const services = ref([
 </script>
 
 <template>
-  <div class="flex flex-col ">
-    <div class="flex-1 mt-12 mb-8 w-full h-full overflow-y-auto">
+  <div class="flex flex-col bg-white">
+    <div class="flex-1 mt-12 mb-12 w-full h-full overflow-y-auto">
       <!-- Hero / Carousel Section -->
       <div class="bg-teal-700 w-full max-h-[600px] overflow-y-auto">
         <Carousel v-bind="carouselConfig" class="flex-1 max-h-full overflow-y-auto">
@@ -98,12 +98,12 @@ const services = ref([
             >
           </Slide>
 
-      <template #addons>
-        <!--<Navigation />-->
-        <Pagination />
-      </template>
-    </Carousel>
-  </div>
+          <template #addons>
+            <!--<Navigation />-->
+            <Pagination />
+          </template>
+        </Carousel>
+      </div>
 
       <!-- Upcoming Events -->
       <div class="px-2 pb-4 pt-4 w-full relative">
@@ -151,7 +151,7 @@ const services = ref([
           </div>
         </div>
       </div>
-      <!-- Volunteer Sign Up -->`
+      <!-- Volunteer Sign Up -->
       <div v-if="!session.data" class="bg-gradient-to-br from-rose-700 to-rose-800 text-center py-3 px-4 relative overflow-hidden items-center justify-center min-h-[100px]">
         <p class="text-white font-bold text-lg mb-1 ">Become A Volunteer</p>
         <!-- Sign up Button -->

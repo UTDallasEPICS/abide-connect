@@ -1,7 +1,6 @@
-import {auth} from "~/../lib/auth"
-import prisma from "~/../lib/prisma"
-import { Language, Availability, Gender, Ethinicity } from "@prisma/client"
-import { APIError } from "better-auth/api"
+import {auth} from "~~/server/utils/auth"
+import prisma from "~~/server/utils/prisma"
+import type { Language, Availability } from '~~/server/utils/generated/prisma/client'
 
 export default defineEventHandler(async (event) => {
     try {
@@ -18,6 +17,7 @@ export default defineEventHandler(async (event) => {
                     phone: phone as string | undefined,
                 },
             })
+            
 
             await tx.volunteer.update({
                 where: { id: data.user.id },
@@ -25,27 +25,27 @@ export default defineEventHandler(async (event) => {
                     phone: phone as string,
                     userId: createdUser.id,
                     languages: {
-                        create: languages?.map((language: Language) => ({
-                                language: language,
+                        create: languages?.map((language: {id: Language, label: string}) => ({
+                                language: language.id,
                             })) || [],
                         },
                     availabilities: {
-                        create: availability?.map((time: Availability) => ({
-                                availability: time,
+                        create: availability?.map((time: {id: Availability, label: string}) => ({
+                                availability: time.id,
                             })) || [],
                         },
-                    gender: gender as Gender,
-                    ethinicity: ethinicity as Ethinicity,
+                    gender: gender.id,
+                    ethinicity: ethinicity.id,
                 },
             });
         });
 
         return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.log(error);
         throw createError({
-            statusCode: error.statusCode,
-            statusMessage: error.body?.message || "An unexpected error occurred",
+            statusCode: (error as { statusCode: number }).statusCode,
+            statusMessage: (error as { body: { message: string} }).body?.message || "An unexpected error occurred",
         });
     }
 });
