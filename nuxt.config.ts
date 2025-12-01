@@ -5,7 +5,6 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/ui',
     '@nuxt/eslint',
-    '@prisma/nuxt',
     'nuxt-maplibre'
   ],
   css: ['~/assets/css/main.css'],
@@ -18,4 +17,24 @@ export default defineNuxtConfig({
     },
   },
   // css: ['assets/css/main.css']
+  ui: {
+    theme: {
+      colors: [
+        'primary',
+        'secondary',
+        'info',
+        'success',
+        'warning',
+        'neutral',
+        'error',
+        'brand1',
+        'brand2',
+        'brand3',
+        'brand4',
+        'brand5',
+        'brand6',
+        'brand7'
+      ]
+    }
+  }
 })
