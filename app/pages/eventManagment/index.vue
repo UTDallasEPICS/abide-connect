@@ -1,9 +1,7 @@
 <script setup>
-import { ref } from "vue"
-import { useRouter } from "vue-router"
+import { ref, onMounted } from "vue"
 import AddEventModal from "~/components/addEventModal.vue"
 
-const router = useRouter()
 const showAddModal = ref(false)
 
 const pastEvents = ref([
@@ -60,6 +58,14 @@ const upcomingEvents = ref([
   },
 ])
 
+// Debug on mount
+onMounted(() => {
+  console.log('✅ Page mounted')
+  console.log('✅ navigateToEvent function exists:', typeof navigateToEvent)
+  console.log('✅ pastEvents:', pastEvents.value)
+  console.log('✅ upcomingEvents:', upcomingEvents.value)
+})
+
 // Called when modal emits "save"
 async function addEventToList(event) {
   upcomingEvents.value.push({
@@ -82,11 +88,18 @@ async function addEventToList(event) {
 }
 
 // Navigate to event template page
-function navigateToEvent(eventId) {
-  console.log('🚀 Navigating to event:', eventId)
-  console.log('🚀 Target path:', `/event-detail/${eventId}`)
-  router.push(`/event-detail/${eventId}`)
-  console.log('🚀 Navigation called')
+async function navigateToEvent(eventId) {
+  console.log('🚀 Clicked event with ID:', eventId)
+  console.log('🚀 Navigating to:', `/event-detail/${eventId}`)
+  
+  // Nuxt 4 navigation
+  await navigateTo(`/event-detail/${eventId}`)
+}
+
+// Test function
+function testNavigation() {
+  console.log('🧪 TEST BUTTON CLICKED!')
+  navigateToEvent(1)
 }
 
 // Helper function to get first image from event
@@ -116,27 +129,38 @@ function getEventImage(event) {
         EVENTS MANAGEMENT
       </h1>
 
+      <!-- TEST BUTTON - Remove this after testing -->
+      <div class="px-5 mb-4">
+        <button 
+          @click="testNavigation"
+          class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          🧪 TEST: Navigate to Event 1
+        </button>
+      </div>
+
       <!-- PAST EVENTS -->
       <div class="px-5">
         <h2 class="text-xl font-semibold mb-3">PAST EVENTS</h2>
 
         <div class="flex gap-3 overflow-x-auto pb-2">
-          <div
+          <button
             v-for="event in pastEvents"
             :key="event.id"
-            @click="navigateToEvent(event.id)"
+            @click.stop="navigateToEvent(event.id)"
             class="min-w-[120px] h-[120px] border border-gray-400 rounded-2xl flex flex-col justify-between cursor-pointer hover:shadow-lg transition-shadow"
+            type="button"
           >
             <div 
-              class="flex justify-center items-center flex-1 text-4xl text-gray-700 rounded-t-2xl overflow-hidden"
+              class="flex justify-center items-center flex-1 text-4xl text-gray-700 rounded-t-2xl overflow-hidden pointer-events-none"
               :style="getEventImage(event) ? `background-image: url(${getEventImage(event)}); background-size: cover; background-position: center;` : ''"
             >
               <span v-if="!getEventImage(event)">+</span>
             </div>
-            <div class="h-[40px] bg-gray-200 rounded-b-2xl flex items-center justify-center px-2">
+            <div class="h-[40px] bg-gray-200 rounded-b-2xl flex items-center justify-center px-2 pointer-events-none">
               <p class="text-xs font-medium text-gray-700 truncate">{{ event.title }}</p>
             </div>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -165,23 +189,24 @@ function getEventImage(event) {
         </div>
 
         <div class="mt-4 flex flex-col gap-4">
-          <div
+          <button
             v-for="event in upcomingEvents"
             :key="event.id"
-            @click="navigateToEvent(event.id)"
+            @click.stop="navigateToEvent(event.id)"
             class="flex items-center gap-4 border border-gray-300 rounded-2xl p-4 bg-white cursor-pointer hover:shadow-lg transition-shadow"
+            type="button"
           >
             <div 
-              class="w-14 h-14 rounded-xl bg-[#9c1a33] flex-shrink-0 overflow-hidden"
+              class="w-14 h-14 rounded-xl bg-[#9c1a33] flex-shrink-0 overflow-hidden pointer-events-none"
               :style="getEventImage(event) ? `background-image: url(${getEventImage(event)}); background-size: cover; background-position: center;` : ''"
             ></div>
 
-            <div class="flex flex-col">
+            <div class="flex flex-col text-left pointer-events-none">
               <p class="text-gray-800 font-semibold">{{ event.title }}</p>
               <p class="text-gray-500 text-sm">{{ event.location }}</p>
               <p class="text-gray-400 text-xs">{{ new Date(event.startTime).toLocaleDateString() }}</p>
             </div>
-          </div>
+          </button>
         </div>
       </div>
     </div>

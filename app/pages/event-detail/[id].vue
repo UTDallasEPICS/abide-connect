@@ -1,9 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue"
-import { useRoute, useRouter } from "vue-router"
 
 const route = useRoute()
-const router = useRouter()
 
 // Get the ID from the route params
 const eventId = route.params.id
@@ -115,14 +113,14 @@ function removeImage(index) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-gray-50 pb-24">
     <!-- Header with Edit Button -->
-    <div class="bg-white shadow-sm sticky top-0 z-10">
+    <div class="bg-white shadow-sm sticky top-0 z-10 mt-16">
       <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
         <UButton
           icon="i-lucide-arrow-left"
           variant="ghost"
-          @click="router.back()"
+          @click="navigateTo('/eventManagement')"
         />
         
         <div class="flex gap-2">
