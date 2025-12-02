@@ -16,7 +16,7 @@
 <script lang="ts" setup>
 defineProps<{
   style: string;
-  center: [number, number];
+  center: number[];
   zoom: number;
 }>();
 </script>

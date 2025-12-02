@@ -1,0 +1,62 @@
+[
+    {
+      "id": "event1",
+      "title": "Childcare Conference",
+      "shortDesc": "A conference on childcare best practices",
+      "description": "A conference bringing together childcare professionals.",
+      "startTime": "2025-12-15T09:00:00.000Z",
+      "endTime": "2025-12-15T17:00:00.000Z",
+      "location": "754 Colors Ct. Fort Worth, TX",
+      "allowVolunteers": true,
+      "allowAttendees": true,
+      "eventAssets": []
+    },
+    {
+      "id": "event2",
+      "title": "Health and Wellness Fair",
+      "shortDesc": "A fair promoting health and wellness in the community",
+      "description": "An event focused on health screenings and wellness education.",
+      "startTime": "2025-12-20T10:00:00.000Z",
+      "endTime": "2025-12-20T15:00:00.000Z",
+      "location": "321 Adieu Ave. Richardson, TX",
+      "allowVolunteers": true,
+      "allowAttendees": false,
+      "eventAssets": []
+    },
+    {
+      "id": "event3",
+      "title": "Maternity Awareness",
+      "shortDesc": "Maternity problems and their solutions",
+      "description": "A presentation increasing awareness of maternity problems and their solutions",
+      "startTime": "2025-12-21T10:00:00.000Z",
+      "endTime": "2025-12-21T15:00:00.000Z",
+      "location": "123 State St. Dallas, TX",
+      "allowVolunteers": false,
+      "allowAttendees": true,
+      "eventAssets": []
+    },
+    {
+      "id": "pastEvent1",
+      "title": "Food Bank Collaboration",
+      "shortDesc": "Package meals and clothes for new mothers",
+      "description": "A day full of helping mothers in need by providing free supplies in an easy to access location",
+      "startTime": "2025-08-21T08:00:00.000Z",
+      "endTime": "2025-08-21T17:00:00.000Z",
+      "location": "123 State St. Dallas, TX",
+      "allowVolunteers": true,
+      "allowAttendees": false,
+      "eventAssets": []
+    },
+    {
+        "id": "pastEvent2",
+        "title": "Childcare Drive",
+        "shortDesc": "Drive for childcare related items",
+        "description": "A drive focused on providing mothers with items for infants ages 0-6 months",
+        "startTime": "2025-08-19T08:00:00.000Z",
+        "endTime": "2025-08-19T12:00:00.000Z",
+        "location": "777 Forza St. Coppell, TX",
+        "allowVolunteers": false,
+        "allowAttendees": true,
+        "eventAssets": []
+    }
+]

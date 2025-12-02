@@ -1,34 +1,23 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import type { DateValue } from '@internationalized/date'
-import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
+import { CalendarDate, getLocalTimeZone } from '@internationalized/date'
 
 const tz = getLocalTimeZone()
 
 const value = ref<DateValue>(new CalendarDate(2022, 2, 3))
 
-const fmt = new Intl.DateTimeFormat('en-US', {
-  weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
-})
-const selectedText = computed(() =>
-  value.value ? value.value.toDate(tz).toLocaleDateString('en-US', {
-    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
-  }) : '—'
-)
+const eventClick = () => {
+  navigateTo('/events/event1')
+}
 
 const isDateDisabled = (d: DateValue) =>
   d.toDate(tz) < new Date(new Date().setHours(0, 0, 0, 0))
-
-const goToday = () => { value.value = today(tz) }
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
-
-   <TopNav />
-
-    
-    <main class="flex-1 px-4 py-6">
+  <div class="flex flex-col bg-white">
+    <div class="w-full h-full mt-12 mb-12 px-4 py-6 overflow-y-auto">
       <UCard class="max-w-4xl mx-auto">
         <template #header>
           <div class="flex items-center justify-between">
@@ -39,7 +28,7 @@ const goToday = () => { value.value = today(tz) }
         <div class="grid md:grid-cols-2 gap-6">
           <UCalendar
             v-model="value"
-            color="emerald"
+            color="brand7"
             :is-date-disabled="isDateDisabled"
             locale="en-US"
             weekday-format="short"
@@ -47,18 +36,18 @@ const goToday = () => { value.value = today(tz) }
             class="rounded-2xl"
           />
           <div class="space-y-4">
-         <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-  Upcoming Events
-</p>
-<UDivider class="mt-2" />
+         <p class="text-xs uppercase tracking-wide text-gray-500">
+          Upcoming Events
+        </p>
+        <USeperator class="mt-2" />
           </div>
         </div>
 
         
-        <UDivider class="my-6" />
+        <USeperator class="my-6" />
 
         <div class="space-y-4">
-          <EventTile />
+          <EventTile :onclick="eventClick"/>
           <EventTile />
           <EventTile />
           <EventTile />
@@ -66,12 +55,7 @@ const goToday = () => { value.value = today(tz) }
         
 
       </UCard>
-
-      <div class="h-24"></div>
-    </main>
-
-  <BottomNav />
-
+    </div>
   </div>
 </template>
 

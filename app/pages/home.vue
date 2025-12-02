@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import 'vue3-carousel/dist/carousel.css'
 import { Carousel, Slide, Pagination } from 'vue3-carousel'
+import { authClient } from '~~/server/utils/auth-client';
+
 
 
 const carouselConfig = {
@@ -10,13 +12,13 @@ const carouselConfig = {
   touchDrag: true,
   autoplay: 6000,
 }
-const slides = [
+const slides = ref([
   { id: 1, src: '/images/image1.jpeg', alt: 'Slide 1' },
   { id: 2, src: '/images/image1.jpeg', alt: 'Slide 2' },
   { id: 3, src: '/images/image1.jpeg', alt: 'Slide 3' },
   { id: 4, src: '/images/image1.jpeg', alt: 'Slide 4' },
-]
-const events = [
+])
+const events = ref([
   {
     id: 1,
     name: "Event 1",
@@ -45,13 +47,15 @@ const events = [
     location: "Location 4",
     image: "/images/image1.jpeg"
   },
-];
+])
+
+const session = authClient.useSession();
 
 const handleSignUp = () => {
-  alert('coming soon')
+  navigateTo("/auth/sign-up");
 }
 
-const services = [
+const services = ref([
   {
     id: 1,
     name: "Prenatal Care",
@@ -76,13 +80,13 @@ const services = [
     image: "/images/image1.jpeg",
     href: "https://www.abidewomen.org/mobile-clinic"
   },
-]
+])
 
 </script>
 
 <template>
-  <div class="flex flex-col ">
-    <div class="flex-1 mt-12 mb-8 w-full h-full overflow-y-auto">
+  <div class="flex flex-col bg-white">
+    <div class="flex-1 mt-12 mb-12 w-full h-full overflow-y-auto">
       <!-- Hero / Carousel Section -->
       <div class="bg-teal-700 w-full max-h-[600px] overflow-y-auto">
         <Carousel v-bind="carouselConfig" class="flex-1 max-h-full overflow-y-auto">
@@ -94,12 +98,12 @@ const services = [
             >
           </Slide>
 
-      <template #addons>
-        <!--<Navigation />-->
-        <Pagination />
-      </template>
-    </Carousel>
-  </div>
+          <template #addons>
+            <!--<Navigation />-->
+            <Pagination />
+          </template>
+        </Carousel>
+      </div>
 
       <!-- Upcoming Events -->
       <div class="px-2 pb-4 pt-4 w-full relative">
@@ -147,8 +151,8 @@ const services = [
           </div>
         </div>
       </div>
-      <!-- Volunteer Sign Up -->`
-      <div class="bg-gradient-to-br from-rose-700 to-rose-800 text-center py-3 px-4 relative overflow-hidden items-center justify-center min-h-[100px]">
+      <!-- Volunteer Sign Up -->
+      <div v-if="!session.data" class="bg-gradient-to-br from-rose-700 to-rose-800 text-center py-3 px-4 relative overflow-hidden items-center justify-center min-h-[100px]">
         <p class="text-white font-bold text-lg mb-1 ">Become A Volunteer</p>
         <!-- Sign up Button -->
         <button 

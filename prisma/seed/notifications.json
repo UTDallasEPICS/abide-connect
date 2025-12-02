@@ -1,0 +1,9 @@
+[
+    {
+        "id": 1,
+        "message": "Welcome to our service!",
+        "userId": 1,
+        "isRead": false,
+        "createdAt": "2024-01-01T10:00:00Z"
+    }
+]
