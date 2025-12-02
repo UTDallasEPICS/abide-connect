@@ -22,16 +22,17 @@ export default defineEventHandler(async (event) => {
             await tx.volunteer.update({
                 where: { id: data.user.id },
                 data: {
-                    phone: phone as string,
+                    name: name as string | undefined,
+                    phone: phone as string | undefined,
                     userId: createdUser.id,
                     languages: {
-                        create: languages?.map((language: {id: Language, label: string}) => ({
-                                language: language.id,
+                        create: languages.map((language: Language) => ({
+                                language: language as string,
                             })) || [],
                         },
                     availabilities: {
-                        create: availability?.map((time: {id: Availability, label: string}) => ({
-                                availability: time.id,
+                        create: availability.map((time: Availability) => ({
+                                availability: time as string,
                             })) || [],
                         },
                     gender: gender.id,
