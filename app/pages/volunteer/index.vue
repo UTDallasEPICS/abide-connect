@@ -3,7 +3,7 @@ import { authClient } from '~~/server/utils/auth-client';
 import { relativeFetch } from '@/lib/relativeFetch';
 
 const { data: session } = await authClient.useSession(relativeFetch);
-
+console.log(session);
 
 </script>
 <template>
