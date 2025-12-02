@@ -42,7 +42,7 @@ const showPending = ref(false)
   <div class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
     
 
-    <main class="flex-1 px-4 py-6 pb-24">
+    <main class="flex-1 px-4 py-6 pt-24 pb-24">
       <div class="max-w-4xl mx-auto space-y-6">
         
         <!-- Calendar Card -->
