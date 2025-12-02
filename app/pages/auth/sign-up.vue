@@ -1,19 +1,10 @@
 <script setup lang="ts">
 import type { FormSubmitEvent } from "@nuxt/ui";
 import type { SignUpSchema } from "~~/shared/types/auth/signUpTypes";
-import { signUpFields } from "~~/shared/types/auth/signUpTypes";
+import { signUpFields, signUpSchema } from "~~/shared/types/auth/signUpTypes";
 import { authProviders } from "~~/shared/types/auth/providers";
 
-const state = reactive<Partial<SignUpSchema>>({
-    name: "",
-    email: "",
-    password: "",
-    phone: "",
-    languages: [],
-    gender: null,
-    ethinicity: null,
-    availability: []
-});
+
 
 const errorMessage = ref<string | null>(null);
 
@@ -21,7 +12,6 @@ const isLoading = ref(false);
 
 async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
     isLoading.value = true;
-    console.log(payload.data);
     try {
         await $fetch("/api/auth/sign-up", {
             method: "POST",
