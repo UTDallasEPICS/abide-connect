@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { FormSubmitEvent } from "@nuxt/ui";
-import type { SignUpSchema } from "~~/shared/types/auth/signUpTypes";
-import { signUpFields, signUpSchema } from "~~/shared/types/auth/signUpTypes";
-import { authProviders } from "~~/shared/types/auth/providers";
+import type { SignUpSchema } from "~/types/auth/sign-up.type";
+import { signUpFields, signUpSchema } from "~/types/auth/sign-up.type";
+import { authProviders } from "~/types/auth/providers.type";
 
 
 
@@ -12,6 +12,7 @@ const isLoading = ref(false);
 
 async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
     isLoading.value = true;
+    console.log(payload.data);
     try {
         await $fetch("/api/auth/sign-up", {
             method: "POST",
