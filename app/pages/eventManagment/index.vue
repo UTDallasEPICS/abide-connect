@@ -1,32 +1,10 @@
 <script setup>
 import { ref } from "vue"
-import { z } from "zod"
+import { useRouter } from "vue-router"
 import AddEventModal from "~/components/addEventModal.vue"
-import EditEventModal from "~/components/editEvents.vue"
 
+const router = useRouter()
 const showAddModal = ref(false)
-const selectedEvent = ref(null)
-
-const newEvent = ref({
-  title: "",
-  shortDesc: "",
-  description: "",
-  location: "",
-  startTime: "",
-  endTime: "",
-  allowVolunteers: false,
-  allowAttendees: false,
-  images: []
-})
-
-const schema = z.object({
-  title: z.string().min(1),
-  shortDesc: z.string().min(1),
-  description: z.string().min(1),
-  location: z.string().min(1),
-  startTime: z.string().min(1),
-  endTime: z.string().min(1),
-})
 
 const pastEvents = ref([
   { 
@@ -84,7 +62,6 @@ const upcomingEvents = ref([
 
 // Called when modal emits "save"
 async function addEventToList(event) {
-  // The event now comes from the API with an ID and eventAssets
   upcomingEvents.value.push({
     id: event.id,
     title: event.title,
@@ -99,42 +76,17 @@ async function addEventToList(event) {
   })
   
   showAddModal.value = false
+  
+  // Navigate to the new event's page
+  navigateToEvent(event.id)
 }
 
-// Open edit modal for an event
-function editEvent(event, isPast = false) {
-  selectedEvent.value = { ...event, isPast }
-}
-
-// Save edited event
-function saveEditedEvent(event) {
-  if (selectedEvent.value.isPast) {
-    const index = pastEvents.value.findIndex(e => e.id === event.id)
-    if (index !== -1) {
-      pastEvents.value[index] = event
-    }
-  } else {
-    const index = upcomingEvents.value.findIndex(e => e.id === event.id)
-    if (index !== -1) {
-      upcomingEvents.value[index] = event
-    }
-  }
-  selectedEvent.value = null
-}
-
-// Delete an event
-function deleteEvent(eventId) {
-  if (selectedEvent.value.isPast) {
-    pastEvents.value = pastEvents.value.filter(e => e.id !== eventId)
-  } else {
-    upcomingEvents.value = upcomingEvents.value.filter(e => e.id !== eventId)
-  }
-  selectedEvent.value = null
-}
-
-// Close edit modal
-function closeEditModal() {
-  selectedEvent.value = null
+// Navigate to event template page
+function navigateToEvent(eventId) {
+  console.log('🚀 Navigating to event:', eventId)
+  console.log('🚀 Target path:', `/event-detail/${eventId}`)
+  router.push(`/event-detail/${eventId}`)
+  console.log('🚀 Navigation called')
 }
 
 // Helper function to get first image from event
@@ -172,7 +124,7 @@ function getEventImage(event) {
           <div
             v-for="event in pastEvents"
             :key="event.id"
-            @click="editEvent(event, true)"
+            @click="navigateToEvent(event.id)"
             class="min-w-[120px] h-[120px] border border-gray-400 rounded-2xl flex flex-col justify-between cursor-pointer hover:shadow-lg transition-shadow"
           >
             <div 
@@ -216,7 +168,7 @@ function getEventImage(event) {
           <div
             v-for="event in upcomingEvents"
             :key="event.id"
-            @click="editEvent(event, false)"
+            @click="navigateToEvent(event.id)"
             class="flex items-center gap-4 border border-gray-300 rounded-2xl p-4 bg-white cursor-pointer hover:shadow-lg transition-shadow"
           >
             <div 
@@ -233,18 +185,6 @@ function getEventImage(event) {
         </div>
       </div>
     </div>
-
-    <!-- Edit Event Modal -->
-    <UModal :model-value="selectedEvent !== null" @update:model-value="val => !val && closeEditModal()">
-      <template #body>
-        <EditEventModal 
-          v-if="selectedEvent"
-          :event="selectedEvent" 
-          @save="saveEditedEvent"
-          @delete="deleteEvent"
-        />
-      </template>
-    </UModal>
 
   </div>
 </template>
