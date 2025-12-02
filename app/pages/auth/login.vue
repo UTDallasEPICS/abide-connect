@@ -1,13 +1,8 @@
 <script setup lang="ts">
 import type { FormSubmitEvent } from "@nuxt/ui";
-import type { LoginSchema } from "~~/shared/types/auth/loginTypes";
-import { loginFields, loginSchema } from "~~/shared/types/auth/loginTypes";
-import { authProviders } from "~~/shared/types/auth/providers";
-
-// const state = reactive<Partial<LoginSchema>>({
-//     email: undefined,
-//     password: undefined,
-// });
+import type { LoginSchema } from "~/types/auth/login.type";
+import { loginFields, loginSchema } from "~/types/auth/login.type";
+import { authProviders } from "~/types/auth/providers.type";
 
 const isLoading = ref(false);
 const errorMessage = ref<string | null>(null);
