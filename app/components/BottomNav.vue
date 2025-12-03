@@ -3,24 +3,20 @@ const nav = ref([
     {
         id: 1,
         icon: "i-lucide-house",
-        label: "Home",
         to: "/home",
     },
     {
         id: 2,
         icon: "i-lucide-calendar-days",
-        label: "Events",
-        to: "/home",
+        to: "/events",
     },{
         id: 3,
         icon: "i-lucide-hospital",
-        label: "Clinic",
         to: "/mobileClinic",
     },
     {
         id: 4,
         icon: "i-lucide-square-user-round",
-        label: "Volunteer",
         to: "/volunteer",
     },
     
@@ -28,31 +24,18 @@ const nav = ref([
 ]);
 </script>
 <template>
- <UFooter class="fixed bottom-0 left-0 right-0 flex justify-around items-center h-13 bg-white">
-   <template #default>
+<UFooter class="fixed bottom-0 left-0 right-0 z-60 flex **justify-between** items-center **px-4** h-12 border-t border-gray-200 bg-white">
+    <template #default>
+        <UButton
+v-for="navItem in nav"
+                :key="navItem.id"
+                :icon="navItem.icon"
+                :to="navItem.to"
+                color="neutral"
+                variant="ghost"
+                class="**flex-1** **min-w-0** h-full mx-auto lg:mx-14"
+                />
+    </template>
+</UFooter>
 
-
-     <div
-       v-for="item in nav"
-       :key="item.id"
-       class="flex flex-col items-center justify-center w-full"
-     >
-       
-       <UButton
-         :icon="item.icon"
-         :to="item.to"
-         color="neutral"
-         variant="ghost"
-         class="h-full mx-7"
-       />
-
-
-       <span class="text-[10px] leading-none text-gray-600 mt-0.5">
-         {{ item.label }}
-       </span>
-     </div>
-
-
-   </template>
- </UFooter>
 </template>
