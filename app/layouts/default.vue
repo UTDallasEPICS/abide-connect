@@ -1,7 +1,7 @@
 <template>
     <div class="w-screen h-screen items-center">
-        <TopNav />
+        <Top />
         <slot />
-        <BottomNav />
+        <Bottom />
     </div>
 </template>
