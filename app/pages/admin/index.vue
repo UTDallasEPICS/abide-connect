@@ -36,20 +36,68 @@ const features: AdminFeature[] = [
         bg: 'bg-gradient-to-br from-[#f4d3e0] to-white'
     }
 ]
+
+//KPI data for top cards
+const kpis = [
+    { 
+        id: 'total-volunteers',
+        label: 'Total Volunteers',
+        value: '248',
+        icon: 'i-heroicons-user-group'
+    },
+    {
+        id: 'pending-certificates',
+        label: 'Pending Certificates',
+        value: '5',
+        icon: 'i-heroicons-document-text'
+    },
+    {
+        id: 'total-donations',
+        label: 'Total Donations',
+        value: '$10,000',
+        icon: 'i-heroicons-currency-dollar'
+    },
+    {
+        id: 'pending-timelog',
+        label: 'Pending Time Log',
+        value: '3',
+        icon: 'i-heroicons-clock'
+    }
+]
+
 </script>
 
 <template>
     <div class="flex flex-col w-screen min-h-screen bg-slate-50 items-stretch pb-20">
-        <section id="overview" class="mt-20 px-6">
-            <div class="overflow-hidden rounded-3xl h-40 border border-slate-300 shadow-lg bg-slate-200">
-                <div class="flex items-start justify-start text-left px-5 py-5 ">
-                    <p class="text-2xl font-semibold text-[#313131] ">Welcome back!</p>
+        <!-- Header for KPI -->
+        <div class="px-6 mt-20">
+            <h1 class="text-3xl font-bold text-[#313131]">Welcome back, Admin!</h1>
+        </div>
+        <!-- KPI section -->
+        <section class="px-6 mt-7 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div
+                v-for="kpi in kpis"
+                :key="kpi.id"
+                class="bg-white rounded-2xl border-2 border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-300"
+            >
+                <div class="flex items-start justify-between mb-4">
+                    <div 
+                        class="flex rounded-xl h-12 w-12 p-2 shadow-md">
+                        <UIcon :name="kpi.icon" class="w-8 h-8 text-black" />
+                    </div>
+                </div>
+                
+                <div class="space-y-1">
+                    <p class="text-sm font-medium text-slate-600">{{ kpi.label }}</p>
+                    <h3 class="text-3xl font-bold text-[#313131]">{{ kpi.value }}</h3>
+                    <div class="flex items-center gap-2 text-sm">
+                    </div>
                 </div>
             </div>
         </section>
-
+        <USeparator class="mt-10"/>
+        <!-- Features section -->
         <section class="px-6 mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
-            
             <UButton
             v-for="feature in features"
             :key="feature.id"
