@@ -1,20 +1,13 @@
 <script setup lang="ts">
 import type { FormSubmitEvent } from "@nuxt/ui";
-import { loginFormSchema } from "#shared/types/authFormTypes";
-import type { LoginFormSchema } from "#imports";
-
-definePageMeta({
-    layout: "secondary"
-})
-
-const state = reactive<Partial<LoginFormSchema>>({
-    email: undefined,
-    password: undefined,
-});
+import type { LoginSchema } from "~/types/auth/login.type";
+import { loginFields, loginSchema } from "~/types/auth/login.type";
+import { authProviders } from "~/types/auth/providers.type";
 
 const isLoading = ref(false);
+const errorMessage = ref<string | null>(null);
 
-async function onSubmit(event: FormSubmitEvent<LoginFormSchema>) {
+async function onSubmit(event: FormSubmitEvent<LoginSchema>) {
     isLoading.value = true;
     try {
         await $fetch("/api/auth/login", {
@@ -24,6 +17,13 @@ async function onSubmit(event: FormSubmitEvent<LoginFormSchema>) {
                 password: event.data.password,
             },
         });
+        
+        // Wait for the next tick to ensure cookies are set
+        await nextTick();  
+        await navigateTo("/volunteer/");
+    } catch (error: unknown) {
+        console.log(error);
+        errorMessage.value = (error as { message: string }).message;
     } finally {
         isLoading.value = false;
     }
@@ -31,22 +31,45 @@ async function onSubmit(event: FormSubmitEvent<LoginFormSchema>) {
 </script>
 
 <template>
-
-    <h1 class="text-black font-bold text-4xl pb-6">Login</h1>
-    <UForm v-bind:schema="loginFormSchema" v-bind:state="state" class="space-y-4" @submit.prevent="onSubmit">
-        <UFormField class="text-black text-2xl font-bold" label="Email" name="email" required>
-            <UInput v-model="state.email" leading-icon="i-lucide-at-sign" color="secondary" variant="soft" size="xl"
-                class="w-full" />
-        </UFormField>
-
-        <UFormField class="text-black text-2xl font-bold" label="Password" name="password" size="xl">
-            <UInput v-model="state.password" type="password" class="w-full" variant="soft" />
-        </UFormField>
-
-        <UButton type="submit" class="bg-[#a26b61] w-[25%] justify-center" size="xl" :loading="isLoading"
-            :disabled="isLoading">
-            <span class="font-bold text-[#a26b61/50]">Login</span>
-        </UButton>
-    </UForm>
-
+    <div class="flex flex-col items-center justify-center p-8 min-h-screen">
+        <UAuthForm
+            class="w-full max-w-md"
+            :schema="loginSchema"
+            :fields="loginFields"
+            :providers="authProviders"
+            title="Welcome back!"
+            icon="i-lucide-lock"
+            :separator="{
+                icon: 'i-lucide-user',
+            }"
+            :submit="{ label: 'Sign in', block: true, color: 'neutral' }"
+            @submit="onSubmit"
+        >
+            <template #description>
+                Don't have an account?
+                <ULink to="/auth/sign-up" class="text-primary font-medium"
+                    >Sign up</ULink
+                >.
+            </template>
+            <template #password-hint>
+                <ULink to="#" class="text-primary font-medium" tabindex="-1"
+                    >Forgot password?</ULink
+                >
+            </template>
+            <template #validation>
+                <UAlert
+                    v-if="errorMessage"
+                    color="error"
+                    icon="i-lucide-info"
+                    :title="errorMessage"
+                />
+            </template>
+            <template #footer>
+                By signing in, you agree to our
+                <ULink to="#" class="text-primary font-medium"
+                    >Terms of Service</ULink
+                >.
+            </template>
+        </UAuthForm>
+    </div>
 </template>

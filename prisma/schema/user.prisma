@@ -6,8 +6,9 @@ model User {
 
   volunteer Volunteer?
 
-  RSVP              RSVP[]
+  RSVPs              RSVP[]
   User_Notification User_Notification[]
+  @@map("users")
 }
 
 model User_Notification {
