@@ -1,19 +1,10 @@
 <script setup lang="ts">
 import type { FormSubmitEvent } from "@nuxt/ui";
-import type { SignUpSchema } from "~~/shared/types/auth/signUpTypes";
-import { signUpFields } from "~~/shared/types/auth/signUpTypes";
-import { authProviders } from "~~/shared/types/auth/providers";
+import type { SignUpSchema } from "~/types/auth/sign-up.type";
+import { signUpFields, signUpSchema } from "~/types/auth/sign-up.type";
+import { authProviders } from "~/types/auth/providers.type";
 
-// const state = reactive<Partial<SignUpSchema>>({
-//     name: "",
-//     email: "",
-//     password: "",
-//     phone: "",
-//     languages: [],
-//     gender: null,
-//     ethinicity: null,
-//     availability: []
-// });
+
 
 const errorMessage = ref<string | null>(null);
 
