@@ -5,7 +5,7 @@ const route = useRoute()
 const router = useRouter()
 
 const goBack = async (_e?: MouseEvent) => {
-    await navigateTo('/home')
+    await navigateTo('/')
 }
 </script>
 
