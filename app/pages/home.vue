@@ -88,7 +88,7 @@ const services = ref([
   <div class="flex flex-col bg-white">
     <div class="flex-1 mt-12 mb-12 w-full h-full overflow-y-auto">
       <!-- Hero / Carousel Section -->
-      <div class="bg-teal-700 w-full max-h-[600px] overflow-y-auto">
+      <div class=" w-full max-h-[600px] overflow-y-auto">
         <Carousel v-bind="carouselConfig" class="flex-1 max-h-full overflow-y-auto">
           <Slide v-for="slide in slides" :key="slide.id" class="max-h-full overflow-y-hidden">
             <img
