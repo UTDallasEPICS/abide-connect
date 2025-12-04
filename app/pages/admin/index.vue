@@ -101,8 +101,9 @@ const kpis = [
             <UButton
             v-for="feature in features"
             :key="feature.id"
-            class="group flex h-40 flex-col p-4 items-start justify-between rounded-3xl border-2 border-slate-200 text-left shadow-xs
-                    transition-all duration-300 hover:shadow-xl hover:border-slate-250" 
+            color="brand6"
+            class="group flex h-40 bg-slate-50 flex-col p-4 items-start justify-between rounded-3xl border-2 border-slate-200 text-left shadow-xs
+                    transition-all duration-300 hover:shadow-xl hover:border-slate-250 hover:bg-slate-50" 
             >
                 <div 
                     :class="feature.iconBg"
