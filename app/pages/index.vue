@@ -110,7 +110,7 @@ const services = ref([
           <div 
               v-for="event in events" 
               :key="event.id" 
-              class="flex-shrink-0 w-[160px] rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer">
+              class="shrink-0 w-40 rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer">
 
               <!-- Event Image Placeholder-->
               <div class="h-35 relative overflow-hidden">
@@ -138,7 +138,7 @@ const services = ref([
                 
                 <!--Location-->
                 <div class="flex items-start text-gray-600 text-[10px]">
-                  <svg class="w-3 h-3 mr-2 ml-0.5 mt-0.5 text-teal-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-3 h-3 mr-2 ml-0.5 mt-0.5 text-teal-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
                     <circle cx="12" cy="10" r="3"/>
                   </svg>
@@ -150,7 +150,7 @@ const services = ref([
         </div>
       </div>
       <!-- Volunteer Sign Up -->
-      <div v-if="!session.data" class="bg-gradient-to-br from-rose-700 to-rose-800 text-center py-3 px-4 relative overflow-hidden items-center justify-center min-h-[100px]">
+      <div v-if="!session.data" class="bg-linear-to-br from-rose-700 to-rose-800 text-center py-3 px-4 relative overflow-hidden items-center justify-center min-h-[100px]">
         <p class="text-white font-bold text-lg mb-1 ">Become A Volunteer</p>
         <!-- Sign up Button -->
         <button 
@@ -184,14 +184,14 @@ const services = ref([
             target="_blank"
             rel="noopener noreferrer"
 
-            class="flex-shrink-0 w-[190px] rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer">
+            class="shrink-0 w-[190px] rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer">
             <div class="h-35 relative overflow-hidden">
               <img
                 :src="service.image"
                 :alt="service.name"
                 class="w-full h-full object-cover transition-transform duration-300"
               >
-              <div class="absolute inset-x-0 bottom-0 w-full bg-gradient-to-t from-black/60 to-transparent p-2">
+              <div class="absolute inset-x-0 bottom-0 w-full bg-linear-to-t from-black/60 to-transparent p-2">
                 <p class="text-white text-sm font-semibold truncate" >{{ service.name }}</p>
               </div>
             </div>

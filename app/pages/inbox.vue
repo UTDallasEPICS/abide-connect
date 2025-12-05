@@ -109,7 +109,7 @@ const router = useRouter()
                                 {{ item.label }}
                                 </h3>
                                 
-                                <span class="whitespace-nowrap text-[13px] text-[#a4123f] leading-tight" >
+                                <span class="whitespace-nowrap text-[13px] text-brand7 leading-tight" >
                                     {{ item.time }}
                                 </span>
                                 <UIcon
