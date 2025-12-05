@@ -54,7 +54,6 @@
 
 @theme {
     --font-hornbill: 'Hornbill', sans-serif;
-    --font-poppins: "Poppins", sans-serif; 
 }
 
 /* Utility classes so you can use the imported fonts easily in templates */
