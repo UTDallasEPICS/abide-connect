@@ -5,7 +5,7 @@ import { getLocalTimeZone, today } from '@internationalized/date'
 const tz = getLocalTimeZone()
 
 const value = ref<DateValue>(today(tz))
-
+const volunteer = await $fetch('/api/volunteer/me')
 const isDateDisabled = (d: DateValue) =>
   d.toDate(tz) < new Date(new Date().setHours(0, 0, 0, 0))
 
@@ -38,12 +38,10 @@ const showPending = ref(false)
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
-    
-
-    <main class="flex-1 px-4 py-6 pt-24 pb-24">
+  <div class="min-h-screen flex flex-col bg-white">
+    <main class="flex-1 px-4 pt-24 pb-24">
       <div class="max-w-4xl mx-auto space-y-6">
-        
+        <h2 class="text-2xl font-semibold text-brand4 mb-4">Welcome back, {{ volunteer?.name }}</h2>
         <!-- Calendar Card -->
         <UCard>
           <UCalendar
