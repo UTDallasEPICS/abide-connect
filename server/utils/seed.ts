@@ -1,6 +1,6 @@
 import fs  from 'fs';
 import type { Language, Gender, Availability, Ethinicity, ApprovalStatus } from "./generated/prisma/client.ts";
-import { PrismaClient } from './generated/prisma/client';
+import { PrismaClient } from './generated/prisma/client.ts';
 import { PrismaBetterSQLite3 } from '@prisma/adapter-better-sqlite3';
 
 const adapter = new PrismaBetterSQLite3({
