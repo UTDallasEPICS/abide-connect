@@ -105,7 +105,7 @@ const services = ref([
 
       <!-- Upcoming Events -->
       <div class="px-2 pb-4 pt-4 w-full relative">
-        <h3 class="text-2xl font-semibold text-teal-700 mb-4">UPCOMING EVENTS</h3>
+        <h3 class="text-2xl font-semibold text-brand4 mb-4">UPCOMING EVENTS</h3>
         <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
           <div 
               v-for="event in events" 
@@ -123,7 +123,7 @@ const services = ref([
               
               <!-- Event Content -->
               <div class="p-2">
-                <h4 class="text-sm font_semibold text-teal-800 mb-1.5"> {{ event.name }}</h4>
+                <h4 class="text-sm font_semibold text-brand4 mb-1.5"> {{ event.name }}</h4>
               <div class="space-y-2">
                 <!--Date-->
                 <div class="flex items-center text-gray-600 text-[12px]">
@@ -175,7 +175,7 @@ const services = ref([
       
       <!-- Services -->
       <div class="px-2 pb-4 pt-4">
-        <h3 class="text-2xl font-semibold text-teal-700 mb-4">SERVICES</h3>
+        <h3 class="text-2xl font-semibold text-brand4 mb-4">SERVICES</h3>
         <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
           <a 
             v-for="service in services" 
