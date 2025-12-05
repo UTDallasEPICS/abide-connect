@@ -3,7 +3,7 @@ const nav = ref([
     {
         id: 1,
         icon: "i-lucide-house",
-        to: "/home",
+        to: "/",
     },
     {
         id: 2,

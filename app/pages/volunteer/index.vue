@@ -47,7 +47,7 @@ const showPending = ref(false)
         <!-- Calendar Card -->
         <UCard>
           <UCalendar
-            v-model="value"
+            :v-model="value"
             color="brand4"
             :is-date-disabled="isDateDisabled"
             locale="en-US"

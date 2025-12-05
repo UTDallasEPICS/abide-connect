@@ -2,8 +2,8 @@
 <template>
     <div class="w-screen h-full items-center">
         <!-- layout with TopNav back button -->
-        <SecondaryTop />
+        <NavSecondaryTop />
         <slot />
-        <Bottom />
+        <NavBottom />
     </div>
 </template>
