@@ -24,7 +24,7 @@ const onSettingsClick = async (_e?: MouseEvent) => {
                         variant="ghost"
                         aria-label="Settings"
                         @click="onSettingsClick">
-                        <UIcon name="i-heroicons-cog-6-tooth" class="w-7 h-7 text-teal-900" />
+                        <UIcon name="i-lucide-settings" class="w-7 h-7 text-teal-900" />
                     </UButton>
 
             </div>
@@ -39,7 +39,7 @@ const onSettingsClick = async (_e?: MouseEvent) => {
                         variant="ghost"
                         aria-label="Inbox" 
                         @click="onInboxClick">
-                        <UIcon name="i-heroicons-chat-bubble-left-ellipsis" class="w-7 h-7  text-teal-900" />
+                        <UIcon name="i-lucide-bell" class="w-7 h-7  text-teal-900" />
                     </UButton>
                 </slot>
             </div>
