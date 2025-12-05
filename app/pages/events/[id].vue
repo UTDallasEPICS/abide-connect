@@ -139,31 +139,3 @@ const fileUpload = async (file: File | null | undefined) => {
     </div>
   </div>
 </template>    
-
-
-<!-- <template>
-  <UContainer class="py-10">
-    <div v-if="!event">Loading...</div>
-    <div v-else>
-      <h1 class="text-3xl font-bold mb-2">{{ event.title }}</h1>
-      <p class="text-gray-600 mb-4">{{ event.shortDesc }}</p>
-      <p>{{ event.description }}</p>
-
-      <p class="mt-4 text-sm">
-        📍 {{ event.location }}  
-        <br />
-        🕒 {{ new Date(event.startTime).toLocaleString() }} → {{ new Date(event.endTime).toLocaleString() }}
-      </p>
-
-      <div v-if="event.eventAssets.length" class="mt-6">
-        <h3 class="font-semibold mb-2">Images</h3>
-        <img
-          v-for="asset in event.eventAssets"
-          :key="asset.imageUrl"
-          :src="asset.imageUrl"
-          class="rounded-lg mb-2"
-        />
-      </div>
-    </div>
-  </UContainer>
-</template> -->

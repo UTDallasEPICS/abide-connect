@@ -27,7 +27,7 @@ const isDateDisabled = (d: DateValue) =>
 
         <div class="grid md:grid-cols-2 gap-6">
           <UCalendar
-            v-model="value"
+            :v-model="value"
             color="brand7"
             :is-date-disabled="isDateDisabled"
             locale="en-US"
