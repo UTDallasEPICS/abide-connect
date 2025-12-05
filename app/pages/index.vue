@@ -150,14 +150,14 @@ const services = ref([
         </div>
       </div>
       <!-- Volunteer Sign Up -->
-      <div  class="bg-linear-to-bl from-rose-600 to-rose-900 text-center py-4 px-4 relative overflow-hidden items-center justify-center min-h-[100px]">
+      <div  class="bg-rose-800 text-center py-4 px-4 relative overflow-hidden items-center justify-center min-h-[100px]">
         <p class="text-white font-bold text-lg mb-1 ">Become A Volunteer</p>
         <!-- Sign up Button -->
         <button 
-          class="group relative bg-white text-rose-700 font-bold px-7 py-2 rounded-full shadow-lg hover:shadow-2xl transition-transform hover:scale-105 active:scale-100 duration-300 overflow-hidden"
+          class="group relative bg-white text-rose-700 font-bold px-7 py-2 mb-1 rounded-full shadow-lg hover:shadow-2xl transition-transform hover:scale-105 active:scale-100 duration-300 overflow-hidden"
           @click="handleSignUp"
           >
-          <span class="absolute inset-0 z-0 opacity-0 scale-95 rounded-full group-hover:opacity-100 group-hover:scale-100 transition-transform duration-300 bg-brand3"/>
+          <span class="absolute inset-0 z-0 opacity-0 scale-95 rounded-full group-hover:opacity-100 group-hover:scale-100 transition-transform duration-300 bg-rose"/>
             <span class="relative z-10 flex items-center justify-center gap-1 text-lg">
             <span>Sign Up</span>
             <svg 
