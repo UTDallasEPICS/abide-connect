@@ -84,15 +84,15 @@ const services = ref([
 
 <template>
   <div class="flex flex-col bg-white">
-    <div class="flex-1 mt-12 mb-12 pl-4 pt-4 w-full h-full overflow-y-auto">
+    <div class="flex-1 mt-12 mb-12 pt-4 w-full h-full overflow-y-auto">
       <!-- Hero / Carousel Section -->
       <div class=" w-full max-h-[600px] overflow-y-auto">
-        <Carousel v-bind="carouselConfig" class="flex-1 pr-4 max-h-full overflow-y-auto rounded-2xl">
-          <Slide v-for="slide in slides" :key="slide.id" class="max-h-full overflow-y-hidden rounded-2xl">
+        <Carousel v-bind="carouselConfig" class="flex-1  max-h-full overflow-y-auto rounded-3xl">
+          <Slide v-for="slide in slides" :key="slide.id" class="max-h-full px-4 overflow-y-hidden rounded-3xl">
             <img
               :src="slide.src"
               :alt="slide.alt"
-              class="max-h-full object-cover"
+              class="max-h-full object-cover rounded-3xl px-1"
             >
           </Slide>
 
@@ -104,7 +104,7 @@ const services = ref([
       </div>
 
       <!-- Upcoming Events -->
-      <div class="px-2 pb-4 pt-4 w-full relative">
+      <div class="px-2 pb-4 pl-4 pt-4 w-full relative">
         <h3 class="text-2xl font-semibold text-brand4 mb-4">UPCOMING EVENTS</h3>
         <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
           <div 
@@ -150,7 +150,7 @@ const services = ref([
         </div>
       </div>
       <!-- Volunteer Sign Up -->
-      <div v-if="!session.data" class="bg-linear-to-br from-rose-700 to-rose-800 text-center py-3 px-4 relative overflow-hidden items-center justify-center min-h-[100px]">
+      <div  class="bg-linear-to-br from-brand3 to-brand3 text-center py-3 px-4 relative overflow-hidden items-center justify-center min-h-[100px]">
         <p class="text-white font-bold text-lg mb-1 ">Become A Volunteer</p>
         <!-- Sign up Button -->
         <button 
@@ -174,7 +174,7 @@ const services = ref([
       </div>
       
       <!-- Services -->
-      <div class="px-2 pb-4 pt-4">
+      <div class="px-2 pb-4 pt-4 pl-4">
         <h3 class="text-2xl font-semibold text-brand4 mb-4">SERVICES</h3>
         <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
           <a 
