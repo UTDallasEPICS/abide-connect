@@ -28,19 +28,19 @@ function formatEnumLabel(value: string): string {
   return words.join(" ")
 }
 
-const languageItems: InputMenuItem[] = Object.keys(Language).map((language) => ({
+const languageItems: InputMenuItem[] = Object.values(Language).map((language) => ({
   id: language,
   label: formatEnumLabel(language),
 }))
-const genderItems: InputMenuItem[] = Object.keys(Gender).map((gender) => ({
+const genderItems: InputMenuItem[] = Object.values(Gender).map((gender) => ({
   id: gender,
   label: formatEnumLabel(gender),
 }))
-const ethinicityItems: InputMenuItem[] = Object.keys(Ethinicity).map((ethinicity) => ({
+const ethinicityItems: InputMenuItem[] = Object.values(Ethinicity).map((ethinicity) => ({
   id: ethinicity,
   label: formatEnumLabel(ethinicity),
 }))
-const availabilityItems: InputMenuItem[] = Object.keys(Availability).map((availability) => ({
+const availabilityItems: InputMenuItem[] = Object.values(Availability).map((availability) => ({
   id: availability,
   label: formatEnumLabel(availability),
 }))
@@ -75,6 +75,7 @@ export const signUpFields: AuthFormField[] = ([{
   type: 'select',
   placeholder: 'What languages do you speak?',
   required: true,
+  valueKey: 'id',
   items: languageItems,
   multiple: true        
 }, {
@@ -82,6 +83,7 @@ export const signUpFields: AuthFormField[] = ([{
   label: 'Gender',
   type: 'select',
   placeholder: "What is your gender?",
+  valueKey: 'id',
   items: genderItems,
   required: true
 },{
@@ -89,6 +91,7 @@ export const signUpFields: AuthFormField[] = ([{
   label: 'Ethinicity',
   type: 'select',
   placeholder: "What is your ethinicity?",
+  valueKey: 'id',
   items: ethinicityItems,
   required: true
 },{
@@ -96,6 +99,7 @@ export const signUpFields: AuthFormField[] = ([{
   label: 'Availability',
   type: 'select',
   placeholder: "What is your availability?",
+  valueKey: 'id',
   items: availabilityItems,
   required: true,
   multiple: true

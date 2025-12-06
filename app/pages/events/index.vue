@@ -17,17 +17,13 @@ const isDateDisabled = (d: DateValue) =>
 
 <template>
   <div class="flex flex-col bg-white">
-    <div class="w-full h-full mt-12 mb-12 px-4 py-6 overflow-y-auto">
-      <UCard class="max-w-4xl mx-auto">
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold">Events</h2>
-          </div>
-        </template>
+    <div class="w-full h-full mt-12 mb-12 px-4 py-12 overflow-y-auto">
+      <h2 class="text-2xl font-semibold text-brand4 mb-4">Events</h2>
+        
 
-        <div class="grid md:grid-cols-2 gap-6">
+        <UCard class="max-w-4xl mx-auto mb-4">
           <UCalendar
-            v-model="value"
+            :v-model="value"
             color="brand7"
             :is-date-disabled="isDateDisabled"
             locale="en-US"
@@ -35,16 +31,12 @@ const isDateDisabled = (d: DateValue) =>
             :first-day-of-week="0"
             class="rounded-2xl"
           />
-          <div class="space-y-4">
-         <p class="text-xs uppercase tracking-wide text-gray-500">
-          Upcoming Events
-        </p>
-        <USeperator class="mt-2" />
-          </div>
-        </div>
 
+          </UCard>
+        <h3 class="text-lg font-semibold text-brand4 mb-4">
+          Upcoming Events
+        </h3>
         
-        <USeperator class="my-6" />
 
         <div class="space-y-4">
           <EventTile :onclick="eventClick"/>
@@ -52,9 +44,6 @@ const isDateDisabled = (d: DateValue) =>
           <EventTile />
           <EventTile />
         </div>
-        
-
-      </UCard>
     </div>
   </div>
 </template>

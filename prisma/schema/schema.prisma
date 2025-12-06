@@ -14,7 +14,6 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      =  env("PRISMA_DB_URL")
 }
 
 // Better Auth Models

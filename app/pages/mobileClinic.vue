@@ -2,7 +2,7 @@
     <!-- Map Section -->
     <div id="mapbox" class="pt-12 pb-12 h-full w-full">
       <div id="map" class="h-full w-full relative overflow-hidden">
-        <AbideMap :style="style" :center="center" :zoom="zoom" />
+        <MapInteractive :style="style" :center="center" :zoom="zoom" />
         <UDrawer
           class="absolute bottom-4 w-11/12 left-1/2 -translate-x-1/2"
           :default-open="true"

@@ -1,7 +1,10 @@
+<script setup lang="ts">
+</script>
+
 <template>
     <div class="w-screen h-screen items-center">
-        <TopNav />
-        <slot />
-        <BottomNav />
+        <NavTop />
+            <slot />
+        <NavBottom />
     </div>
 </template>
