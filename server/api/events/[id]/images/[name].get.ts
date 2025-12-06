@@ -15,7 +15,6 @@ export default defineEventHandler(async (event) => {
 
   // Get file path relative to project root
   const filePath = path.join(
-    process.cwd(), 
     process.env.IMAGE_STORAGE_PATH || "public/images", 
     eventID, 
     fileName

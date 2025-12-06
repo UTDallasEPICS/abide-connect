@@ -137,7 +137,7 @@ async function uploadNewImages() {
     formData.append('file', file)
     
     try {
-      await $fetch(`/api/events/${event.value.id}/uploadImage`, {
+      await $fetch(`/api/events/${event.value.id}/images/upload`, {
         method: 'POST',
         body: formData
       })

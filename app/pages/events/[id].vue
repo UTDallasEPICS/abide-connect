@@ -54,7 +54,7 @@ const fileUpload = async (file: File | null | undefined) => {
   const formData = new FormData()
   formData.append("file", file)
 
-  const res = await $fetch.raw(`/api/events/${route.params.id}/uploadImage`, {
+  const res = await $fetch.raw(`/api/events/${route.params.id}/images/upload`, {
     method: 'POST',
     body: formData,
     ignoreResponseError: true

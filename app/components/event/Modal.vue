@@ -89,7 +89,7 @@ async function saveEvent() {
         formData.append('file', file)
         
         try {
-          await $fetch(`/api/events/${response.id}/uploadImage`, {
+          await $fetch(`/api/events/${response.id}/images/upload`, {
             method: 'POST',
             body: formData
           })
