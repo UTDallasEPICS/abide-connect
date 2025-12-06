@@ -29,8 +29,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'Event not found' })
   }
 
-  // Save file to public/images - USE process.cwd() for project root
-  const dirPath = path.join(process.cwd(), process.env.IMAGE_STORAGE_PATH || "public/images", id)
+  // Save file to public/images
+  const dirPath = path.join(process.env.IMAGE_STORAGE_PATH || "public/images", id)
 
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true })

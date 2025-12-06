@@ -1,6 +1,5 @@
 <script setup>
 import { ref, onMounted } from "vue"
-import AddEventModal from "~/components/addEventModal.vue"
 
 const showAddModal = ref(false)
 
@@ -161,7 +160,7 @@ function getEventDate(event) {
         @click.self="closeModal"
       >
         <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-auto">
-          <AddEventModal @save="addEventToList" @close="closeModal" />
+          <EventModal @save="addEventToList" @close="closeModal" />
         </div>
       </div>
     </Teleport>

@@ -213,7 +213,7 @@ function getImageUrl(asset) {
           <UButton
             icon="i-lucide-arrow-left"
             variant="ghost"
-            @click="navigateTo('/eventManagement')"
+            @click="navigateTo('/events/manage')"
           />
           
           <div class="flex gap-2">
