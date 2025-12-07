@@ -210,14 +210,14 @@ function cancel() {
         type="file"
         multiple
         accept="image/*"
-        @change="handleFileChange"
         class="block w-full text-sm text-gray-500
           file:mr-4 file:py-2 file:px-4
           file:rounded-full file:border-0
           file:text-sm file:font-semibold
-          file:bg-primary-50 file:text-primary-700
+          file:bg-primary-50 file:text-brand4
           hover:file:bg-primary-100
           cursor-pointer"
+        @change="handleFileChange"
       />
     </div>
 
@@ -247,8 +247,8 @@ function cancel() {
     </div>
 
     <div class="flex justify-end gap-2 pt-4 border-t">
-      <UButton variant="ghost" @click="cancel" :disabled="isSaving">Cancel</UButton>
-      <UButton color="primary" @click="saveEvent" :loading="isSaving">
+      <UButton variant="ghost" color="brand4" @click="cancel" :disabled="isSaving">Cancel</UButton>
+      <UButton color="brand4" @click="saveEvent" :loading="isSaving">
         {{ isSaving ? 'Creating...' : 'Create Event' }}
       </UButton>
     </div>

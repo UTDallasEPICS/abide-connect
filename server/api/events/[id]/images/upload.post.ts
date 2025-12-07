@@ -36,7 +36,7 @@ export default defineEventHandler(async (event) => {
     fs.mkdirSync(dirPath, { recursive: true })
   }
 
-  const filePath = path.join(dirPath, file.filename || "failed.png")
+  const filePath = path.join(dirPath, decodeURIComponent(file.filename || "failed.png"))
 
   if (fs.existsSync(filePath)) {
     throw createError({ statusCode: 400, message: 'Image already exists.' })

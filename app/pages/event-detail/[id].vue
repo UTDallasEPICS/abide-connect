@@ -213,6 +213,7 @@ function getImageUrl(asset) {
           <UButton
             icon="i-lucide-arrow-left"
             variant="ghost"
+            class="text-brand4"
             @click="navigateTo('/events/manage')"
           />
           
@@ -220,7 +221,7 @@ function getImageUrl(asset) {
             <UButton
               v-if="!isEditMode"
               icon="i-lucide-pencil"
-              color="primary"
+              color="brand4"
               variant="soft"
               @click="toggleEditMode"
             >
@@ -230,13 +231,14 @@ function getImageUrl(asset) {
             <template v-else>
               <UButton
                 variant="ghost"
+                color="brand4"
                 @click="toggleEditMode"
               >
                 Cancel
               </UButton>
               <UButton
                 icon="i-lucide-check"
-                color="primary"
+                color="brand4"
                 @click="async () => { await saveChanges(); await uploadNewImages(); }"
               >
                 Save Changes
@@ -293,14 +295,14 @@ function getImageUrl(asset) {
                 type="file"
                 multiple
                 accept="image/*"
-                @change="handleImageUpload"
                 class="block w-full text-sm text-gray-500
                   file:mr-4 file:py-2 file:px-4
                   file:rounded-full file:border-0
                   file:text-sm file:font-semibold
-                  file:bg-primary-50 file:text-primary-700
+                  file:bg-primary-50 file:text-brand4
                   hover:file:bg-primary-100
                   cursor-pointer"
+                  @change="handleImageUpload"
               />
             </div>
           </div>
@@ -323,8 +325,8 @@ function getImageUrl(asset) {
         <!-- Date & Location Card -->
         <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
           <div class="flex items-start gap-4 mb-4">
-            <div class="bg-primary-100 p-3 rounded-xl">
-              <UIcon name="i-lucide-calendar" class="w-6 h-6 text-primary-600" />
+            <div class="bg-brand6 p-3 rounded-xl">
+              <UIcon name="i-lucide-calendar" class="w-6 h-6 text-brand4" />
             </div>
             <div class="flex-1">
               <p class="text-sm text-gray-500 mb-1">Date & Time</p>
@@ -345,8 +347,8 @@ function getImageUrl(asset) {
           </div>
 
           <div class="flex items-start gap-4">
-            <div class="bg-primary-100 p-3 rounded-xl">
-              <UIcon name="i-lucide-map-pin" class="w-6 h-6 text-primary-600" />
+            <div class="bg-brand6 p-3 rounded-xl">
+              <UIcon name="i-lucide-map-pin" class="w-6 h-6 text-brand4" />
             </div>
             <div class="flex-1">
               <p class="text-sm text-gray-500 mb-1">Location</p>
@@ -363,7 +365,7 @@ function getImageUrl(asset) {
         </div>
 
         <!-- Short Description -->
-        <div class="bg-primary-50 rounded-2xl p-6 mb-6" v-if="event.shortDesc || isEditMode">
+        <div class="bg-brand6 rounded-2xl p-6 mb-6" v-if="event.shortDesc || isEditMode">
           <p v-if="!isEditMode" class="text-lg text-gray-700 italic">
             "{{ event.shortDesc }}"
           </p>
@@ -396,33 +398,33 @@ function getImageUrl(asset) {
           <div class="space-y-4">
             <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
               <div class="flex items-center gap-3">
-                <UIcon name="i-lucide-users" class="w-5 h-5 text-primary-600" />
+                <UIcon name="i-lucide-users" class="w-5 h-5 text-brand4" />
                 <div>
                   <p class="font-medium text-gray-900">Volunteer Sign-ups</p>
                   <p class="text-sm text-gray-500">Allow people to volunteer for this event</p>
                 </div>
               </div>
               <label v-if="isEditMode" class="flex items-center gap-2 cursor-pointer">
-                <UCheckbox v-model="editForm.allowVolunteers" />
+                <UCheckbox v-model="editForm.allowVolunteers" color="brand4" />
               </label>
               <label v-else class="flex items-center gap-2">
-                <UCheckbox :model-value="event.allowVolunteers" disabled />
+                <UCheckbox :model-value="event.allowVolunteers" color="brand4" disabled />
               </label>
             </div>
 
             <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
               <div class="flex items-center gap-3">
-                <UIcon name="i-lucide-ticket" class="w-5 h-5 text-primary-600" />
+                <UIcon name="i-lucide-ticket" class="w-5 h-5 text-brand4" />
                 <div>
                   <p class="font-medium text-gray-900">Attendee Registration</p>
                   <p class="text-sm text-gray-500">Allow people to register as attendees</p>
                 </div>
               </div>
               <label v-if="isEditMode" class="flex items-center gap-2 cursor-pointer">
-                <UCheckbox v-model="editForm.allowAttendees" />
+                <UCheckbox v-model="editForm.allowAttendees" color="brand4" />
               </label>
               <label v-else class="flex items-center gap-2">
-                <UCheckbox :model-value="event.allowAttendees" disabled />
+                <UCheckbox :model-value="event.allowAttendees" color="brand4" disabled />
               </label>
             </div>
           </div>
@@ -432,7 +434,7 @@ function getImageUrl(asset) {
         <div v-if="!isEditMode" class="flex gap-4">
           <UButton
             v-if="event.allowVolunteers"
-            color="primary"
+            color="brand4"
             size="xl"
             block
             icon="i-lucide-heart-handshake"
@@ -442,7 +444,7 @@ function getImageUrl(asset) {
           
           <UButton
             v-if="event.allowAttendees"
-            color="primary"
+            color="brand4"
             variant="outline"
             size="xl"
             block
