@@ -13,8 +13,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: "Missing eventID" })
   }
 
-  // Example: serve from disk *outside* project
-  const filePath = path.join(process.env.IMAGE_STORAGE_PATH || "images", eventID, fileName)
+  // Get file path relative to project root
+  const filePath = path.join(
+    process.env.IMAGE_STORAGE_PATH || "public/images", 
+    eventID, 
+    fileName
+  )
 
   if (!fs.existsSync(filePath)) {
     throw createError({ statusCode: 404, statusMessage: "File not found" })
@@ -29,6 +33,7 @@ export default defineEventHandler(async (event) => {
     ext === ".png" ? "image/png" :
     ext === ".jpg" || ext === ".jpeg" ? "image/jpeg" :
     ext === ".gif" ? "image/gif" :
+    ext === ".webp" ? "image/webp" :
     "application/octet-stream"
 
   setHeader(event, "Content-Type", mime)

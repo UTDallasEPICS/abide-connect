@@ -54,7 +54,7 @@ const fileUpload = async (file: File | null | undefined) => {
   const formData = new FormData()
   formData.append("file", file)
 
-  const res = await $fetch.raw(`/api/events/${route.params.id}/uploadImage`, {
+  const res = await $fetch.raw(`/api/events/${route.params.id}/images/upload`, {
     method: 'POST',
     body: formData,
     ignoreResponseError: true
@@ -94,7 +94,7 @@ const fileUpload = async (file: File | null | undefined) => {
         </p>
         
         <div id="map" class="h-60 relative overflow-hidden justify-center items-center">
-          <AbideMap :style="style" :center="center" :zoom="zoom" />
+          <MapInteractive :style="style" :center="center" :zoom="zoom" />
         </div>
 
         <div class="flex-1 mt-4 mb-2 w-full h-full overflow-y-auto"/>
@@ -107,7 +107,7 @@ const fileUpload = async (file: File | null | undefined) => {
                   class="w-full bg-brand4 text-white font-poppins rounded-xl py-3"
                   :ui="{ base: 'justify-center' }"
                   size="xl"
-                  href="/volunteer/signup"
+                  href="/volunteer"
                 >
                   Volunteer
                 </UButton>

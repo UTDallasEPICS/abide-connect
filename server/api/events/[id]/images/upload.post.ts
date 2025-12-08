@@ -29,16 +29,14 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'Event not found' })
   }
 
-  // Save file to /public/uploads
-
-  
-  const dirPath = path.join(process.env.IMAGE_STORAGE_PATH || "/public/images", id)
+  // Save file to public/images
+  const dirPath = path.join(process.env.IMAGE_STORAGE_PATH || "public/images", id)
 
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true })
   }
 
-  const filePath = path.join(dirPath, file.filename || "failed.png")
+  const filePath = path.join(dirPath, decodeURIComponent(file.filename || "failed.png"))
 
   if (fs.existsSync(filePath)) {
     throw createError({ statusCode: 400, message: 'Image already exists.' })
