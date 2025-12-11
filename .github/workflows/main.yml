@@ -5,9 +5,6 @@ on:
     branches:
       - main
 
-env:
-  DATABASE_URL:"file:./prisma/dev.db"
-
 jobs:
   build:
     permissions:
@@ -37,6 +34,7 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry}}
           REPOSITORY: abide-connect
           IMAGE_TAG: ${{ github.sha}}
+          DATABASE_URL: "file:./prisma/dev.db"
         run: |
           docker buildx build --output type=image,push=true --platform linux/arm64 -t $ECR_REGISTRY/$REPOSITORY:$IMAGE_TAG .
           docker buildx build --output type=image,push=true --platform linux/arm64 -t $ECR_REGISTRY/$REPOSITORY:prod .
