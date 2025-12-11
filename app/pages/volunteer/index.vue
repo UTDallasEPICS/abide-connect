@@ -52,7 +52,8 @@ const showPending = ref(false);
         </h2>
         <!-- Calendar Card -->
         <UCard>
-          <UCalendar :v-model="value" color="brand4" :is-date-disabled="isDateDisabled" locale="en-US"
+          <UCalendar
+:v-model="value" color="brand4" :is-date-disabled="isDateDisabled" locale="en-US"
             weekday-format="short" :first-day-of-week="0" class="rounded-2xl" />
         </UCard>
 
@@ -61,7 +62,8 @@ const showPending = ref(false);
           Upcoming Events
         </h3>
         <div class="space-y-4">
-          <div v-for="event in upcomingEvents" :key="event.id"
+          <div
+v-for="event in upcomingEvents" :key="event.id"
             class="flex items-center justify-between p-3 rounded-lg border border-gray-200">
             <div>
               <p class="font-medium text-sm">{{ event.title }}</p>
@@ -86,24 +88,27 @@ const showPending = ref(false);
 
           <!-- In Review -->
           <div class="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
-            <button @click="showPending = !showPending"
-              class="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+            <button
+class="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              @click="showPending = !showPending">
               <div class="flex items-center gap-3">
-                <div class="w-2 h-2 rounded-full bg-amber-500"></div>
+                <div class="w-2 h-2 rounded-full bg-amber-500"/>
                 <span class="font-medium">In Review</span>
                 <span
                   class="text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
                   {{ pendingLogs.length }}
                 </span>
               </div>
-              <UIcon :name="showPending
+              <UIcon
+:name="showPending
                   ? 'i-heroicons-chevron-up'
                   : 'i-heroicons-chevron-down'
                 " class="w-5 h-5 text-gray-400" />
             </button>
 
             <div v-if="showPending" class="p-4 pt-0 space-y-2 bg-gray-50 dark:bg-gray-900/50">
-              <div v-for="log in pendingLogs" :key="log.id"
+              <div
+v-for="log in pendingLogs" :key="log.id"
                 class="p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800">
                 <div class="flex items-start justify-between">
                   <div>
@@ -123,24 +128,27 @@ const showPending = ref(false);
           </div>
           <!-- Approved -->
           <div class="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
-            <button @click="showApproved = !showApproved"
-              class="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+            <button
+class="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              @click="showApproved = !showApproved">
               <div class="flex items-center gap-3">
-                <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                <div class="w-2 h-2 rounded-full bg-emerald-500"/>
                 <span class="font-medium">Approved</span>
                 <span
                   class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
                   {{ approvedLogs.length }}
                 </span>
               </div>
-              <UIcon :name="showApproved
+              <UIcon
+:name="showApproved
                   ? 'i-heroicons-chevron-up'
                   : 'i-heroicons-chevron-down'
                 " class="w-5 h-5 text-gray-400" />
             </button>
 
             <div v-if="showApproved" class="p-4 pt-0 space-y-2 bg-gray-50 dark:bg-gray-900/50">
-              <div v-for="log in approvedLogs" :key="log.id"
+              <div
+v-for="log in approvedLogs" :key="log.id"
                 class="p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800">
                 <div class="flex items-start justify-between">
                   <div>
@@ -161,24 +169,27 @@ const showPending = ref(false);
 
           <!-- Denied -->
           <div class="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
-            <button @click="showDenied = !showDenied"
-              class="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+            <button
+class="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              @click="showDenied = !showDenied">
               <div class="flex items-center gap-3">
-                <div class="w-2 h-2 rounded-full bg-red-500"></div>
+                <div class="w-2 h-2 rounded-full bg-red-500"/>
                 <span class="font-medium">Denied</span>
                 <span
                   class="text-xs px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
                   {{ deniedLogs.length }}
                 </span>
               </div>
-              <UIcon :name="showDenied
+              <UIcon
+:name="showDenied
                   ? 'i-heroicons-chevron-up'
                   : 'i-heroicons-chevron-down'
                 " class="w-5 h-5 text-gray-400" />
             </button>
 
             <div v-if="showDenied" class="p-4 pt-0 space-y-2 bg-gray-50 dark:bg-gray-900/50">
-              <div v-for="log in deniedLogs" :key="log.id"
+              <div
+v-for="log in deniedLogs" :key="log.id"
                 class="p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800">
                 <div class="flex items-start justify-between mb-2">
                   <div>

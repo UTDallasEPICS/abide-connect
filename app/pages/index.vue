@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import 'vue3-carousel/dist/carousel.css'
 import { Carousel, Slide, Pagination } from 'vue3-carousel'
-import { authClient } from '~~/server/utils/auth-client';
 
 const carouselConfig = {
   itemsToShow: 1,
@@ -46,8 +45,6 @@ const events = ref([
     image: "/images/image1.jpeg"
   },
 ])
-
-const session = authClient.useSession();
 
 const handleSignUp = () => {
   navigateTo("/auth/sign-up");

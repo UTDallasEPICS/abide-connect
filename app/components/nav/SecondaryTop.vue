@@ -1,12 +1,5 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
-
-const route = useRoute()
 const router = useRouter()
-
-const goBack = async (_e?: MouseEvent) => {
-    await navigateTo('/')
-}
 </script>
 
 <template>

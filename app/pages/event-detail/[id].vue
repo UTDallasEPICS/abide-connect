@@ -19,10 +19,9 @@ onMounted(async () => {
     console.log('📡 Loading event with ID:', eventId)
     
     // Fetch event from your backend API
-    const response = await $fetch(`/api/events/${eventId}`)
+    event.value = await $fetch(`/api/events/${eventId}`)
     
-    event.value = response
-    editForm.value = { ...response }
+    editForm.value = { ...event.value }
     
     console.log('✅ Event loaded:', event.value)
     loading.value = false
@@ -73,7 +72,7 @@ async function saveChanges() {
     console.log('💾 Saving changes...')
     
     // Update event via API
-    const response = await $fetch(`/api/events/${event.value.id}`, {
+    await $fetch(`/api/events/${event.value.id}`, {
       method: 'PATCH',
       body: {
         title: editForm.value.title,
@@ -98,7 +97,6 @@ async function saveChanges() {
   }
 }
 
-const uploadedFiles = ref([])
 const filesToUpload = ref([])
 
 function handleImageUpload(event) {
@@ -185,7 +183,7 @@ function getImageUrl(asset) {
     <!-- Loading State -->
     <div v-if="loading" class="flex items-center justify-center min-h-screen">
       <div class="text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"/>
         <p class="text-gray-600">Loading event...</p>
       </div>
     </div>
@@ -258,7 +256,7 @@ function getImageUrl(asset) {
               :src="getImageUrl(event.eventAssets[0])" 
               alt="Event banner"
               class="w-full h-full object-cover"
-            />
+            >
             <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
               <span class="text-6xl">📷</span>
             </div>
@@ -276,11 +274,11 @@ function getImageUrl(asset) {
                   :src="getImageUrl(asset)" 
                   alt="Event image"
                   class="w-full h-full object-cover"
-                />
+                >
                 <button
-                  @click="removeImage(index)"
                   class="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                   type="button"
+                  @click="removeImage(index)"
                 >
                   <UIcon name="i-lucide-x" class="w-4 h-4" />
                 </button>
@@ -303,7 +301,7 @@ function getImageUrl(asset) {
                   hover:file:bg-primary-100
                   cursor-pointer"
                   @change="handleImageUpload"
-              />
+              >
             </div>
           </div>
         </div>
@@ -336,11 +334,11 @@ function getImageUrl(asset) {
               <div v-else class="grid grid-cols-2 gap-2">
                 <div>
                   <label class="text-xs text-gray-500">Start</label>
-                  <UInput type="datetime-local" v-model="editForm.startTime" />
+                  <UInput v-model="editForm.startTime" type="datetime-local" />
                 </div>
                 <div>
                   <label class="text-xs text-gray-500">End</label>
-                  <UInput type="datetime-local" v-model="editForm.endTime" />
+                  <UInput v-model="editForm.endTime" type="datetime-local" />
                 </div>
               </div>
             </div>
@@ -365,7 +363,7 @@ function getImageUrl(asset) {
         </div>
 
         <!-- Short Description -->
-        <div class="bg-brand6 rounded-2xl p-6 mb-6" v-if="event.shortDesc || isEditMode">
+        <div v-if="event.shortDesc || isEditMode" class="bg-brand6 rounded-2xl p-6 mb-6">
           <p v-if="!isEditMode" class="text-lg text-gray-700 italic">
             "{{ event.shortDesc }}"
           </p>

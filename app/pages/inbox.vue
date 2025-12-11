@@ -1,10 +1,9 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue'
+
 definePageMeta({
   layout: 'secondary',
 })
-
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
 
 // type for API 
 type Notification = {
@@ -76,9 +75,6 @@ const formatTime = (timestamp: string) => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-
-const router = useRouter()
-
 </script>
 
 <template>
@@ -100,11 +96,12 @@ const router = useRouter()
                     <!-- Header -->
                     <template #default="{ item, open }">
                         <div 
-                        @click="markAsRead(item.id)"
-                        class="w-full">
+                        class="w-full"
+                        @click="markAsRead(item.id)">
                             <div class="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-x-3 w-full">
                               <UIcon name="i-heroicons-bell" class="w-5 h-5 text-[#3a696e]" />
-                                <h3 class="min-w-0 line-clamp-1 truncate leading-tight"
+                                <h3
+class="min-w-0 line-clamp-1 truncate leading-tight"
                                 :class="!item.isRead ? 'text-[20px] font-extrabold text-[#3a696e]' : 'text-[20px] font-semibold text-[#3a696e]' ">                               
                                 {{ item.label }}
                                 </h3>

@@ -90,8 +90,7 @@ const kpis = [
                 <div class="space-y-1">
                     <p class="text-sm font-medium text-slate-600">{{ kpi.label }}</p>
                     <h3 class="text-3xl font-bold text-[#313131]">{{ kpi.value }}</h3>
-                    <div class="flex items-center gap-2 text-sm">
-                    </div>
+                    <div class="flex items-center gap-2 text-sm"/>
                 </div>
             </div>
         </section>

@@ -1,4 +1,6 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+defineEmits(['add'])
+</script>
 <template>
   <div
     class="flex items-center gap-4 rounded-[22px] border border-gray-800/70 dark:border-gray-700/60

@@ -42,7 +42,7 @@ function deleteEvent() {
     </UFormGroup>
 
     <UFormGroup label="Date">
-      <UInput type="date" v-model="editedEvent.date" />
+      <UInput v-model="editedEvent.date" type="date" />
     </UFormGroup>
 
     <UFormGroup label="Location">
@@ -61,7 +61,7 @@ function deleteEvent() {
         alt="Event preview" 
         class="w-full h-32 object-cover rounded-lg"
         @error="$event.target.style.display = 'none'"
-      />
+      >
     </div>
 
     <div class="flex justify-between pt-2">

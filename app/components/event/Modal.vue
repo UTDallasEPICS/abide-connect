@@ -178,7 +178,7 @@ function cancel() {
           Start Date & Time <span class="text-red-500">*</span>
         </label>
         <UFormGroup>
-          <UInput type="datetime-local" v-model="newEvent.startTime" />
+          <UInput v-model="newEvent.startTime" type="datetime-local" />
         </UFormGroup>
       </div>
 
@@ -187,7 +187,7 @@ function cancel() {
           End Date & Time <span class="text-red-500">*</span>
         </label>
         <UFormGroup>
-          <UInput type="datetime-local" v-model="newEvent.endTime" />
+          <UInput v-model="newEvent.endTime" type="datetime-local" />
         </UFormGroup>
       </div>
     </div>
@@ -218,7 +218,7 @@ function cancel() {
           hover:file:bg-primary-100
           cursor-pointer"
         @change="handleFileChange"
-      />
+      >
     </div>
 
     <!-- Preview images if uploaded -->
@@ -234,11 +234,11 @@ function cancel() {
             :src="asset.imageUrl" 
             alt="Event preview" 
             class="w-full h-32 object-cover rounded-lg"
-          />
+          >
           <button
-            @click="removeImage(index)"
             class="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
             type="button"
+            @click="removeImage(index)"
           >
             <UIcon name="i-lucide-x" class="w-4 h-4" />
           </button>
@@ -247,8 +247,8 @@ function cancel() {
     </div>
 
     <div class="flex justify-end gap-2 pt-4 border-t">
-      <UButton variant="ghost" color="brand4" @click="cancel" :disabled="isSaving">Cancel</UButton>
-      <UButton color="brand4" @click="saveEvent" :loading="isSaving">
+      <UButton variant="ghost" color="brand4" :disabled="isSaving" @click="cancel">Cancel</UButton>
+      <UButton color="brand4" :loading="isSaving" @click="saveEvent">
         {{ isSaving ? 'Creating...' : 'Create Event' }}
       </UButton>
     </div>

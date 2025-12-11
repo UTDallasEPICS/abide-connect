@@ -90,9 +90,9 @@ function getEventDate(event) {
           <button
             v-for="event in pastEvents"
             :key="event.id"
-            @click.stop="navigateToEvent(event.id)"
             class="min-w-[120px] h-[120px] border border-gray-400 rounded-2xl flex flex-col justify-between cursor-pointer hover:shadow-lg transition-shadow"
             type="button"
+            @click.stop="navigateToEvent(event.id)"
           >
             <div 
               class="flex justify-center items-center flex-1 text-4xl text-gray-700 rounded-t-2xl overflow-hidden pointer-events-none"
@@ -131,9 +131,9 @@ function getEventDate(event) {
           <button
             v-for="event in upcomingEvents"
             :key="event.id"
-            @click.stop="navigateToEvent(event.id)"
             class="flex items-center gap-4 border border-gray-300 rounded-2xl p-4 bg-white cursor-pointer hover:shadow-lg transition-shadow"
             type="button"
+            @click.stop="navigateToEvent(event.id)"
           >
             <div 
               class="w-14 h-14 rounded-xl bg-[#9c1a33] flex-shrink-0 overflow-hidden pointer-events-none"
