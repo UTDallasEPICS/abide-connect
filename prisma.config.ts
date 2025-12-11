@@ -12,6 +12,6 @@ export default {
 		seed: "ts-node ./server/utils/seed.ts",
 	},
 	datasource: {
-		url: import.meta.env.DATABASE_URL
+		url: process.env.DATABASE_URL
 	}
 } satisfies PrismaConfig;
