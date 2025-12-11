@@ -5,6 +5,9 @@ on:
     branches:
       - stage
 
+env:
+  DATABASE_URL:"file:./prisma/dev.db"
+
 jobs:
   build:
     permissions:

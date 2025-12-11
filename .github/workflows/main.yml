@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+env:
+  DATABASE_URL:"file:./prisma/dev.db"
+
 jobs:
   build:
     permissions:
