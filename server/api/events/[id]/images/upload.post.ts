@@ -51,7 +51,7 @@ export default defineEventHandler(async (event) => {
     data: {
       eventAssets: {
         create: [{
-          imageUrl: path.join(id, file.filename || "failed.png")
+          imageUrl: path.join(id, "images", file.filename || "failed.png")
         }]
       }
     }
