@@ -28,10 +28,6 @@
 
 <script setup>
 
-definePageMeta({
-  middleware: 'auth'
-})
-
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 const style = '/mapstyles.json'
