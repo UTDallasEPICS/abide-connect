@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
 
 definePageMeta({
+  middleware: 'auth',
   layout: 'secondary',
 })
+
+import { ref, computed } from 'vue'
+
+
 
 // type for API 
 type Notification = {

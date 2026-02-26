@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+
 definePageMeta({
+  middleware: 'auth',
   layout: 'secondary',
 })
+
+
 
 // type for the select
 type NotificationType = 'General Events' | 'Volunteer Events' | 'Both'

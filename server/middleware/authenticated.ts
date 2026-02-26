@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   event.context.session = session;
   if (event.path.startsWith("/volunteer") || event.path.startsWith("/api/volunteer")) {
     if (!session?.session) {
-      await sendRedirect(event, "/auth/login", 302);
+      return sendRedirect(event, "/auth/login", 302);
     }
   }
 });
