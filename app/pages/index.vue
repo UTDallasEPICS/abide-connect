@@ -1,9 +1,5 @@
 <script setup lang="ts">
 
-definePageMeta({
-  middleware: 'auth'
-})
-
 
 import 'vue3-carousel/dist/carousel.css'
 import { Carousel, Slide, Pagination } from 'vue3-carousel'
