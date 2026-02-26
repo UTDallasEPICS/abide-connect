@@ -1,17 +1,25 @@
 <script setup>
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { ref, computed, onMounted } from "vue"
 
 const route = useRoute()
 
 // Get the ID from the route params
 const eventId = route.params.id
+const { data: event, error } = await useFetch(`/api/events/${route.params.id}`)
 
-const event = ref(null)
 const loading = ref(true)
 const notFound = ref(false)
 
 const isEditMode = ref(false)
 const editForm = ref({})
+
+//placeholder until we implement auth
+const admin = true;
+
+const style = '/mapstyles.json'
+const center = [-96.77049780046936, 32.772891246510596]
+const zoom = 15
 
 // Fetch event data from API on mount
 onMounted(async () => {
@@ -97,6 +105,15 @@ async function saveChanges() {
   }
 }
 
+const placeholders = [
+  'https://picsum.photos/640/640?random=1',
+  'https://picsum.photos/640/640?random=2',
+  'https://picsum.photos/640/640?random=3',
+  'https://picsum.photos/640/640?random=4',
+  'https://picsum.photos/640/640?random=5',
+  'https://picsum.photos/640/640?random=6'
+]
+
 const filesToUpload = ref([])
 
 function handleImageUpload(event) {
@@ -158,14 +175,9 @@ function removeImage(index) {
   const asset = editForm.value.eventAssets[index]
   
   // If it's a preview (not yet uploaded), just remove from array
-  if (asset.isPreview) {
-    editForm.value.eventAssets.splice(index, 1)
-    filesToUpload.value.splice(index, 1)
-  } else {
-    // If it's an existing image, we'd need a delete endpoint
-    // For now, just remove from display
-    editForm.value.eventAssets.splice(index, 1)
-  }
+  editForm.value.eventAssets.splice(index, 1)
+  filesToUpload.value.splice(index, 1)
+
 }
 
 // Helper to get proper image URL
@@ -176,6 +188,10 @@ function getImageUrl(asset) {
   // Use your backend image endpoint
   return `/api/events/${event.value.id}/images/${asset.imageUrl.split('/').pop()}`
 }
+
+const fetchedItems = event.value?.eventAssets.map((asset) => "/api/events/" + asset.imageUrl)
+
+const items = (fetchedItems?.length || 0) > 0 ? fetchedItems : placeholders
 </script>
 
 <template>
@@ -215,7 +231,7 @@ function getImageUrl(asset) {
             @click="navigateTo('/events/manage')"
           />
           
-          <div class="flex gap-2">
+          <div v-if="admin"class="flex gap-2">
             <UButton
               v-if="!isEditMode"
               icon="i-lucide-pencil"
@@ -248,19 +264,40 @@ function getImageUrl(asset) {
 
       <div class="max-w-4xl mx-auto px-4 py-8">
         
+        
+        <!-- Event Title -->
+        <div class="mb-6">
+          <h1  v-if="!isEditMode"  class="text-3xl font-hornbill font-bold mb-2 text-brand4 text-center">{{ event.title }}</h1>
+
+          <UInput
+            v-else
+            v-model="editForm.title"
+            size="xl"
+            placeholder="Event Title"
+            class="text-4xl font-bold"
+            
+          />
+        </div>
+
+        <!-- Short Description -->
+        <div v-if="event.shortDesc || isEditMode" class="bg-brand6 rounded-2xl p-3 mb-6">
+          <p v-if="!isEditMode" class="text-md text-gray-700 italic">
+            {{ event.shortDesc }}
+          </p>
+          <UInput
+            v-else
+            v-model="editForm.shortDesc"
+            class="w-full"
+            placeholder="Short Description"
+            size="lg"
+          />
+        </div>
+
         <!-- Event Images Carousel -->
         <div class="mb-8">
-          <div v-if="!isEditMode" class="relative h-96 rounded-2xl overflow-hidden bg-gray-200">
-            <img 
-              v-if="event.eventAssets && event.eventAssets.length > 0"
-              :src="getImageUrl(event.eventAssets[0])" 
-              alt="Event banner"
-              class="w-full h-full object-cover"
-            >
-            <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
-              <span class="text-6xl">📷</span>
-            </div>
-          </div>
+          <UCarousel v-if="!isEditMode" v-slot="{ item }" dots :items="items" class="h-80 max-w-xs mx-auto">
+          <img :src="item" class="h-80 w-auto rounded-lg mx-auto">
+          </UCarousel>
           
           <!-- Edit Mode Images -->
           <div v-else class="space-y-4">
@@ -305,20 +342,7 @@ function getImageUrl(asset) {
             </div>
           </div>
         </div>
-
-        <!-- Event Title -->
-        <div class="mb-6">
-          <h1 v-if="!isEditMode" class="text-4xl font-bold text-gray-900 mb-2">
-            {{ event.title }}
-          </h1>
-          <UInput
-            v-else
-            v-model="editForm.title"
-            size="xl"
-            placeholder="Event Title"
-            class="text-4xl font-bold"
-          />
-        </div>
+        
 
         <!-- Date & Location Card -->
         <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
@@ -331,18 +355,20 @@ function getImageUrl(asset) {
               <p v-if="!isEditMode" class="text-gray-900 font-medium">
                 {{ formattedDate }}
               </p>
-              <div v-else class="grid grid-cols-2 gap-2">
+              <div v-else class="grid grid-rows-2 gap-2">
                 <div>
-                  <label class="text-xs text-gray-500">Start</label>
+                  <label class="text-xs text-gray-500">Start </label>
                   <UInput v-model="editForm.startTime" type="datetime-local" />
                 </div>
                 <div>
-                  <label class="text-xs text-gray-500">End</label>
+                  <label class="text-xs text-gray-500">End </label>
                   <UInput v-model="editForm.endTime" type="datetime-local" />
                 </div>
               </div>
             </div>
           </div>
+
+          
 
           <div class="flex items-start gap-4">
             <div class="bg-brand6 p-3 rounded-xl">
@@ -361,18 +387,9 @@ function getImageUrl(asset) {
             </div>
           </div>
         </div>
-
-        <!-- Short Description -->
-        <div v-if="event.shortDesc || isEditMode" class="bg-brand6 rounded-2xl p-6 mb-6">
-          <p v-if="!isEditMode" class="text-lg text-gray-700 italic">
-            "{{ event.shortDesc }}"
-          </p>
-          <UInput
-            v-else
-            v-model="editForm.shortDesc"
-            placeholder="Short Description"
-            size="lg"
-          />
+        
+        <div v-if="!isEditMode" id="map" class="h-60 relative overflow-hidden justify-center items-center mb-6">
+          <MapInteractive :style="style" :center="center" :zoom="zoom" />
         </div>
 
         <!-- Full Description -->
@@ -384,13 +401,20 @@ function getImageUrl(asset) {
           <UTextarea
             v-else
             v-model="editForm.description"
+            class="w-full"
             placeholder="Full event description"
             :rows="6"
           />
         </div>
 
+        <div v-if="event.mobileClinicId" class="mt-4 mb-4">
+          <p class="text-gray-600 font-poppins">
+            This event is part of our Mobile Clinic program. Please visit the clinic for health services and support.
+          </p>  
+        </div>
+
         <!-- Event Options -->
-        <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+        <div v-if="admin && isEditMode" class="bg-white rounded-2xl shadow-sm p-6 mb-6">
           <h2 class="text-2xl font-semibold mb-4">Event Settings</h2>
           
           <div class="space-y-4">
@@ -402,11 +426,8 @@ function getImageUrl(asset) {
                   <p class="text-sm text-gray-500">Allow people to volunteer for this event</p>
                 </div>
               </div>
-              <label v-if="isEditMode" class="flex items-center gap-2 cursor-pointer">
+              <label class="flex items-center gap-2 cursor-pointer">
                 <UCheckbox v-model="editForm.allowVolunteers" color="brand4" />
-              </label>
-              <label v-else class="flex items-center gap-2">
-                <UCheckbox :model-value="event.allowVolunteers" color="brand4" disabled />
               </label>
             </div>
 
