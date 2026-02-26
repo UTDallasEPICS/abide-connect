@@ -105,7 +105,7 @@ You are now ready to use/deploy the app!
 > WARNING: You will see many warning messages during startup. This is normal. Ignore them!
 > However, if any errors show up, they must be resolved.
 
-Start the development server on `http://localhost:3000`:
+Start the development server on `http://localhosnt:3000`:
 
 ```bash
 pnpm dev
