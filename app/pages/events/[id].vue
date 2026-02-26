@@ -15,7 +15,7 @@ const isEditMode = ref(false)
 const editForm = ref({})
 
 //placeholder until we implement auth
-const admin = false;
+const admin = true;
 
 const style = '/mapstyles.json'
 const center = [-96.77049780046936, 32.772891246510596]
@@ -192,6 +192,10 @@ function getImageUrl(asset) {
 const fetchedItems = event.value?.eventAssets.map((asset) => "/api/events/" + asset.imageUrl)
 
 const items = (fetchedItems?.length || 0) > 0 ? fetchedItems : placeholders
+
+const backNavigate = computed(() => {
+  return admin ? '/events/manage' : '/events'
+})
 </script>
 
 <template>
@@ -224,18 +228,11 @@ const items = (fetchedItems?.length || 0) > 0 ? fetchedItems : placeholders
       <!-- Header with Edit Button -->
       <div class="bg-white shadow-sm sticky top-0 z-10 mt-16">
         <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <UButton v-if="admin"
+          <UButton
             icon="i-lucide-arrow-left"
             variant="ghost"
             class="text-brand4"
-            @click="navigateTo('/events/manage')"
-          />
-
-          <UButton v-else
-            icon="i-lucide-arrow-left"
-            variant="ghost"
-            class="text-brand4"
-            @click="navigateTo('/events')"
+            @click="navigateTo(backNavigate)"
           />
           
           <div v-if="admin"class="flex gap-2">
