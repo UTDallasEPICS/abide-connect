@@ -75,6 +75,24 @@ function toggleEditMode() {
   isEditMode.value = !isEditMode.value
 }
 
+// async function geocodeLocation(location) {
+//   try {
+//     const response = await $fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1`)
+//     if (response && response.length > 0) {
+//       console.log('✅ Geocoding successful:', response[0])
+//       return {
+//         lat: parseFloat(response[0].lat),
+//         lng: parseFloat(response[0].lon)
+//       }
+//     }
+//   } catch (error) {
+//     console.error('❌ Geocoding error:', error)
+//   }
+//   return { lat: null, lng: null }
+// }
+
+// const coords = await geocodeLocation(editForm.value.location)
+
 async function saveChanges() {
   try {
     console.log('💾 Saving changes...')
@@ -87,6 +105,8 @@ async function saveChanges() {
         shortDesc: editForm.value.shortDesc,
         description: editForm.value.description,
         location: editForm.value.location,
+        lat: coords.lat,
+        lng: coords.lng,
         startTime: new Date(editForm.value.startTime).toISOString(),
         endTime: new Date(editForm.value.endTime).toISOString(),
         allowVolunteers: editForm.value.allowVolunteers,
