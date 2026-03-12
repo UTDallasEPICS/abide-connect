@@ -22,7 +22,7 @@ const notificationOptions = [
 </script>
 
 <template>
-    <div class="flex flex-col w-screen h-screen bg-white items-stretch">
+    <div class="min-h-screen flex flex-col bg-white dark:bg-gray-900">
          <!-- top nav bar with back button -->
         <main class="flex-1 px-5 pt-20 pb-24">
             <h2 class="text-xl font-semibold mb-6 text-brand7">

@@ -82,7 +82,7 @@ const formatTime = (timestamp: string) => {
 </script>
 
 <template>
-    <div class="flex flex-col w-screen h-screen bg-white items-stretch">
+    <div class="min-h-screen flex flex-col bg-white dark:bg-gray-900">
              <!-- Notifications accordion -->
              <div class="flex-1 w-full mx-auto mt-15">
                 <UAccordion
