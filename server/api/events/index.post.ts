@@ -1,5 +1,38 @@
 import prisma from '~~/server/utils/prisma'
 
+// Geocode location using Nominatim
+async function geocodeLocation(location: string) {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`,
+      {
+        headers: {
+          'User-Agent': 'Abide-Connect/1.0'
+        }
+      }
+    )
+    
+    if (!response.ok) {
+      console.warn(`Nominatim API error: ${response.status}`)
+      return null
+    }
+
+    const results = await response.json()
+    
+    if (results.length === 0) {
+      console.warn(`No geocoding results found for: ${location}`)
+      return null
+    }
+
+    const topResult = results[0]
+    console.log("latitude:", parseFloat(topResult.lat), "longitude:", parseFloat(topResult.lon))
+      
+  } catch (error) {
+    console.error('❌ Geocoding error:', error)
+    return null
+  }
+}
+
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
 
@@ -10,6 +43,8 @@ export default defineEventHandler(async (event) => {
       message: 'Missing required fields: title, startTime, endTime' 
     })
   }
+
+  
 
   try {
     // Create the event in the database

@@ -6,6 +6,7 @@ export default defineEventHandler(async (_event) => {
       include: {
         eventAssets: true,
         volunteerHours: true,
+        location: true,
         participants: true
       },
       orderBy: {

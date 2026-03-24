@@ -75,23 +75,6 @@ function toggleEditMode() {
   isEditMode.value = !isEditMode.value
 }
 
-// async function geocodeLocation(location) {
-//   try {
-//     const response = await $fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1`)
-//     if (response && response.length > 0) {
-//       console.log('✅ Geocoding successful:', response[0])
-//       return {
-//         lat: parseFloat(response[0].lat),
-//         lng: parseFloat(response[0].lon)
-//       }
-//     }
-//   } catch (error) {
-//     console.error('❌ Geocoding error:', error)
-//   }
-//   return { lat: null, lng: null }
-// }
-
-// const coords = await geocodeLocation(editForm.value.location)
 
 async function saveChanges() {
   try {
@@ -105,8 +88,6 @@ async function saveChanges() {
         shortDesc: editForm.value.shortDesc,
         description: editForm.value.description,
         location: editForm.value.location,
-        lat: coords.lat,
-        lng: coords.lng,
         startTime: new Date(editForm.value.startTime).toISOString(),
         endTime: new Date(editForm.value.endTime).toISOString(),
         allowVolunteers: editForm.value.allowVolunteers,
@@ -401,11 +382,11 @@ const backNavigate = computed(() => {
             <div class="flex-1">
               <p class="text-sm text-gray-500 mb-1">Location</p>
               <p v-if="!isEditMode" class="text-gray-900 font-medium">
-                {{ event.location }}
+                {{ event.location.address }}
               </p>
               <UInput
                 v-else
-                v-model="editForm.location"
+                v-model="editForm.location.adress"
                 placeholder="Event Location"
               />
             </div>
