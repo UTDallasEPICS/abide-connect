@@ -26,6 +26,12 @@ async function geocodeLocation(location: string) {
 
     const topResult = results[0]
     console.log("latitude:", parseFloat(topResult.lat), "longitude:", parseFloat(topResult.lon))
+    return {
+      latitude: parseFloat(topResult.lat),
+      longitude: parseFloat(topResult.lon),
+      address: location
+    }
+    
       
   } catch (error) {
     console.error('❌ Geocoding error:', error)
@@ -44,7 +50,28 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  
+  //check if location has already been fetched
+  const locationData = await prisma.location.findUnique({
+    where: {
+      address: body.location || null
+    },
+    select: {
+      latitude: true,
+      longitude: true,
+      address: true
+    }
+  }) || await geocodeLocation(body.location)
+
+  console.log('📍 Location data from DB:', locationData)
+
+
+  if (!locationData) {
+    throw createError({ 
+      statusCode: 400, 
+      message: 'Invalid location provided and geocoding failed' 
+    })
+  }
+
 
   try {
     // Create the event in the database
@@ -53,12 +80,18 @@ export default defineEventHandler(async (event) => {
         title: body.title,
         shortDesc: body.shortDesc || null,
         description: body.description || null,
-        location: body.location || null,
+        location: {
+          connectOrCreate: {
+            where: {
+              address: body.location || null
+            },
+            create: locationData!
+          }
+        },
         startTime: new Date(body.startTime),
         endTime: new Date(body.endTime),
         allowVolunteers: body.allowVolunteers || false,
         allowAttendees: body.allowAttendees || false,
-        mobileClinicId: body.mobileClinicId || null,
       },
       include: {
         eventAssets: true

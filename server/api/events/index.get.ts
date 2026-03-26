@@ -6,7 +6,6 @@ export default defineEventHandler(async (_event) => {
       include: {
         eventAssets: true,
         volunteerHours: true,
-        location: true,
         participants: true
       },
       orderBy: {
@@ -18,7 +17,6 @@ export default defineEventHandler(async (_event) => {
     return allEvents
     
   } catch (error) {
-    console.error('❌ Error fetching events:', error)
     throw createError({ 
       statusCode: 500, 
       message: 'Failed to fetch events' 

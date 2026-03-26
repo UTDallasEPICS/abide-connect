@@ -1,9 +1,9 @@
 import fs  from 'fs';
 import type { Language, Gender, Availability, Ethinicity, ApprovalStatus } from "./generated/prisma/client.ts";
 import { PrismaClient } from './generated/prisma/client.ts';
-import { PrismaBetterSQLite3 } from '@prisma/adapter-better-sqlite3';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 
-const adapter = new PrismaBetterSQLite3({
+const adapter = new PrismaBetterSqlite3({
     url: process.env.DATABASE_URL
   })
   const prisma = new PrismaClient({ adapter })
@@ -15,7 +15,11 @@ type RawEvent = {
   description: string,
   startTime: string,
   endTime: string,
-  location: string,
+  location: {
+    longitude: number,
+    latitude: number,
+    address: string
+  },
   allowVolunteers: boolean,
   allowAttendees: boolean,
   eventAssets: string[]
@@ -80,6 +84,18 @@ async function main() {
             imageUrl: imageUrl
           }
         })
+      },
+      location: {
+        connectOrCreate:{
+          where: {
+            address: event.location.address
+          },
+          create: {
+            longitude: event.location.longitude,
+            latitude: event.location.latitude,
+            address: event.location.address
+          }
+        }
       }
     };
   })

@@ -1,6 +1,6 @@
 model Location{
     id        String   @id @default(uuid())
-    address   String
+    address   String   @unique
     latitude  Float
     longitude Float
     events    Event[]

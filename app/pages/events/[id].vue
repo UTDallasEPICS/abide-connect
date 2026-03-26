@@ -17,9 +17,6 @@ const editForm = ref({})
 //placeholder until we implement auth
 const admin = true;
 
-const style = '/mapstyles.json'
-const center = [-96.77049780046936, 32.772891246510596]
-const zoom = 15
 
 // Fetch event data from API on mount
 onMounted(async () => {
@@ -66,6 +63,10 @@ const formattedDate = computed(() => {
   
   return `${dateStr} • ${startTime} - ${endTime}`
 })
+
+const style = '/mapstyles.json'
+const center = computed(() => [event.value.location.longitude, event.value.location.latitude])
+const zoom = 15
 
 function toggleEditMode() {
   if (isEditMode.value) {
@@ -386,7 +387,7 @@ const backNavigate = computed(() => {
               </p>
               <UInput
                 v-else
-                v-model="editForm.location.adress"
+                v-model="editForm.location.address"
                 placeholder="Event Location"
               />
             </div>
