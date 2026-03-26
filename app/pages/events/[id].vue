@@ -6,7 +6,7 @@ const route = useRoute()
 
 // Get the ID from the route params
 const eventId = route.params.id
-const { data: event, error } = await useFetch(`/api/events/${route.params.id}`)
+const { data: event} = await useFetch(`/api/events/${route.params.id}`)
 
 const loading = ref(true)
 const notFound = ref(false)
@@ -174,7 +174,7 @@ async function uploadNewImages() {
 }
 
 function removeImage(index) {
-  const asset = editForm.value.eventAssets[index]
+  // const asset = editForm.value.eventAssets[index]
   
   // If it's a preview (not yet uploaded), just remove from array
   editForm.value.eventAssets.splice(index, 1)
@@ -237,7 +237,7 @@ const backNavigate = computed(() => {
             @click="navigateTo(backNavigate)"
           />
           
-          <div v-if="admin"class="flex gap-2">
+          <div v-if="admin" class="flex gap-2">
             <UButton
               v-if="!isEditMode"
               icon="i-lucide-pencil"

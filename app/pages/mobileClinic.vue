@@ -17,14 +17,16 @@
           :snap-points="snapPoints"
             >
           <template #content>
-            <EventTile v-if ="pastEvents.length === 0"
+            <EventTile
+v-if ="pastEvents.length === 0"
               class="w-11/12 mx-auto my-4 cursor-pointer"
               title="No past events"
               subtitle="Check back later for updates!"
               
             />
-            <EventTile v-else
-              v-for="event in pastEvents"
+            <EventTile
+v-for="event in pastEvents"
+              v-else
               :key="event.id"
               class="w-11/12 mx-auto my-4 cursor-pointer"
               :title="event.title"
@@ -81,22 +83,8 @@ async function loadEvents() {
   }
 }
 
-async function addEventToList(event) {
-  console.log('✅ New event received from modal:', event)
-  await loadEvents()
-  showAddModal.value = false
-}
 
-function closeModal() {
-  showAddModal.value = false
-}
-
-async function navigateToEvent(eventId) {
-  console.log('🚀 Navigating to event:', eventId)
-  await navigateTo(`/events/${eventId}`)
-}
-
-async function mapAdjust(event) {
+async function mapAdjust() {
 
   const lng = -96.749788
   const lat = 32.985141
