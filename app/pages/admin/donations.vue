@@ -4,40 +4,13 @@ import { ref, computed } from 'vue'
 definePageMeta({
   layout: 'secondary',
 })
-const funds = ref([
-{
-    id: 1,
-    name: "Prenatal Care",
-    startDate: "1/1/26",
-    endDate: "1/1/27",
-    link: "https://www.example.com/prenatal-care",
-    image: "/images/image1.jpeg"
-},
-{
-    id: 2,
-    name: "Postpartum Care",
-    startDate: "1/1/26",
-    endDate: "1/1/27",
-    link: "https://www.example.com/postpartum-care",
-    image: "/images/image1.jpeg"
-},
-{
-    id: 3,
-    name: "Childbirth Education",
-    startDate: "1/1/26",
-    endDate: "1/1/27",
-    link: "https://www.example.com/childbirth-education",
-    image: "/images/image1.jpeg"
-},
-{
-    id: 4,
-    name: "Mobile Clinic",
-    startDate: "1/1/26",
-    endDate: "1/1/27",
-    link: "https://www.example.com/mobile-clinic",
-    image: "/images/image1.jpeg"
-}
-])
+
+//Backend
+const { data: fundsData, execute: refresh } = await useAsyncData(
+  'donations',
+  () => $fetch<any[]>('/api/admin/donations')
+)
+const funds = computed(() => fundsData.value ?? [])
 
 //Make dates pretty
 function formatShort(dateStr: string) {
@@ -70,55 +43,86 @@ const editImagePrevies = ref('')
 
 
 //New Fund Save
-function saveFund(close: () => void) {
-  const imageUrl = image.value ? URL.createObjectURL(image.value) : '/images/image1.jpeg'
-  funds.value.push({
-    id: funds.value.length + 1,
+async function saveFund(close: () => void) {
+  //create the new fund on the backend
+  const newDonation = await $fetch<{ id: string }>('/api/admin/donations', {
+  method: 'POST',
+  body: {
     name: fundName.value,
+    link: link.value,
     startDate: startDate.value,
     endDate: endDate.value,
-    image: imageUrl,
-    link: link.value
-  })
-  fundName.value = ''
-  startDate.value = ''
-  endDate.value = ''
-  image.value = null
-  link.value = ''
-  close()
+  },
+})
+  //add the image if it has one
+    if (image.value) {
+        const formData = new FormData()
+        formData.append('file', image.value)
+        await $fetch(`/api/admin/donations/${newDonation.id}/image`, {
+        method: 'POST',
+        body: formData,
+        })
+    }
+    await refresh()
+    fundName.value = ''
+    startDate.value = ''
+    endDate.value = ''
+    image.value = null
+    link.value = ''
+    close()
 }
 
-//Editing Fund Save
 
-async function openEdit(fund: typeof funds.value[0]) {
+//Editing Fund Modal
+async function openEdit(fund: any) {
   editingFund.value = fund
   editFundName.value = fund.name
-  editStartDate.value = fund.startDate
-  editEndDate.value = fund.endDate
+  editStartDate.value = fund.startDate.split('T')[0] ?? ''
+  editEndDate.value = fund.endDate.split('T')[0] ?? ''
   editLink.value = fund.link
-
-  const response = await fetch(fund.image)
-  const blob = await response.blob()
-  editImage.value = new File([blob], "fund-image", { type: blob.type })
-
+  editImagePrevies.value = fund.image
   editOpen.value = true
  
 }
-function saveEdit(close: () => void) {
-  const target = funds.value.find(f => f.id === editingFund.value?.id)
-  if (target) {
-    target.name = editFundName.value
-    target.startDate = editStartDate.value
-    target.endDate = editEndDate.value
-    target.link = editLink.value
-    target.image = editImage.value ? URL.createObjectURL(editImage.value) : target.image
+//Editing Fund Save
+async function saveEdit(close: () => void) {
+  if (!editingFund.value) return
+  await $fetch(`/api/admin/donations/${editingFund.value.id}`, {
+    method: 'PUT',
+    body: {
+      name: editFundName.value,
+      link: editLink.value,
+      startDate: editStartDate.value,
+      endDate: editEndDate.value,
+      imageUrl: editingFund.value?.image,
+    },
+  })
+  //add the image if it has one
+  if (editImage.value) {
+    const formData = new FormData()
+    formData.append('file', editImage.value)
+    await $fetch(`/api/admin/donations/${editingFund.value.id}/image`, {
+      method: 'POST',
+      body: formData,
+    })
   }
+  await refresh()
   editOpen.value = false
   close()
 }
 
-function deleteFund(id: number) {
-  funds.value = funds.value.filter(f => f.id !== id)
+//delete Fund
+async function deleteFund(id: string) {
+  await $fetch(`/api/admin/donations/${id}`, {
+    method: 'DELETE',
+  })
+  await refresh()
+}
+
+//Create Image URL
+function getImageUrl(fund: any) {
+  if (!fund.imageUrl) return '/images/image1.jpeg'
+  return `/api/admin/donations/${fund.id}/image/${fund.imageUrl.split('/').pop()}`
 }
 
 </script>
@@ -132,14 +136,14 @@ function deleteFund(id: number) {
         <!--New Button-->
         <div class="px-6 mt-4 justify-end">
             <UModal v-model:open="open" title="New Fund" :ui="{footer: 'justify-end'}">
-                <Ubutton
+                <UButton
                 class="grid place-items-center rounded-xl h-9 w-9 
                 border border-gray-800/70
                 hover:bg-gray-100/70 
                 transition duration-200"
                 >
                 <UIcon name="i-heroicons-plus" class="w-5 h-5" />
-                </Ubutton>
+                </UButton>
                 <!--New Modal-->
                 <template #body>
                     <div class="space-y-4">
@@ -225,7 +229,7 @@ function deleteFund(id: number) {
                 </div>
             </template>
             <template #footer="{ close }">
-                <UButton label="Delete" color="brand7" @click="deleteFund(editingFund?.id || 0); close()" />
+                <UButton label="Delete" color="brand7" @click="editingFund && deleteFund(editingFund.id)" />
                 <UButton label="Save" color="brand4" @click="saveEdit(close)" />
             </template>
         </UModal>
