@@ -1,5 +1,9 @@
 <script setup lang="ts">
 defineEmits(['add'])
+defineProps<{
+  title: string
+  subtitle?: string
+}>()
 </script>
 <template>
   <div
@@ -11,8 +15,13 @@ defineEmits(['add'])
 
     <!-- Text lines -->
     <div class="flex-1">
-      <p class="h-3 w-40 rounded bg-rose-300/40 dark:bg-rose-400/30 mb-2"/>
-      <p class="h-3 w-28 rounded bg-rose-300/30 dark:bg-rose-400/20"/>
+      <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+      {{ title }}
+      </p>
+
+      <p class="text-xs text-gray-500 dark:text-gray-400">
+      {{ subtitle }}
+      </p>
     </div>
 
     <!-- Plus button -->

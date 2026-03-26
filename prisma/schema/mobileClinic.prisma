@@ -12,7 +12,8 @@ model Mobile_Clinic_Schedule {
   id             Int          @id @default(autoincrement())
   mobileClinic   MobileClinic @relation(fields: [mobileClinicId], references: [id])
   mobileClinicId String
-  location       String
+  location        Location @relation(fields: [locationId], references: [id])
+  locationId      String
   datetime       DateTime
 
   @@map("schedule")
@@ -22,7 +23,8 @@ model Mobile_Clinic_Timeline {
   id             Int          @id @default(autoincrement())
   mobile_clinic  MobileClinic @relation(fields: [mobileClinicId], references: [id])
   mobileClinicId String
-  location       String
+  location        Location @relation(fields: [locationId], references: [id])
+  locationId      String
   datetime       DateTime
 
   @@map("timeline")
