@@ -1,0 +1,9 @@
+model Location{
+    id        String   @id @default(uuid())
+    address   String   @unique
+    latitude  Float
+    longitude Float
+    events    Event[]
+    mobileClinicSchedule Mobile_Clinic_Schedule[]
+    mobileClinicTimeline Mobile_Clinic_Timeline[]
+}

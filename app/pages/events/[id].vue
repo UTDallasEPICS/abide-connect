@@ -6,7 +6,7 @@ const route = useRoute()
 
 // Get the ID from the route params
 const eventId = route.params.id
-const { data: event, error } = await useFetch(`/api/events/${route.params.id}`)
+const { data: event} = await useFetch(`/api/events/${route.params.id}`)
 
 const loading = ref(true)
 const notFound = ref(false)
@@ -17,9 +17,6 @@ const editForm = ref({})
 //placeholder until we implement auth
 const admin = true;
 
-const style = '/mapstyles.json'
-const center = [-96.77049780046936, 32.772891246510596]
-const zoom = 15
 
 // Fetch event data from API on mount
 onMounted(async () => {
@@ -67,6 +64,10 @@ const formattedDate = computed(() => {
   return `${dateStr} • ${startTime} - ${endTime}`
 })
 
+const style = '/mapstyles.json'
+const center = computed(() => [event.value.location.longitude, event.value.location.latitude])
+const zoom = 15
+
 function toggleEditMode() {
   if (isEditMode.value) {
     // Cancel editing - reset form to original event data
@@ -74,6 +75,7 @@ function toggleEditMode() {
   }
   isEditMode.value = !isEditMode.value
 }
+
 
 async function saveChanges() {
   try {
@@ -172,7 +174,7 @@ async function uploadNewImages() {
 }
 
 function removeImage(index) {
-  const asset = editForm.value.eventAssets[index]
+  // const asset = editForm.value.eventAssets[index]
   
   // If it's a preview (not yet uploaded), just remove from array
   editForm.value.eventAssets.splice(index, 1)
@@ -235,7 +237,7 @@ const backNavigate = computed(() => {
             @click="navigateTo(backNavigate)"
           />
           
-          <div v-if="admin"class="flex gap-2">
+          <div v-if="admin" class="flex gap-2">
             <UButton
               v-if="!isEditMode"
               icon="i-lucide-pencil"
@@ -381,11 +383,11 @@ const backNavigate = computed(() => {
             <div class="flex-1">
               <p class="text-sm text-gray-500 mb-1">Location</p>
               <p v-if="!isEditMode" class="text-gray-900 font-medium">
-                {{ event.location }}
+                {{ event.location.address }}
               </p>
               <UInput
                 v-else
-                v-model="editForm.location"
+                v-model="editForm.location.address"
                 placeholder="Event Location"
               />
             </div>
