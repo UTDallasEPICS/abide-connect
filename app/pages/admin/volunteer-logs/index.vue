@@ -1,25 +1,22 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
 const activeTab = ref('pending')
 const router = useRouter()
 
-function goToLog(id: string) {
-    router.push(`/admin/volunteer-logs/${id}`)
-}
 
 const tabs = [
     { id: 'pending', label: 'Pending' },
     { id: 'approved', label: 'Approved' },
     { id: 'rejected', label: 'Rejected' }
 ]
+
+function setStatus(id: string, status: LogStatus) {
+  const log = logs.value.find((l) => l.id === id)
+  if (log) log.status = status
+}
 function approve(id: string) {
   setStatus(id, 'approved')
 }
 
-function reject(id: string) {
-  setStatus(id, 'rejected')
-}
 type LogStatus = 'pending' | 'approved' | 'rejected'
 
 interface VolunteerLog {
@@ -60,10 +57,6 @@ const accordionItems = computed(() =>
 )
 
 
-function setStatus(id: string, status: LogStatus) {
-  const log = logs.value.find((l) => l.id === id)
-  if (log) log.status = status
-}
 
 // local UI state for inline reject
 const rejectingId = ref<string | null>(null)
