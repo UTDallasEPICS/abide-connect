@@ -1,6 +1,5 @@
 <script setup lang="ts">
 const activeTab = ref('pending')
-const router = useRouter()
 
 
 const tabs = [
@@ -102,11 +101,11 @@ function confirmReject(id: string) {
                 <button
                     v-for="tab in tabs"
                     :key="tab.id"
-                    @click="activeTab =tab.id"
                     class="px-4 py-2 rounded-full border"
                     :class="activeTab === tab.id
                         ? 'bg-teal-600 text-white border-teal-600'
                         : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-100'"
+                    @click="activeTab =tab.id"
                         >
                     {{  tab.label }}
                 </button>
