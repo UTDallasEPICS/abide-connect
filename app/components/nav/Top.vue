@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { authClient } from '~/utils/auth-client'
+import { authClient } from '~~/server/utils/auth-client'
 
-const colorMode = useColorMode()  // ← add this
+const colorMode = useColorMode()
 
 const onInboxClick = async (_e?: MouseEvent) => {
   await navigateTo('/inbox') 

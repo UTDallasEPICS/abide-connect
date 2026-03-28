@@ -1,12 +1,12 @@
 <script setup lang="ts">
 
+import type { DateValue } from "@internationalized/date";
+import { getLocalTimeZone, today } from "@internationalized/date";
+
+
 definePageMeta({
   middleware: 'auth'
 })
-
-
-import type { DateValue } from "@internationalized/date";
-import { getLocalTimeZone, today } from "@internationalized/date";
 
 const tz = getLocalTimeZone();
 
