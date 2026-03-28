@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import 'vue3-carousel/dist/carousel.css'
 import { Carousel, Slide, Pagination } from 'vue3-carousel'
+import type { Settings } from 'http2'
 
 const carouselConfig = {
   itemsToShow: 1,
@@ -9,42 +10,26 @@ const carouselConfig = {
   touchDrag: true,
   autoplay: 6000,
 }
+
+type Event = {
+  id: string
+  title: string
+  startTime: string
+  location: string
+  eventAssets: any[]
+}
+
+const { data: eventsData, pending, error } = await useFetch<Event[]>('/api/events', {
+  default: () => [],
+})
+
 const slides = ref([
   { id: 1, src: '/images/image1.jpeg', alt: 'Slide 1' },
   { id: 2, src: '/images/image1.jpeg', alt: 'Slide 2' },
   { id: 3, src: '/images/image1.jpeg', alt: 'Slide 3' },
   { id: 4, src: '/images/image1.jpeg', alt: 'Slide 4' },
 ])
-const events = ref([
-  {
-    id: 1,
-    name: "Event 1",
-    date: "October 07, 2025",
-    location: "Location 1",
-    image: "/images/image1.jpeg"
-  },
-  {
-    id: 2,
-    name: "Event 2",
-    date: "October 15, 2025",
-    location: "Location 2",
-    image: "/images/image1.jpeg"
-  },
-  {
-    id: 3,
-    name: "Event 3",
-    date: "November 03, 2025",
-    location: "Location 3",
-    image: "/images/image1.jpeg"
-  },
-  {
-    id: 4,
-    name: "Event 4",
-    date: "November 20, 2025",
-    location: "Location 4",
-    image: "/images/image1.jpeg"
-  },
-])
+
 
 const handleSignUp = () => {
   navigateTo("/auth/sign-up");
@@ -59,7 +44,7 @@ const services = ref([
   },
   {
     id: 2,
-    name: "Postpatrun Care",
+    name: "Postpatrum Care",
     image: "/images/image1.jpeg",
     href: "https://www.abidewomen.org/postpartumcare"
   },
@@ -76,6 +61,24 @@ const services = ref([
     href: "https://www.abidewomen.org/mobile-clinic"
   },
 ])
+
+const events = computed(() =>
+  (eventsData.value || [])
+  //.filter(e => new Date(e.startTime).getTime() >= Date.now())
+  .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+  .slice(0, 6)
+  .map(e => ({
+    id: e.id,
+    title: e.title,
+    date: new Date(e.startTime).toLocaleDateString('en-US', {
+      month: 'short',
+      day: '2-digit',
+      year: 'numeric'
+  }),
+  location: e.location,
+  image: e.eventAssets?.[0]?.url ?? '/images/image1.jpeg',
+  }))
+)
 
 </script>
 
@@ -113,14 +116,13 @@ const services = ref([
               <div class="h-35 relative overflow-hidden">
                 <img
                   :src="event.image"
-                  :alt="event.name"
                   class="w-full h-full object-cover"
                 >
               </div>
               
               <!-- Event Content -->
               <div class="p-2">
-                <h4 class="text-sm font_semibold text-brand4 mb-1.5"> {{ event.name }}</h4>
+                <h4 class="text-sm font_semibold text-brand4 mb-1.5"> {{ event.title }}</h4>
               <div class="space-y-2">
                 <!--Date-->
                 <div class="flex items-center text-gray-600 text-[12px]">

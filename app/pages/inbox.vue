@@ -14,31 +14,38 @@ type Notification = {
   isRead: boolean
 }
 
-// notifications
-const notifications = ref<Notification[]>([
-  {
-    id: '1',
-    title: 'Notification 1',
-    content: 'Thank you for choosing Abide Women’s Health. This message contains several important reminders and helpful instructions to ensure your upcoming visit goes as smoothly as possible. Please plan to arrive 10–15 minutes early to allow time for check-in and any necessary paperwork. If you have recently experienced changes in your medical history, medications, or insurance coverage, bring any updated documents with you so our team can review them before your appointment begins.',
-    createdAt: '2025-10-27T10:30:00Z',
-    isRead: false
-  },
-  {
-    id: '2',
-    title: 'Notification 2',
-    content: 'Message 2',
-    createdAt: '2025-10-26T14:15:00Z',
-    isRead:false
-  },
-  {
-    id: '3',
-    title: 'Notification 3',
-    content: 'Message 3',
-    createdAt: '2025-10-25T09:00:00Z',
-    isRead: false
-  }
-])
 
+const { data: sessionData } = await useFetch('/api/auth/get-session')
+const userId = computed(() => (sessionData.value as any)?.user?.id ?? '24f667b1-c09f-4b9e-a57f-96b87d94327d')
+
+
+const notifications = ref<Notification[]>([])
+const loading = ref(false)
+const error = ref<string | null>(null)
+
+const fetchNotification = async () => {
+  if (!userId.value) return 
+  loading.value=true
+  error.value = null
+
+  try {
+    const data = await $fetch<{ notifications: Notification[] }>(
+      `/api/notification/${userId.value}`
+    )
+    notifications.value = data.notifications
+  } catch (err) {
+    console.error("Failed to fetch notifications", err)
+    error.value = "Failed to load notifications"
+  } finally {
+    loading.value = false
+  }
+}
+watch(userId, (id) => {
+  if (id) fetchNotification()
+}, { immediate: true }) 
+
+console.log('sessionData:', sessionData.value)
+console.log('userId:', userId.value)
 
 // map to uaccordion items
 const accordionItems = computed(() => 

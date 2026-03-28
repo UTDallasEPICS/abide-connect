@@ -1,9 +1,9 @@
 import fs  from 'fs';
 import type { Language, Gender, Availability, Ethinicity, ApprovalStatus } from "./generated/prisma/client.ts";
 import { PrismaClient } from './generated/prisma/client.ts';
-import { PrismaBetterSQLite3 } from '@prisma/adapter-better-sqlite3';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 
-const adapter = new PrismaBetterSQLite3({
+const adapter = new PrismaBetterSqlite3({
     url: process.env.DATABASE_URL
   })
   const prisma = new PrismaClient({ adapter })
@@ -54,15 +54,11 @@ type RawVolunteer = {
   }[]
 }
 
-// type RawNotification = {
-//   id: string,
-//   title: string,
-//   content: string,
-//   isRead: boolean,
-//   user: {
-//     email: string
-//   }[]
-// }
+ type RawNotification = {
+   id: string,
+   title: string,
+   content: string,
+ }
 
 async function main() {
   // Seed 5 events (3 future, 2 past) + images
@@ -186,29 +182,37 @@ async function main() {
   }
 
   // Seed six notifications - UNFINISHED
-  // const rawNotifications: RawNotification[] = JSON.parse(fs.readFileSync('prisma/seed/notifications.json').toString());
-  // // Convert each notification into an upsertable format
-  // const notifications = rawNotifications.map((notification) => {
-  //   return {
-  //     ...notification,
-  //     user: {
-  //       connect: notification.user.map((notificationUser) => {
-  //         return {
-  //           email: notificationUser.email
-  //         }
-  //       }),
-  //     }
-  //   }
-  // })
-  // // Upsert each notification
-  // for(const notification of notifications) {
-  //   const notificationResult = await prisma.notification.upsert({
-  //     where: { id: notification.id },
-  //     update: {},
-  //     create: notification
-  //   })
-  //   console.log(notificationResult)
-  // }
+   console.log("Seeding notifications...")
+  const rawNotifications: RawNotification[] = JSON.parse(fs.readFileSync('prisma/seed/notifications.json').toString());
+  const allUsers = await prisma.user.findMany()
+  for (const notification of rawNotifications) {
+    const notificationResult = await prisma.notification.upsert({
+      where: { id: notification.id },
+      update: {},
+      create: {
+        id: notification.id,
+        title: notification.title,
+        content: notification.content,
+      }
+    })
+    // Link to all users
+    for (const user of allUsers) {
+      await prisma.user_Notification.upsert({
+        where: {
+          userId_notificationId: {
+            userId: user.id,
+            notificationId: notificationResult.id
+          }
+        },
+        update: {},
+        create: {
+          userId: user.id,
+          notificationId: notificationResult.id,
+        }
+      })
+    }
+    console.log(notificationResult)
+  }
 }
 
 main()
