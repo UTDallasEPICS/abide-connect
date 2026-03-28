@@ -15,7 +15,11 @@ type RawEvent = {
   description: string,
   startTime: string,
   endTime: string,
-  location: string,
+  location: {
+    longitude: number,
+    latitude: number,
+    address: string
+  },
   allowVolunteers: boolean,
   allowAttendees: boolean,
   eventAssets: string[]
@@ -80,6 +84,18 @@ async function main() {
             imageUrl: imageUrl
           }
         })
+      },
+      location: {
+        connectOrCreate:{
+          where: {
+            address: event.location.address
+          },
+          create: {
+            longitude: event.location.longitude,
+            latitude: event.location.latitude,
+            address: event.location.address
+          }
+        }
       }
     };
   })
