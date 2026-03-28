@@ -1,3 +1,4 @@
+import { error } from 'node:console'
 import prisma from '~~/server/utils/prisma'
 
 // Geocode location using Nominatim
@@ -39,7 +40,6 @@ async function geocodeLocation( location: string) {
 }
 
 
-
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   const body = await readBody(event)
@@ -51,17 +51,20 @@ export default defineEventHandler(async (event) => {
     //check if location has already been fetched
   const locationData = await prisma.location.findUnique({
     where: {
-      address: body.location || null
+      address: body.location.address || null
     },
     select: {
       latitude: true,
       longitude: true,
       address: true
     }
-  }) || await geocodeLocation(body.location)
+  }) || await geocodeLocation(body.location.address)
+
+  if (!locationData) {
+    throw createError({ statusCode: 500, message: 'Failed to retrieve or create location data' })
+  }
 
   console.log('📍 Location data from DB:', locationData)
-
 
   if (!locationData) {
     throw createError({ 
@@ -84,21 +87,16 @@ export default defineEventHandler(async (event) => {
     const updatedEvent = await prisma.event.update({
       where: { id },
       data: {
-        title: body.title,
-        shortDesc: body.shortDesc,
-        description: body.description,
+        ...body,
         location: {
           connectOrCreate: {
             where: {
-              address: body.location || null
+              address: body.location.address
             },
             create: locationData!
           }
         },
-        startTime: new Date(body.startTime),
-        endTime: new Date(body.endTime),
-        allowVolunteers: body.allowVolunteers,
-        allowAttendees: body.allowAttendees,
+       
       },
       include: {
         eventAssets: true
