@@ -1,4 +1,6 @@
 <script setup lang="ts">
+
+
 import 'vue3-carousel/dist/carousel.css'
 import { Carousel, Slide, Pagination } from 'vue3-carousel'
 
@@ -80,7 +82,7 @@ const services = ref([
 </script>
 
 <template>
-  <div class="flex flex-col bg-white">
+  <div class="min-h-screen flex flex-col bg-white dark:bg-gray-900">
     <div class="flex-1 mt-12 mb-12 pt-4 w-full h-full overflow-y-auto">
       <!-- Hero / Carousel Section -->
       <div class=" w-full max-h-[600px] overflow-y-auto">

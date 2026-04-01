@@ -33,6 +33,7 @@
   "devDependencies": {
     "@nuxt/eslint": "^1.9.0",
     "@types/node": "^24.3.1",
+    "@types/parse-path": "^7.1.0",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.34.0",
     "postcss": "^8.5.6",

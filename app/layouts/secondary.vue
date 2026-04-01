@@ -1,7 +1,5 @@
-
 <template>
-    <div class="w-screen h-full items-center">
-        <!-- layout with TopNav back button -->
+    <div class="w-screen h-full items-center bg-white dark:bg-gray-900">
         <NavSecondaryTop />
         <slot />
         <NavBottom />
