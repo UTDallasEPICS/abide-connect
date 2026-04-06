@@ -1,5 +1,6 @@
 import path from 'path'
 import fs from 'fs'
+import { randomUUID } from 'crypto'
 import prisma from '~~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
@@ -28,21 +29,24 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'Donation not found' })
   }
 
-  const dirPath = path.join(process.env.IMAGE_STORAGE_PATH || 'public/images', id)
+  const dirPath = path.join(process.env.IMAGE_STORAGE_PATH || 'public/images', 'donations', id)
 
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true })
   }
 
-  const filePath = path.join(dirPath, decodeURIComponent(file.filename || 'image.png'))
+  const ext = path.extname(file.filename || '.png')
+  const uniqueFilename = `${randomUUID()}${ext}`
+  const filePath = path.join(dirPath, uniqueFilename)
 
-  if (fs.existsSync(filePath)) {
-    throw createError({ statusCode: 400, message: 'Image already exists.' })
-  }
+console.log('filename:', file.filename)
+console.log('ext:', ext)
+console.log('uniqueFilename:', uniqueFilename)
+console.log('saving to:', filePath)
 
   fs.writeFileSync(filePath, file.data)
 
-  const imageUrl = path.join(id, file.filename || 'image.png')
+  const imageUrl = uniqueFilename
 
   await prisma.donation.update({
     where: { id },

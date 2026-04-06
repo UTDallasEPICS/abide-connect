@@ -6,9 +6,18 @@ definePageMeta({
 })
 
 //Backend
-const { data: fundsData, execute: refresh } = await useAsyncData(
+interface DonationFund {
+  id: string
+  name: string
+  link: string
+  startDate: string
+  endDate: string
+  imageUrl: string | null
+  updatedAt: string
+}
+const { data: fundsData, refresh } = await useAsyncData(
   'donations',
-  () => $fetch<any[]>('/api/admin/donations')
+  () => $fetch<DonationFund[]>('/api/admin/donations')
 )
 const funds = computed(() => fundsData.value ?? [])
 
@@ -74,13 +83,14 @@ async function saveFund(close: () => void) {
 
 
 //Editing Fund Modal
-async function openEdit(fund: any) {
+async function openEdit(fund: DonationFund) {
   editingFund.value = fund
   editFundName.value = fund.name
   editStartDate.value = fund.startDate.split('T')[0] ?? ''
   editEndDate.value = fund.endDate.split('T')[0] ?? ''
   editLink.value = fund.link
-  editImagePrevies.value = fund.image
+  editImagePrevies.value = fund.imageUrl ?? ''
+  editImage.value = null
   editOpen.value = true
  
 }
@@ -94,7 +104,7 @@ async function saveEdit(close: () => void) {
       link: editLink.value,
       startDate: editStartDate.value,
       endDate: editEndDate.value,
-      imageUrl: editingFund.value?.image,
+      imageUrl: editingFund.value?.imageUrl,
     },
   })
   //add the image if it has one
@@ -106,8 +116,9 @@ async function saveEdit(close: () => void) {
       body: formData,
     })
   }
-  await refresh()
+  editImage.value = null
   editOpen.value = false
+  await refresh()
   close()
 }
 
@@ -117,13 +128,9 @@ async function deleteFund(id: string) {
     method: 'DELETE',
   })
   await refresh()
+  editOpen.value = false
 }
 
-//Create Image URL
-function getImageUrl(fund: any) {
-  if (!fund.imageUrl) return '/images/image1.jpeg'
-  return `/api/admin/donations/${fund.id}/image/${fund.imageUrl.split('/').pop()}`
-}
 
 </script>
 <template>
@@ -137,10 +144,12 @@ function getImageUrl(fund: any) {
         <div class="px-6 mt-4 justify-end">
             <UModal v-model:open="open" title="New Fund" :ui="{footer: 'justify-end'}">
                 <UButton
+                color="brand4"
                 class="grid place-items-center rounded-xl h-9 w-9 
                 border border-gray-800/70
                 hover:bg-gray-100/70 
                 transition duration-200"
+                :ui="{ base: 'flex items-center justify-center' }"
                 >
                 <UIcon name="i-heroicons-plus" class="w-5 h-5" />
                 </UButton>
@@ -183,7 +192,7 @@ function getImageUrl(fund: any) {
                     <!-- Fund Image -->
                     <div class="h-35 relative overflow-hidden">
                         <img
-                        :src="fund.image"
+                        :src="fund.imageUrl ? `/api/admin/donations/${fund.id}/image?t=${new Date(fund.updatedAt).getTime()}` : ''"
                         :alt="fund.name"
                         class="w-full h-full object-cover"
                         >
