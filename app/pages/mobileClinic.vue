@@ -31,6 +31,9 @@
                 class="w-11/12 mx-auto my-4 cursor-pointer"
                 :title="event.title"
                 :subtitle="new Date(event.startTime).toLocaleString()"
+                button-type="arrow"
+                :eventId="event.id"
+                @add="eventClick"
                 @click="() => {
                   console.log('📍 Adjusting map to location:', event.location.address)
                   mapAdjust(event.location)
@@ -63,6 +66,11 @@ onMounted(async () => {
   await loadEvents()
 })
 
+const eventClick = (id) => {
+  if (!id) return
+  navigateTo(`/events/${id}`)
+}
+
 async function loadEvents() {
   try {
     const allEvents = await $fetch('/api/events')
@@ -93,5 +101,6 @@ async function mapAdjust(location) {
   center.value = [lng, lat]
   zoom.value = 17
 }
+
 
 </script>
