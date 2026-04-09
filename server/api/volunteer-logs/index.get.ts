@@ -18,7 +18,7 @@ export default eventHandler(async (event) => {
 
     const formattedLogs = logs.map(log => ({
       id: String(log.id),
-      name: log.volunteer.user?.name ?? log.volunteer.user?.contactEmail,
+      name: log.volunteer.user?.name ?? log.volunteer.user?.contactEmail ?? 'Unknown',
       event: log.event.title,
       date: log.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       hours: log.hours,

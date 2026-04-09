@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 const activeTab = ref('PENDING')
 
 
@@ -8,14 +9,9 @@ const tabs = [
     { id: 'REJECTED', label: 'Rejected' }
 ]
 
-function setStatus(id: string, status: LogStatus) {
-  const log = logs.value.find((l) => l.id === id)
-  if (log) log.status = status
-}
 
 type LogStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
 type ActionType = 'approve' | 'reject'
-
 
 interface VolunteerLog {
     id: string
@@ -27,14 +23,33 @@ interface VolunteerLog {
     comment?: string
 }
 
-// placeholder data for logs
-const logs = ref<VolunteerLog[]>([
-    { id: '1', name: 'John', event: 'Event 1', date: 'Feb 1, 2026', hours: 4, status: 'PENDING' },
-    { id: '2', name: 'Sofia', event: 'Event 2', date: 'Jan 10, 2026', hours: 3, status: 'PENDING' },
-    { id: '3', name: 'Emily', event: 'Event 3', date: 'Mar 3, 2025', hours: 2, status: 'APPROVED' },
-    { id: '4', name: 'Josh', event: 'Event 4', date: 'Apr 4, 2025', hours: 5, status: 'REJECTED' }
-])
+// fetch from database 
+const logs = ref<VolunteerLog[]>([])
+const loading = ref(false)
+const error = ref<string | null>(null)
 
+const fetchlogs = async () => {
+    loading.value = true
+    error.value = null
+    try {
+        const data = await $fetch<{ logs: VolunteerLog[] }>('/api/volunteer-logs')
+        console.log('API response:', data)
+        logs.value = data?.logs ?? []
+    } catch (err) {
+        console.error('Failed to fetch logs:', err)
+        error.value = 'Failed to load volunteer logs'
+    } finally {
+        loading.value = false 
+    }
+}
+
+await fetchlogs()
+
+
+function setStatus(id: string, status: LogStatus) {
+  const log = logs.value.find((l) => l.id === id)
+  if (log) log.status = status
+}
 
 const filteredLogs = computed(() => 
     logs.value.filter(log => log.status === activeTab.value)
@@ -94,6 +109,7 @@ function confirmAction(id: string) {
 
 </script>
 
+
 <template>
     <div class="flex flex-col w-screen min-h-screen bg-slate-50 items-stretch pb-20">
 
@@ -118,8 +134,22 @@ function confirmAction(id: string) {
                 </button>
              </div>
             <USeparator class="mt-8"/>
+            <!-- Loading -->
+            <div v-if="loading" class="flex justify-center items-center h-40">
+                <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin text-teal-600" />
+            </div>
+
+            <!-- Error -->
+            <div v-else-if="error" class="mt-8 text-red-500 text-sm">
+                {{ error }}
+            </div>
+
+            <!-- Empty -->
+            <div v-else-if="accordionItems.length === 0" class="mt-8 text-gray-400 text-sm text-center">
+                No {{ activeTab.toLowerCase() }} logs found.
+            </div>
              <!-- logs -->
-             <div class="mt-8">
+             <div v-else class="mt-8">
                 <UAccordion
                     type="multiple"
                     class="bg-slate-50 w-full"
