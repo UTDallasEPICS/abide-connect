@@ -17,22 +17,26 @@
           :snap-points="snapPoints"
             >
           <template #content>
-            <EventTile
-v-if ="pastEvents.length === 0"
-              class="w-11/12 mx-auto my-4 cursor-pointer"
-              title="No past events"
-              subtitle="Check back later for updates!"
-              
-            />
-            <EventTile
-v-for="event in pastEvents"
-              v-else
-              :key="event.id"
-              class="w-11/12 mx-auto my-4 cursor-pointer"
-              :title="event.title"
-              :subtitle="new Date(event.startTime).toLocaleString()"
-              @click="() => mapAdjust(event)"
-            />
+            <div class="max-h-[55vh] overflow-y-auto space-y-2 px-2 pb-4">
+              <EventTile
+                v-if="upcomingEvents.length === 0"
+                class="w-11/12 mx-auto my-4 cursor-pointer"
+                title="No upcoming events"
+                subtitle="Check back later for updates!"
+              />
+              <EventTile
+                v-for="event in upcomingEvents"
+                v-else
+                :key="event.id"
+                class="w-11/12 mx-auto my-4 cursor-pointer"
+                :title="event.title"
+                :subtitle="new Date(event.startTime).toLocaleString()"
+                @click="() => {
+                  console.log('📍 Adjusting map to location:', event.location.address)
+                  mapAdjust(event.location)
+                }"
+              />
+            </div>
           </template>
         </UDrawer>
       </div>
@@ -52,6 +56,7 @@ const snapPoints = ["230", "340", "450"]
 const pastEvents = ref([])
 const upcomingEvents = ref([])
 
+
 // Load all events from API on mount
 onMounted(async () => {
   console.log('✅ Page mounted - Loading events from API')
@@ -65,17 +70,13 @@ async function loadEvents() {
     
     const now = new Date()
     
-    pastEvents.value = allEvents.filter(event => {
-      const endTime = new Date(event.endTime)
-      return endTime < now
-    })
-    
-    upcomingEvents.value = allEvents.filter(event => {
+    const mobileClinicEvents = allEvents.filter(event => event.mobileClinicId !== null)
+
+    upcomingEvents.value = mobileClinicEvents.filter(event => {
       const endTime = new Date(event.endTime)
       return endTime >= now
     })
     
-    console.log('📅 Past events:', pastEvents.value.length)
     console.log('📅 Upcoming events:', upcomingEvents.value.length)
     
   } catch (error) {
@@ -83,12 +84,12 @@ async function loadEvents() {
   }
 }
 
-
-async function mapAdjust() {
-
-  const lng = -96.749788
-  const lat = 32.985141
+async function mapAdjust(location) {
   
+  const lng = location.longitude
+  const lat = location.latitude
+  
+  console.log(`📍 Adjusting map to event location: [${lng}, ${lat}]`)
   center.value = [lng, lat]
   zoom.value = 17
 }

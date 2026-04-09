@@ -144,7 +144,7 @@ function getEventDate(event) {
 
             <div class="flex flex-col text-left pointer-events-none">
               <p class="text-gray-800 font-semibold">{{ event.title }}</p>
-              <p class="text-gray-500 text-sm">{{ event.location }}</p>
+              <p class="text-gray-500 text-sm">{{ event.location.address }}</p>
               <p class="text-gray-400 text-xs">{{ getEventDate(event) }}</p>
             </div>
           </button>

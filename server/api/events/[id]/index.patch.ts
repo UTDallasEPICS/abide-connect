@@ -83,6 +83,23 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 404, message: 'Event not found' })
     }
 
+    const mobileClinicUpdate: Record<string, any> = {}
+    if (typeof body.mobileClinic === 'boolean') {
+      if (body.mobileClinic) {
+        if (!foundEvent.mobileClinicId) {
+          mobileClinicUpdate.mobileClinic = {
+            create: {}
+          }
+        }
+      } else {
+        if (foundEvent.mobileClinicId) {
+          mobileClinicUpdate.mobileClinic = {
+            disconnect: true
+          }
+        }
+      }
+    }
+
     // Update the event
     const updatedEvent = await prisma.event.update({
       where: { id },
@@ -96,10 +113,11 @@ export default defineEventHandler(async (event) => {
             create: locationData!
           }
         },
-       
+        ...mobileClinicUpdate
       },
       include: {
-        eventAssets: true
+        eventAssets: true,
+        location: true
       }
     })
 

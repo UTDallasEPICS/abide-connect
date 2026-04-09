@@ -12,7 +12,7 @@ const loading = ref(true)
 const notFound = ref(false)
 
 const isEditMode = ref(false)
-const editForm = ref({})
+const editForm = ref({ mobileClinic: false })
 
 //placeholder until we implement auth
 const admin = true;
@@ -26,7 +26,7 @@ onMounted(async () => {
     // Fetch event from your backend API
     event.value = await $fetch(`/api/events/${eventId}`)
     
-    editForm.value = { ...event.value }
+    editForm.value = { ...event.value, mobileClinic: Boolean(event.value?.mobileClinicId) }
     
     console.log('✅ Event loaded:', event.value)
     loading.value = false
@@ -71,7 +71,7 @@ const zoom = 15
 function toggleEditMode() {
   if (isEditMode.value) {
     // Cancel editing - reset form to original event data
-    editForm.value = { ...event.value }
+    editForm.value = { ...event.value, mobileClinic: Boolean(event.value?.mobileClinicId) }
   }
   isEditMode.value = !isEditMode.value
 }
@@ -82,7 +82,7 @@ async function saveChanges() {
     console.log('💾 Saving changes...')
     
     // Update event via API
-    await $fetch(`/api/events/${event.value.id}`, {
+    const updatedEvent = await $fetch(`/api/events/${event.value.id}`, {
       method: 'PATCH',
       body: {
         title: editForm.value.title,
@@ -92,7 +92,8 @@ async function saveChanges() {
         startTime: new Date(editForm.value.startTime).toISOString(),
         endTime: new Date(editForm.value.endTime).toISOString(),
         allowVolunteers: editForm.value.allowVolunteers,
-        allowAttendees: editForm.value.allowAttendees
+        allowAttendees: editForm.value.allowAttendees,
+        mobileClinic: editForm.value.mobileClinic
       }
     })
     
@@ -439,7 +440,7 @@ const backNavigate = computed(() => {
                 <UIcon name="i-lucide-users" class="w-5 h-5 text-brand4" />
                 <div>
                   <p class="font-medium text-gray-900">Volunteer Sign-ups</p>
-                  <p class="text-sm text-gray-500">Allow people to volunteer for this event</p>
+                  <p class="text-sm text-gray-500">Allow people to volunteer for this event?</p>
                 </div>
               </div>
               <label class="flex items-center gap-2 cursor-pointer">
@@ -452,7 +453,7 @@ const backNavigate = computed(() => {
                 <UIcon name="i-lucide-ticket" class="w-5 h-5 text-brand4" />
                 <div>
                   <p class="font-medium text-gray-900">Attendee Registration</p>
-                  <p class="text-sm text-gray-500">Allow people to register as attendees</p>
+                  <p class="text-sm text-gray-500">Allow people to register as attendees?</p>
                 </div>
               </div>
               <label v-if="isEditMode" class="flex items-center gap-2 cursor-pointer">
@@ -460,6 +461,22 @@ const backNavigate = computed(() => {
               </label>
               <label v-else class="flex items-center gap-2">
                 <UCheckbox :model-value="event.allowAttendees" color="brand4" disabled />
+              </label>
+            </div>
+
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+              <div class="flex items-center gap-3">
+                <UIcon name="i-lucide-ticket" class="w-5 h-5 text-brand4" />
+                <div>
+                  <p class="font-medium text-gray-900">Mobile Clinic</p>
+                  <p class="text-sm text-gray-500">Will this event have a mobile clinic?</p>
+                </div>
+              </div>
+              <label v-if="isEditMode" class="flex items-center gap-2 cursor-pointer">
+                <UCheckbox v-model="editForm.mobileClinic" color="brand4" />
+              </label>
+              <label v-else class="flex items-center gap-2">
+                <UCheckbox :model-value="Boolean(event.mobileClinicId)" color="brand4" disabled />
               </label>
             </div>
           </div>

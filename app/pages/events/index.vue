@@ -7,8 +7,9 @@ const tz = getLocalTimeZone()
 
 const value = ref<DateValue>(new CalendarDate(2022, 2, 3))
 
-const eventClick = () => {
-  navigateTo('/events/event1')
+const eventClick = (id?: string) => {
+  if (!id) return
+  navigateTo(`/events/${id}`)
 }
 
 const isDateDisabled = (d: DateValue) =>
@@ -39,10 +40,34 @@ const isDateDisabled = (d: DateValue) =>
         
 
         <div class="space-y-4">
-          <EventTile :onclick="eventClick"/>
-          <EventTile />
-          <EventTile />
-          <EventTile />
+          <EventTile
+            title="Community Health Fair"
+            subtitle="Tap to view details"
+            buttonType="arrow"
+            eventId="event1"
+            @add="eventClick"
+          />
+          <EventTile
+            title="Support Workshop"
+            subtitle="Tap to view details"
+            buttonType="arrow"
+            eventId="event2"
+            @add="eventClick"
+          />
+          <EventTile
+            title="Family Clinic"
+            subtitle="Tap to view details"
+            buttonType="arrow"
+            eventId="event3"
+            @add="eventClick"
+          />
+          <EventTile
+            title="Wellness Check"
+            subtitle="Tap to view details"
+            buttonType="arrow"
+            eventId="event4"
+            @add="eventClick"
+          />
         </div>
     </div>
   </div>
