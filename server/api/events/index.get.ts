@@ -4,6 +4,7 @@ export default defineEventHandler(async (_event) => {
   try {
     const allEvents = await prisma.event.findMany({
       include: {
+        location: true,
         eventAssets: true,
         volunteerHours: true,
         participants: true

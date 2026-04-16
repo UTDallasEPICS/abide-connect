@@ -15,7 +15,12 @@ type Event = {
   id: string
   title: string
   startTime: string
-  location: string
+  location: {
+    id: string
+    address: string
+    latitude: number
+    longitude: number
+  }
   eventAssets: any[]
 }
 
@@ -36,7 +41,7 @@ const events = computed(() =>
       day: '2-digit',
       year: 'numeric'
   }),
-  location: e.location,
+  location: e.location?.address,
   image: e.eventAssets?.[0]?.url ?? '/images/image1.jpeg',
   }))
 )
