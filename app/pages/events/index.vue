@@ -46,9 +46,9 @@ const isDateDisabled = (d: DateValue) =>
 </script>
 
 <template>
-  <div class="flex flex-col bg-white">
+  <div class="min-h-screen flex flex-col bg-white dark:bg-gray-900">
     <div class="w-full h-full mt-12 mb-12 px-4 py-12 overflow-y-auto">
-      <h2 class="text-2xl font-semibold text-brand4 mb-4">Events</h2>
+      <h2 class="text-center text-2xl font-bold text-brand4 dark:text-teal-400">Events</h2>
         
 
         <UCard class="max-w-4xl mx-auto mb-4">

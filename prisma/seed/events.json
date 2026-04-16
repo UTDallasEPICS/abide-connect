@@ -4,9 +4,13 @@
       "title": "Childcare Conference",
       "shortDesc": "A conference on childcare best practices",
       "description": "A conference bringing together childcare professionals.",
-      "startTime": "2026-12-15T09:00:00.000Z",
-      "endTime": "2026-12-15T17:00:00.000Z",
-      "location": "754 Colors Ct. Fort Worth, TX",
+      "startTime": "2025-12-15T09:00:00.000Z",
+      "endTime": "2025-12-15T17:00:00.000Z",
+      "location": {
+        "longitude": 9.896875,
+        "latitude": 32.77659,
+        "address": "123 Main St. Dallas, TX"
+      },
       "allowVolunteers": true,
       "allowAttendees": true,
       "eventAssets": []
@@ -18,7 +22,11 @@
       "description": "An event focused on health screenings and wellness education.",
       "startTime": "2025-12-20T10:00:00.000Z",
       "endTime": "2025-12-20T15:00:00.000Z",
-      "location": "321 Adieu Ave. Richardson, TX",
+      "location": {
+        "longitude": 9.896875,
+        "latitude": 32.77659,
+        "address": "321 Adieu Ave. Richardson, TX"
+      },
       "allowVolunteers": true,
       "allowAttendees": false,
       "eventAssets": []
@@ -30,7 +38,11 @@
       "description": "A presentation increasing awareness of maternity problems and their solutions",
       "startTime": "2025-12-21T10:00:00.000Z",
       "endTime": "2025-12-21T15:00:00.000Z",
-      "location": "123 State St. Dallas, TX",
+      "location": {
+        "longitude": 9.896875,
+        "latitude": 32.77659,
+        "address": "456 Forza St. Coppell, TX"
+      },
       "allowVolunteers": false,
       "allowAttendees": true,
       "eventAssets": []
@@ -42,7 +54,11 @@
       "description": "A day full of helping mothers in need by providing free supplies in an easy to access location",
       "startTime": "2025-08-21T08:00:00.000Z",
       "endTime": "2025-08-21T17:00:00.000Z",
-      "location": "123 State St. Dallas, TX",
+      "location": {
+        "longitude": 9.896875,
+        "latitude": 32.77659,
+        "address": "683 Forza St. Coppell, TX"
+      },
       "allowVolunteers": true,
       "allowAttendees": false,
       "eventAssets": []
@@ -54,7 +70,11 @@
         "description": "A drive focused on providing mothers with items for infants ages 0-6 months",
         "startTime": "2025-08-19T08:00:00.000Z",
         "endTime": "2025-08-19T12:00:00.000Z",
-        "location": "777 Forza St. Coppell, TX",
+        "location": {
+          "longitude": -96.749788,
+          "latitude": 32.985141,
+          "address": "786 Adieu Ave. Richardson, TX"
+        },
         "allowVolunteers": false,
         "allowAttendees": true,
         "eventAssets": []
