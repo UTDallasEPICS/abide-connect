@@ -1,15 +1,56 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-const volunteers = ref([
-  { id: 1, name: 'Bob Johnson', verified: false },
-  { id: 2, name: 'Maria Lopez', verified: true },
-  { id: 3, name: 'Sarah Kim', verified: false },
-  { id: 4, name: 'David Chen', verified: true }
-])
+type Volunteer = {
+  id: number
+  name: string
+  verified: boolean
+}
 
-function toggle(v: any) {
-  v.verified = !v.verified
+const volunteers = ref<Volunteer[]>([])
+
+const { data } = await useFetch('/api/admin/training')
+
+volunteers.value =
+  data.value?.map((v: any) => ({
+    id: v.id,
+    name: v.name || 'Unknown Volunteer',
+    verified: v.status === 'APPROVED'
+  })) || []
+  const newName = ref('')
+const newEmail = ref('')
+
+async function addVolunteer() {
+
+  const newVolunteer = await $fetch('/api/admin/training', {
+    method: 'POST',
+    body: {
+      name: newName.value,
+      email: newEmail.value
+    }
+  })
+
+  volunteers.value.push({
+    id: newVolunteer.id,
+    name: newVolunteer.name,
+    verified: false
+  })
+
+  newName.value = ''
+  newEmail.value = ''
+}
+
+async function toggle(v: Volunteer) {
+
+v.verified = !v.verified
+
+await $fetch('/api/admin/volunteer', {
+  method: 'PATCH',
+  body: {
+    id: v.id,
+    verified: v.verified
+  }
+})
 }
 
 function removePerson(id: number) {
@@ -20,6 +61,12 @@ function removePerson(id: number) {
 <template>
   <div class="page">
     <h1>Volunteer Verification</h1>
+
+ <div class="add-form">
+    <input v-model="newName" placeholder="Volunteer Name" />
+    <input v-model="newEmail" placeholder="Email" />
+    <button @click="addVolunteer">Add Volunteer</button>
+  </div>
 
     <div 
       class="card" 

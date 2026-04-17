@@ -3,12 +3,12 @@ import prisma from "~~/server/utils/prisma";
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
 
-  return await prisma.trainingCertificate.update({
-    where: {
-      id: body.id
-    },
+  return await prisma.trainingCertificate.create({
     data: {
-      status: body.verified ? "APPROVED" : "PENDING"
+      name: body.name,
+      email: body.email,
+      fileUrl: "",
+      status: "PENDING"
     }
   });
 });
