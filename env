@@ -1,0 +1,7 @@
+BETTER_AUTH_SECRET=I6oYdCbnOX2GJANjKXg3c89leZiUA0Md
+BETTER_AUTH_URL=http://localhost:3000
+
+DATABASE_URL="file:./prisma/dev.db"
+PRISMA_DB_URL="file:../dev.db"
+IMAGE_STORAGE_PATH="/home/vikachubro21/documents/projects/abide-images"
+IMAGE_URL_PATH="/api/events"

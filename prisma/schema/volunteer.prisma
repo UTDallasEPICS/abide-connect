@@ -13,6 +13,7 @@ model Volunteer {
   events         RSVP[]
 
   emailVerified Boolean   @default(false)
+  zoomVerified  Boolean   @default(false)   
   imageURL      String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @default(now()) @updatedAt

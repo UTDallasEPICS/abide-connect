@@ -62,3 +62,14 @@ model Verification {
 
   @@map("verification")
 }
+
+model TrainingCertificate {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  fileUrl   String
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+}
+
+
