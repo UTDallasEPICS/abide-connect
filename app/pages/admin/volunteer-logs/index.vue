@@ -1,22 +1,17 @@
 <script setup lang="ts">
-const activeTab = ref('pending')
+import { onMounted } from 'vue'
+const activeTab = ref('PENDING')
 
 
 const tabs = [
-    { id: 'pending', label: 'Pending' },
-    { id: 'approved', label: 'Approved' },
-    { id: 'rejected', label: 'Rejected' }
+    { id: 'PENDING', label: 'Pending' },
+    { id: 'APPROVED', label: 'Approved' },
+    { id: 'REJECTED', label: 'Rejected' }
 ]
 
-function setStatus(id: string, status: LogStatus) {
-  const log = logs.value.find((l) => l.id === id)
-  if (log) log.status = status
-}
-function approve(id: string) {
-  setStatus(id, 'approved')
-}
 
-type LogStatus = 'pending' | 'approved' | 'rejected'
+type LogStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+type ActionType = 'approve' | 'reject'
 
 interface VolunteerLog {
     id: string
@@ -25,18 +20,36 @@ interface VolunteerLog {
     date: string
     hours: number
     status: LogStatus
-    notes?: string
-    rejectReason?: string
+    comment?: string
 }
 
-// placeholder data for logs
-const logs = ref<VolunteerLog[]>([
-    { id: '1', name: 'John', event: 'Event 1', date: 'Feb 1, 2026', hours: 4, status: 'pending' },
-    { id: '2', name: 'Sofia', event: 'Event 2', date: 'Jan 10, 2026', hours: 3, status: 'pending' },
-    { id: '3', name: 'Emily', event: 'Event 3', date: 'Mar 3, 2025', hours: 2, status: 'approved' },
-    { id: '4', name: 'Josh', event: 'Event 4', date: 'Apr 4, 2025', hours: 5, status: 'rejected' }
-])
+// fetch from database 
+const logs = ref<VolunteerLog[]>([])
+const loading = ref(false)
+const error = ref<string | null>(null)
 
+const fetchlogs = async () => {
+    loading.value = true
+    error.value = null
+    try {
+        const data = await $fetch<{ logs: VolunteerLog[] }>('/api/volunteer-logs')
+        console.log('API response:', data)
+        logs.value = data?.logs ?? []
+    } catch (err) {
+        console.error('Failed to fetch logs:', err)
+        error.value = 'Failed to load volunteer logs'
+    } finally {
+        loading.value = false 
+    }
+}
+
+await fetchlogs()
+
+
+function setStatus(id: string, status: LogStatus) {
+  const log = logs.value.find((l) => l.id === id)
+  if (log) log.status = status
+}
 
 const filteredLogs = computed(() => 
     logs.value.filter(log => log.status === activeTab.value)
@@ -50,42 +63,52 @@ const accordionItems = computed(() =>
     date: log.date,
     hours: log.hours,
     status: log.status,
-    notes: log.notes ?? '',
-    rejectReason: log.rejectReason ?? ''
+    comment: log.comment ?? ''
   }))
 )
 
 
 
 // local UI state for inline reject
-const rejectingId = ref<string | null>(null)
-const rejectDraft = ref<Record<string, string>>({})
+// unified action state
+const actioningId = ref<string | null>(null)
+const actionType = ref<ActionType | null>(null)
+const commentDraft = ref<Record<string, string>>({})
 
-function startReject(id: string) {
-  rejectingId.value = id
-  const log = logs.value.find(l => l.id === id)
-  // prefill if previously rejected
-  rejectDraft.value[id] = log?.rejectReason ?? ''
+function startAction(id: string, type: ActionType) {
+  actioningId.value = id
+  actionType.value = type
+  const log = logs.value.find((l: VolunteerLog) => l.id === id)
+  commentDraft.value[id] = log?.comment ?? ''
 }
 
-function cancelReject() {
-  rejectingId.value = null
+function cancelAction() {
+  actioningId.value = null
+  actionType.value = null
 }
 
-function confirmReject(id: string) {
-  const reason = (rejectDraft.value[id] ?? '').trim()
-  if (!reason) return
+function confirmAction(id: string) {
+  if (!actionType.value) return
 
-  const log = logs.value.find(l => l.id === id)
+  const log = logs.value.find((l: VolunteerLog) => l.id === id)
   if (!log) return
 
-  log.rejectReason = reason
-  setStatus(id, 'rejected')
-  rejectingId.value = null
+  // comment is optional for approve, required for reject
+  if (actionType.value === 'reject') {
+    const reason = (commentDraft.value[id] ?? '').trim()
+    if (!reason) return
+    log.comment = reason
+  } else {
+    log.comment = (commentDraft.value[id] ?? '').trim() || undefined
+  }
+
+  setStatus(id, actionType.value === 'approve' ? 'APPROVED' : 'REJECTED')
+  actioningId.value = null
+  actionType.value = null
 }
 
-
 </script>
+
 
 <template>
     <div class="flex flex-col w-screen min-h-screen bg-slate-50 items-stretch pb-20">
@@ -111,8 +134,22 @@ function confirmReject(id: string) {
                 </button>
              </div>
             <USeparator class="mt-8"/>
+            <!-- Loading -->
+            <div v-if="loading" class="flex justify-center items-center h-40">
+                <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin text-teal-600" />
+            </div>
+
+            <!-- Error -->
+            <div v-else-if="error" class="mt-8 text-red-500 text-sm">
+                {{ error }}
+            </div>
+
+            <!-- Empty -->
+            <div v-else-if="accordionItems.length === 0" class="mt-8 text-gray-400 text-sm text-center">
+                No {{ activeTab.toLowerCase() }} logs found.
+            </div>
              <!-- logs -->
-             <div class="mt-8">
+             <div v-else class="mt-8">
                 <UAccordion
                     type="multiple"
                     class="bg-slate-50 w-full"
@@ -157,23 +194,22 @@ function confirmReject(id: string) {
                                     <p><span class="font-medium">Date:</span> {{ item.date }}</p>
                                     <p><span class="font-medium">Hours:</span> {{ item.hours }}</p>
                                     <p><span class="font-medium">Status:</span> {{ item.status }}</p>
-                                    <p v-if="item.notes"><span class="font-medium">Notes:</span> {{ item.notes }}</p>
-                                    <p v-if="item.rejectReason"><span class="font-medium">Rejection Reason:</span> {{ item.rejectReason }}</p>
+                                    <p v-if="item.comment"><span class="font-medium">Comment:</span> {{ item.comment }}</p>
                                 </div>
 
-                                <div v-if="item.status === 'pending'" class="space-y-3">
+                                <div v-if="item.status === 'PENDING'" class="space-y-3">
                                     <!-- Normal buttons -->
-                                    <div v-if="rejectingId !== item.id" class="flex gap-2">
+                                    <div v-if="actioningId !== item.id" class="flex gap-2">
                                         <button
                                         class="px-4 py-2 rounded-full bg-teal-600 text-white hover:bg-teal-700"
-                                        @click.stop="approve(item.id)"
+                                        @click.stop="startAction(item.id, 'approve')"
                                         >
                                         Approve
                                         </button>
 
                                         <button
                                         class="px-4 py-2 rounded-full bg-rose-600 text-white hover:bg-rose-700"
-                                        @click.stop="startReject(item.id)"
+                                        @click.stop="startAction(item.id, 'reject')"
                                         >
                                         Reject
                                         </button>
@@ -181,30 +217,33 @@ function confirmReject(id: string) {
                                     <!-- Inline reject reason (only for this log) -->
                                     <div v-else class="mt-3 space-y-2">
                                         <label class="text-sm font-medium text-gray-700">
-                                        Rejection reason <span class="text-rose-600">*</span>
+                                        {{ actionType === 'reject' ? 'Rejection reason' : 'Comment (optional)' }}
+                                        <span v-if="actionType === 'reject'" class="text-rose-600">*</span>
                                         </label>
 
                                         <textarea
-                                        v-model="rejectDraft[item.id]"
+                                        v-model="commentDraft[item.id]"
                                         rows="3"
                                         class="w-full rounded-lg border border-gray-300 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300"
+                                        :class="actionType === 'reject' ? 'focus:ring-rose-300' : 'focus:ring-teal-300'"
                                         @click.stop
                                         />
 
                                         <div class="flex gap-2">
                                         <button
                                             class="px-4 py-2 rounded-lg border"
-                                            @click.stop="cancelReject"
+                                            @click.stop="cancelAction"
                                         >
                                             Cancel
                                         </button>
 
                                         <button
                                             class="px-4 py-2 rounded-lg bg-rose-600 text-white disabled:opacity-50"
-                                            :disabled="!(rejectDraft[item.id] || '').trim()"
-                                            @click.stop="confirmReject(item.id)"
+                                            :class="actionType === 'reject' ? 'bg-rose-600' : 'bg-teal-600'"
+                                            :disabled="actionType === 'reject' && !(commentDraft[item.id] || '').trim()"
+                                            @click.stop="confirmAction(item.id)"
                                         >
-                                            Confirm Reject
+                                            {{ actionType === 'reject' ? 'Confirm Reject' : 'Confirm Approve' }}
                                         </button>
                                         </div>
                                     </div>

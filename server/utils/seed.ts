@@ -51,8 +51,8 @@ type RawVolunteer = {
     event: {
       id: string
     },
-    clockIn: string,
-    clockOut?: string,
+    date: string,
+    hours: number,
     approvalStatus: string,
     comment?: string
   }[]
@@ -162,9 +162,10 @@ async function main() {
         create: volunteer.hourLogs.map((log) => {
           return {
             ...log,
-            clockIn: new Date(log.clockIn),
-            clockOut: log.clockOut ? new Date(log.clockOut) : null,
+            date: new Date(log.date),
+            hours: log.hours,
             approvalStatus: log.approvalStatus as ApprovalStatus,
+            comment: log.comment,
             event: {
               connect: {
                 id: log.event.id
