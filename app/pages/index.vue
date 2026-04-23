@@ -3,7 +3,6 @@
 
 import 'vue3-carousel/dist/carousel.css'
 import { Carousel, Slide, Pagination } from 'vue3-carousel'
-import type { Settings } from 'http2'
 
 const carouselConfig = {
   itemsToShow: 1,
@@ -17,7 +16,12 @@ type Event = {
   id: string
   title: string
   startTime: string
-  location: string
+  location: {
+    id: string
+    address: string
+    latitude: number
+    longitude: number
+  }
   eventAssets: any[]
 }
 
@@ -66,7 +70,7 @@ const services = ref([
 
 const events = computed(() =>
   (eventsData.value || [])
-  //.filter(e => new Date(e.startTime).getTime() >= Date.now())
+  .filter(e => new Date(e.startTime).getTime() >= Date.now())
   .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
   .slice(0, 6)
   .map(e => ({
@@ -143,7 +147,7 @@ const events = computed(() =>
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
                     <circle cx="12" cy="10" r="3"/>
                   </svg>
-                  <span class="leading-tight"> {{ event.location }}</span>
+                  <span class="leading-tight"> {{ event.location.address }}</span>
                 </div>
               </div>
             </div>

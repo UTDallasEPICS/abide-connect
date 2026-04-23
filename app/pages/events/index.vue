@@ -7,8 +7,9 @@ const tz = getLocalTimeZone()
 
 const value = ref<DateValue>(new CalendarDate(2022, 2, 3))
 
-const eventClick = () => {
-  navigateTo('/events/event1')
+  async function navigateToEvent(eventId) {
+  console.log('Navigating to event:', eventId)
+  await navigateTo(`/events/${eventId}`)
 }
 
 type Event = {
@@ -41,7 +42,7 @@ const events = computed(() =>
       day: '2-digit',
       year: 'numeric'
   }),
-  location: e.location?.address,
+  location: e.location,
   image: e.eventAssets?.[0]?.url ?? '/images/image1.jpeg',
   }))
 )
@@ -74,7 +75,8 @@ const isDateDisabled = (d: DateValue) =>
               <div 
                   v-for="event in events" 
                   :key="event.id" 
-                  class="shrink-0 w-40 rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer">
+                  class="shrink-0 w-40 rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer"
+                  @click.stop="navigateToEvent(event.id)">
 
                   <!-- Event Image Placeholder-->
                   <div class="h-35 relative overflow-hidden">
@@ -105,7 +107,7 @@ const isDateDisabled = (d: DateValue) =>
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
                     <circle cx="12" cy="10" r="3"/>
                   </svg>
-                  <span class="leading-tight"> {{ event.location }}</span>
+                  <span class="leading-tight"> {{ event.location.address }}</span>
                 </div>
               </div>
             </div>

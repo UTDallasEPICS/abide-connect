@@ -1,8 +1,10 @@
 <script setup>
+import { router } from 'better-auth/api';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { ref, computed, onMounted } from "vue"
 
 const route = useRoute()
+const router1 = useRouter()
 
 // Get the ID from the route params
 const eventId = route.params.id
@@ -234,7 +236,7 @@ const backNavigate = computed(() => {
             icon="i-lucide-arrow-left"
             variant="ghost"
             class="text-brand4"
-            @click="navigateTo(backNavigate)"
+            @click="router1.back()"
           />
           
           <div v-if="admin" class="flex gap-2">
