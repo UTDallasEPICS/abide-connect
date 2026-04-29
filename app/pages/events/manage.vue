@@ -55,7 +55,8 @@ async function navigateToEvent(eventId) {
 function getEventImage(event) {
   if (event.eventAssets && event.eventAssets.length > 0) {
     const imageUrl = event.eventAssets[0].imageUrl
-    return `/api/events/${event.id}/images/${imageUrl.split('/').pop()}`
+    const encoded = encodeURIComponent(imageUrl)
+    return `/api/events/${event.id}/images/${encoded}`
   }
   return null
 }
@@ -144,7 +145,7 @@ function getEventDate(event) {
 
             <div class="flex flex-col text-left pointer-events-none">
               <p class="text-gray-800 font-semibold">{{ event.title }}</p>
-              <p class="text-gray-500 text-sm">{{ event.location }}</p>
+              <p class="text-gray-500 text-sm">{{ event.location?.address }}</p>
               <p class="text-gray-400 text-xs">{{ getEventDate(event) }}</p>
             </div>
           </button>

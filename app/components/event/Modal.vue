@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from "vue"
 
 const emit = defineEmits(["save", "close"])
@@ -13,47 +13,20 @@ const newEvent = ref({
   allowVolunteers: false,
   allowAttendees: false,
   mobileClinicId: null,
-  eventAssets: []
 })
 
-const uploadedFiles = ref([])
+// Assets shown in the uploader (previews before save)
+const eventAssets = ref<{ imageUrl: string; isPreview?: boolean; fileName?: string }[]>([])
+// Raw File objects to upload after event is created
+const filesToUpload = ref<File[]>([])
+
 const isSaving = ref(false)
 
-// Store actual File objects for upload
-const filesToUpload = ref([])
-
-function handleFileChange(event) {
-  const files = event.target?.files || event
-  
-  if (!files || files.length === 0) return
-  
-  // Store actual File objects for later upload
-  filesToUpload.value = [...filesToUpload.value, ...Array.from(files)]
-  
-  // Convert files to base64 for preview only
-  const imagePromises = Array.from(files).map(file => {
-    return new Promise((resolve) => {
-      const reader = new FileReader()
-      reader.onload = (e) => resolve({ 
-        imageUrl: e.target.result,
-        fileName: file.name
-      })
-      reader.readAsDataURL(file)
-    })
-  })
-  
-  Promise.all(imagePromises).then(images => {
-    newEvent.value.eventAssets = [...newEvent.value.eventAssets, ...images]
-  })
-}
-
-function removeImage(index) {
-  newEvent.value.eventAssets.splice(index, 1)
-  filesToUpload.value.splice(index, 1)
+function onFilesChanged(files: File[]) {
+  filesToUpload.value = files
 }
 
 async function saveEvent() {
-  // Validate required fields
   if (!newEvent.value.title || !newEvent.value.startTime || !newEvent.value.endTime) {
     alert('Please fill in all required fields (Title, Start Time, End Time)')
     return
@@ -62,7 +35,7 @@ async function saveEvent() {
   isSaving.value = true
 
   try {
-    // Step 1: Create the event in the database
+    // Step 1: Create the event
     const response = await $fetch('/api/events', {
       method: 'POST',
       body: {
@@ -78,55 +51,37 @@ async function saveEvent() {
       }
     })
 
-    console.log('✅ Event created:', response)
-
-    // Step 2: Upload images if event was created successfully
+    // Step 2: Upload images
     if (response.id && filesToUpload.value.length > 0) {
-      console.log(`📤 Uploading ${filesToUpload.value.length} images...`)
-      
       for (const file of filesToUpload.value) {
         const formData = new FormData()
         formData.append('file', file)
-        
         try {
           await $fetch(`/api/events/${response.id}/images/upload`, {
             method: 'POST',
             body: formData
           })
-          console.log(`✅ Uploaded: ${file.name}`)
         } catch (uploadError) {
-          console.error(`❌ Failed to upload ${file.name}:`, uploadError)
+          console.error(`Failed to upload ${file.name}:`, uploadError)
         }
       }
     }
 
-    // Step 3: Fetch the complete event with images from the server
+    // Step 3: Fetch complete event with images
     const completeEvent = await $fetch(`/api/events/${response.id}`)
-    
-    console.log('✅ Complete event fetched:', completeEvent)
-
-    // Step 4: Emit the complete event to parent
     emit("save", completeEvent)
-    
-    // Step 5: Reset form
+
+    // Reset form
     newEvent.value = {
-      title: "",
-      shortDesc: "",
-      description: "",
-      location: "",
-      startTime: "",
-      endTime: "",
-      allowVolunteers: false,
-      allowAttendees: false,
-      mobileClinicId: null,
-      eventAssets: []
+      title: "", shortDesc: "", description: "", location: "",
+      startTime: "", endTime: "", allowVolunteers: false,
+      allowAttendees: false, mobileClinicId: null,
     }
-    uploadedFiles.value = []
+    eventAssets.value = []
     filesToUpload.value = []
-    
-    console.log('✅ Event saved successfully and form reset')
-  } catch (error) {
-    console.error('❌ Error creating event:', error)
+
+  } catch (error: any) {
+    console.error('Error creating event:', error)
     alert(`Error creating event: ${error.message || 'Please try again.'}`)
   } finally {
     isSaving.value = false
@@ -146,58 +101,44 @@ function cancel() {
       <label class="block text-sm font-medium text-gray-700 mb-1">
         Event Title <span class="text-red-500">*</span>
       </label>
-      <UFormGroup>
-        <UInput v-model="newEvent.title" placeholder="Enter event title" />
-      </UFormGroup>
+      <UInput v-model="newEvent.title" placeholder="Enter event title" />
     </div>
 
     <div>
       <label class="block text-sm font-medium text-gray-700 mb-1">Short Description</label>
-      <UFormGroup>
-        <UInput v-model="newEvent.shortDesc" placeholder="Brief description" />
-      </UFormGroup>
+      <UInput v-model="newEvent.shortDesc" placeholder="Brief description" />
     </div>
 
     <div>
       <label class="block text-sm font-medium text-gray-700 mb-1">Full Description</label>
-      <UFormGroup>
-        <UTextarea v-model="newEvent.description" placeholder="Detailed description" :rows="4" />
-      </UFormGroup>
+      <UTextarea v-model="newEvent.description" placeholder="Detailed description" :rows="4" />
     </div>
 
     <div>
       <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
-      <UFormGroup>
-        <UInput v-model="newEvent.location" placeholder="Enter location address" />
-      </UFormGroup>
+      <UInput v-model="newEvent.location" placeholder="Enter location address" />
     </div>
 
-    <div class="grid grid-cols-2 gap-4">
+    >
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">
           Start Date & Time <span class="text-red-500">*</span>
         </label>
-        <UFormGroup>
-          <UInput v-model="newEvent.startTime" type="datetime-local" />
-        </UFormGroup>
+        <UInput v-model="newEvent.startTime" type="datetime-local" />
       </div>
-
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">
           End Date & Time <span class="text-red-500">*</span>
         </label>
-        <UFormGroup>
-          <UInput v-model="newEvent.endTime" type="datetime-local" />
-        </UFormGroup>
+        <UInput v-model="newEvent.endTime" type="datetime-local" />
       </div>
-    </div>
+  
 
     <div class="space-y-2">
       <label class="flex items-center gap-2 cursor-pointer">
         <UCheckbox v-model="newEvent.allowVolunteers" />
         <span class="text-sm font-medium text-gray-700">Allow Volunteers</span>
       </label>
-
       <label class="flex items-center gap-2 cursor-pointer">
         <UCheckbox v-model="newEvent.allowAttendees" />
         <span class="text-sm font-medium text-gray-700">Allow Attendees to Register</span>
@@ -206,44 +147,9 @@ function cancel() {
 
     <div>
       <label class="block text-sm font-medium text-gray-700 mb-2">Event Images</label>
-      <input
-        type="file"
-        multiple
-        accept="image/*"
-        class="block w-full text-sm text-gray-500
-          file:mr-4 file:py-2 file:px-4
-          file:rounded-full file:border-0
-          file:text-sm file:font-semibold
-          file:bg-primary-50 file:text-brand4
-          hover:file:bg-primary-100
-          cursor-pointer"
-        @change="handleFileChange"
-      >
-    </div>
-
-    <!-- Preview images if uploaded -->
-    <div v-if="newEvent.eventAssets.length > 0" class="mt-2">
-      <p class="text-sm text-gray-600 mb-2">Image Previews:</p>
-      <div class="grid grid-cols-2 gap-2">
-        <div
-          v-for="(asset, index) in newEvent.eventAssets"
-          :key="index"
-          class="relative group"
-        >
-          <img 
-            :src="asset.imageUrl" 
-            alt="Event preview" 
-            class="w-full h-32 object-cover rounded-lg"
-          >
-          <button
-            class="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-            type="button"
-            @click="removeImage(index)"
-          >
-            <UIcon name="i-lucide-x" class="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+      <EventImageUpload
+        @files-changed="onFilesChanged"
+      />
     </div>
 
     <div class="flex justify-end gap-2 pt-4 border-t">
