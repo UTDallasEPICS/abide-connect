@@ -5,6 +5,7 @@ import prisma from '~~/server/utils/prisma'
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   const form = await readMultipartFormData(event)
+  
 
   if (!id) {
     throw createError({ statusCode: 400, message: 'Missing event ID' })
@@ -51,17 +52,19 @@ export default defineEventHandler(async (event) => {
     data: {
       eventAssets: {
         create: [{
-          imageUrl: path.join(id, "images", file.filename || "failed.png")
+          imageUrl: path.join(id, file.filename || "failed.png")
         }]
       }
     }
   })
 
   console.log(addedImage)
+  
 
   setResponseStatus(event, 201);
 
   return {
     message: "Added file to event."
   }
+
 })
