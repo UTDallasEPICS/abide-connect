@@ -89,7 +89,7 @@ async function loadMobileClinicSchedule() {
 
     const scheduleItems = schedule.map((item) => ({
       ...item,
-      title: `Mobile Clinic at ${item.location.address}`,
+      title: `Mobile Clinic`,
       eventId: null,
     }))
 

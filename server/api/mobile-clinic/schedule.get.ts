@@ -2,7 +2,7 @@ import prisma from '~~/server/utils/prisma'
 
 const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000
 const MAX_OCCURRENCES = 8
-const LOOKAHEAD_WEEKS = 8
+const LOOKAHEAD_WEEKS = 4
 
 const addWeeks = (date: Date, weeks: number) =>
   new Date(date.getTime() + weeks * MS_PER_WEEK)
@@ -54,7 +54,7 @@ export default defineEventHandler(async () => {
       return occurrencesForEntry
     })
 
-    
+    console.log(`Generated ${occurrences.length} mobile clinic occurrences from ${scheduleEntries.length} schedule entries`)
     return occurrences.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
   } catch (error) {
     console.error('Failed to fetch mobile clinic schedule', error)
