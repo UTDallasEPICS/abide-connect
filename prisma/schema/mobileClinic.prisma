@@ -14,7 +14,8 @@ model Mobile_Clinic_Schedule {
   mobileClinicId String
   location        Location @relation(fields: [locationId], references: [id])
   locationId      String
-  datetime       DateTime
+  startTime      DateTime @unique
+  endTime        DateTime @unique
 
   @@map("schedule")
 }

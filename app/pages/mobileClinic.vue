@@ -32,12 +32,9 @@
                 :title="event.title"
                 :subtitle="new Date(event.startTime).toLocaleString()"
                 button-type="arrow"
-                :eventId="event.id"
+                :eventId="event.eventId"
                 @add="eventClick"
-                @click="() => {
-                  console.log('📍 Adjusting map to location:', event.location.address)
-                  mapAdjust(event.location)
-                }"
+                @click="handleTileClick(event)"
               />
             </div>
           </template>
@@ -56,20 +53,53 @@ const zoom = ref(15)
 // Pixel values
 const snapPoints = ["230", "340", "450"]
 
-const pastEvents = ref([])
 const upcomingEvents = ref([])
 
 
-// Load all events from API on mount
+// Load both events and mobile clinic schedule on mount
 onMounted(async () => {
-  console.log('✅ Page mounted - Loading events from API')
+  console.log('✅ Page mounted - Loading events and mobile clinic schedule')
   await loadEvents()
+  await loadMobileClinicSchedule()
 })
 
 const eventClick = (id) => {
   if (!id) return
   navigateTo(`/events/${id}`)
 }
+
+const handleTileClick = (event) => {
+  if (!event?.location) return
+  mapAdjust(event.location)
+}
+
+const setUpcomingItems = (items) => {
+  upcomingEvents.value = items
+    .map((item) => ({
+      ...item,
+      subtitle: item.subtitle ?? new Date(item.startTime).toLocaleString(),
+    }))
+    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+}
+
+async function loadMobileClinicSchedule() {
+  try {
+    const schedule = await $fetch('/api/mobile-clinic/schedule')
+    console.log('✅ Loaded mobile clinic schedule:', schedule)
+
+    const scheduleItems = schedule.map((item) => ({
+      ...item,
+      title: `Mobile Clinic at ${item.location.address}`,
+      eventId: null,
+    }))
+
+    setUpcomingItems([...upcomingEvents.value, ...scheduleItems])
+    console.log('📅 Combined schedule items:', scheduleItems.length)
+  } catch (error) {
+    console.error('❌ Error loading mobile clinic schedule:', error)
+  }
+}
+
 
 async function loadEvents() {
   try {
@@ -78,14 +108,16 @@ async function loadEvents() {
     
     const now = new Date()
     
-    const mobileClinicEvents = allEvents.filter(event => event.mobileClinicId !== null)
+    const eventItems = allEvents
+      .filter((event) => event.mobileClinicId !== null)
+      .filter((event) => new Date(event.endTime) >= now)
+      .map((event) => ({
+        ...event,
+        eventId: event.id,
+      }))
 
-    upcomingEvents.value = mobileClinicEvents.filter(event => {
-      const endTime = new Date(event.endTime)
-      return endTime >= now
-    })
-    
-    console.log('📅 Upcoming events:', upcomingEvents.value.length)
+    setUpcomingItems([...upcomingEvents.value, ...eventItems])
+    console.log('📅 Upcoming events:', eventItems.length)
     
   } catch (error) {
     console.error('❌ Error loading events:', error)
