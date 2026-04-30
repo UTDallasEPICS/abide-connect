@@ -18,6 +18,21 @@ const editForm = ref<any>({})
 // Placeholder until auth is implemented
 const admin = true
 
+// RSVP modal state
+const showRsvpModal = ref(false)
+const rsvpIsVolunteer = ref(false)
+const rsvpStatsRef = ref<any>(null)
+
+function openRsvpModal(isVolunteer: boolean) {
+  rsvpIsVolunteer.value = isVolunteer
+  showRsvpModal.value = true
+}
+
+async function onRsvpSuccess() {
+  showRsvpModal.value = false
+  await rsvpStatsRef.value?.refresh()
+}
+
 // Assets shown in the edit uploader
 const filesToUpload = ref<File[]>([])
 
@@ -279,6 +294,14 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
           </div>
         </div>
 
+        <!-- RSVP Stats (admin only, view mode) -->
+        <EventRSVPStats
+          v-if="admin && !isEditMode"
+          ref="rsvpStatsRef"
+          :event-id="eventId"
+          :admin="admin"
+        />
+
         <!-- Action Buttons (view mode) -->
         <div v-if="!isEditMode" class="flex gap-4">
           <UButton
@@ -287,6 +310,7 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
             size="xl"
             block
             icon="i-lucide-heart-handshake"
+            @click="openRsvpModal(true)"
           >
             Sign Up as Volunteer
           </UButton>
@@ -297,10 +321,29 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
             size="xl"
             block
             icon="i-lucide-ticket"
+            @click="openRsvpModal(false)"
           >
             Register to Attend
           </UButton>
         </div>
+
+        <!-- RSVP Modal -->
+        <Teleport to="body">
+          <div
+            v-if="showRsvpModal"
+            class="fixed inset-0 z-50 flex items-center justify-center p-4"
+            @click.self="showRsvpModal = false"
+          >
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+              <EventRSVPModal
+                :event-id="eventId"
+                :is-volunteer="rsvpIsVolunteer"
+                @success="onRsvpSuccess"
+                @close="showRsvpModal = false"
+              />
+            </div>
+          </div>
+        </Teleport>
 
       </div>
     </div>
