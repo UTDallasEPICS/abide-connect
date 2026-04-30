@@ -16,8 +16,7 @@ export default defineEventHandler(async (_event) => {
     console.log(`✅ Fetched ${allEvents.length} events`)
     return allEvents
     
-  } catch (error) {
-    console.error('❌ Error fetching events:', error)
+  } catch {
     throw createError({ 
       statusCode: 500, 
       message: 'Failed to fetch events' 

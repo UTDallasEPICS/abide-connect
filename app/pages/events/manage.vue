@@ -49,7 +49,7 @@ function closeModal() {
 
 async function navigateToEvent(eventId) {
   console.log('🚀 Navigating to event:', eventId)
-  await navigateTo(`/event-detail/${eventId}`)
+  await navigateTo(`/events/${eventId}`)
 }
 
 function getEventImage(event) {

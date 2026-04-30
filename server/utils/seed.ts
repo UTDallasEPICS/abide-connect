@@ -1,6 +1,6 @@
 import fs  from 'fs';
 import type { Language, Gender, Availability, Ethinicity, ApprovalStatus } from "./generated/prisma/client.ts";
-import { PrismaClient } from './generated/prisma/client';
+import { PrismaClient } from './generated/prisma/client.ts';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 
 const adapter = new PrismaBetterSqlite3({
@@ -15,7 +15,11 @@ type RawEvent = {
   description: string,
   startTime: string,
   endTime: string,
-  location: string,
+  location: {
+    longitude: number,
+    latitude: number,
+    address: string
+  },
   allowVolunteers: boolean,
   allowAttendees: boolean,
   eventAssets: string[]
@@ -47,8 +51,8 @@ type RawVolunteer = {
     event: {
       id: string
     },
-    clockIn: string,
-    clockOut?: string,
+    date: string,
+    hours: number,
     approvalStatus: string,
     comment?: string
   }[]
@@ -80,6 +84,18 @@ async function main() {
             imageUrl: imageUrl
           }
         })
+      },
+      location: {
+        connectOrCreate:{
+          where: {
+            address: event.location.address
+          },
+          create: {
+            longitude: event.location.longitude,
+            latitude: event.location.latitude,
+            address: event.location.address
+          }
+        }
       }
     };
   })
@@ -150,9 +166,10 @@ async function main() {
         create: volunteer.hourLogs.map((log) => {
           return {
             ...log,
-            clockIn: new Date(log.clockIn),
-            clockOut: log.clockOut ? new Date(log.clockOut) : null,
+            date: new Date(log.date),
+            hours: log.hours,
             approvalStatus: log.approvalStatus as ApprovalStatus,
+            comment: log.comment,
             event: {
               connect: {
                 id: log.event.id

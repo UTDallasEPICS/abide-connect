@@ -5,7 +5,8 @@ model Event {
   description     String?
   startTime       DateTime
   endTime         DateTime
-  location        String
+  location        Location @relation(fields: [locationId], references: [id])
+  locationId      String
   calendarURL     String?
   allowVolunteers Boolean
   allowAttendees  Boolean
