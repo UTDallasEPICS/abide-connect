@@ -5,4 +5,5 @@ export type AdminFeature = {
     icon: string
     iconBg: string
     bg: string
+    to: string
 }

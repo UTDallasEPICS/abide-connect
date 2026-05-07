@@ -8,7 +8,8 @@ const features: AdminFeature[] = [
         description: 'Create and manage event',
         icon: 'i-heroicons-calendar',
         iconBg: 'bg-[#3a696e]',
-        bg: 'bg-gradient-to-br from-[#d3e2e4] to-white'
+        bg: 'bg-gradient-to-br from-[#d3e2e4] to-white',
+        to: '/events/manage'
 
     },
     {
@@ -17,7 +18,8 @@ const features: AdminFeature[] = [
         description: "Approve pending volunteer certificates",
         icon: 'i-heroicons-trophy',
         iconBg: 'bg-[#a26b60]',
-        bg: 'bg-gradient-to-br from-[#F4E8E7] to-white'
+        bg: 'bg-gradient-to-br from-[#F4E8E7] to-white',
+        to: '/'
     },
     {
         id: 'donations',
@@ -25,7 +27,8 @@ const features: AdminFeature[] = [
         description: 'Track and manage donations',
         icon: 'i-heroicons-currency-dollar',
         iconBg: 'bg-[#6b5745]',
-        bg: 'bg-gradient-to-br from-[#e6d6c3] to-white'
+        bg: 'bg-gradient-to-br from-[#e6d6c3] to-white',
+        to: '/'
     },
     {
         id: 'time-log',
@@ -33,7 +36,8 @@ const features: AdminFeature[] = [
         description: 'Approve and manage volunteer time log',
         icon: 'i-heroicons-clock',
         iconBg: 'bg-[#a4123f]',
-        bg: 'bg-gradient-to-br from-[#f4d3e0] to-white'
+        bg: 'bg-gradient-to-br from-[#f4d3e0] to-white',
+        to: '/admin/volunteer-logs'
     }
 ]
 
@@ -64,6 +68,7 @@ const kpis = [
         icon: 'i-heroicons-clock'
     }
 ]
+
 
 </script>
 
@@ -100,6 +105,7 @@ const kpis = [
             <UButton
             v-for="feature in features"
             :key="feature.id"
+            :to="feature.to"
             color="brand6"
             class="group flex h-40 bg-slate-50 flex-col p-4 items-start justify-between rounded-3xl border-2 border-slate-200 text-left shadow-xs
                     transition-all duration-300 hover:shadow-xl hover:border-slate-250 hover:bg-slate-50" 
