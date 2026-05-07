@@ -140,4 +140,4 @@ pnpm run build
 ## Deploying to Production
 
 There is currently a Github Actions flow setup such that for each commit to main, a new build is created and dockerized.
-We can then manually deploy to the NPTS EC2 instances for prod and staging that are currently set up.
+This then gets automatically deployed to the endpoint ECS cluster.
