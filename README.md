@@ -37,9 +37,9 @@ Post-Signup Volunteer Dashboard
 
 Admin Dashboard (Admin only)
 - Overview Panel
-  - Event management
   - Training Certificate approval
   - Volunteer hour log approval
+  - Donation fund creation
 
 Event Management
 - Add Event (options: volunteer-only, public, internal)
@@ -86,7 +86,7 @@ Next, make sure to create a `.env` file based on the `.env.example` file and fil
 Then, initialize prisma client.
 
 ```bash
-pnpx prisma generate
+pnpm prisma generate
 ```
 
 The generated client will be placed in `/server/utils/generated/prisma`.
@@ -94,8 +94,8 @@ The generated client will be placed in `/server/utils/generated/prisma`.
 Next, migrate and seed the database.
 
 ```bash
-pnpx prisma migrate dev
-pnpx prisma db seed
+pnpm prisma migrate dev
+pnpm prisma db seed
 ```
 
 You are now ready to use/deploy the app!
@@ -121,8 +121,8 @@ After performing database operations, it may be good to reset the database to en
 In order to achieve this, run the following commands:
 
 ```bash
-pnpx prisma migrate reset
-pnpx prisma db seed
+pnpm prisma migrate reset
+pnpm prisma db seed
 ```
 
 ### Production
