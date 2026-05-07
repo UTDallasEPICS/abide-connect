@@ -140,4 +140,4 @@ pnpm run build
 ## Deploying to Production
 
 There is currently a Github Actions flow setup such that for each commit to main, a new build is created and dockerized.
-This then gets automatically deployed to the endpoint ECS cluster.
+This then gets automatically deployed to the NPTS ECS cluster.
