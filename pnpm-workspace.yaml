@@ -1,3 +1,11 @@
+ignoredBuiltDependencies:
+  - '@parcel/watcher'
+  - '@prisma/engines'
+  - esbuild
+  - prisma
+  - unrs-resolver
+  - vue-demi
+
 onlyBuiltDependencies:
   - '@prisma/client'
   - better-sqlite3

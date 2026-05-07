@@ -1,71 +1,121 @@
 <script setup lang="ts">
-import type { FormSubmitEvent } from "@nuxt/ui";
-import type { SignUpSchema } from "~/types/auth/sign-up.type";
-import { signUpFields, signUpSchema } from "~/types/auth/sign-up.type";
-import { authProviders } from "~/types/auth/providers.type";
+import { ref } from "vue"
+import { applicationFields, applicationSchema } from "~/types/auth/application.type"
+import { signUpFields, signUpSchema } from "~/types/auth/sign-up.type"
+import { authProviders } from "~/types/auth/providers.type"
 
+const step = ref(1)
+const form = ref<any>({})
+const errorMessage = ref<string | null>(null)
 
+/* STEP 1 */
+function handleStep1(payload: any) {
+  form.value = { ...payload.data }
+  step.value = 2
+}
 
-const errorMessage = ref<string | null>(null);
+/* FINAL SUBMIT */
+async function submitAll(payload: any) {
+  try {
+    const finalData = {
+      ...form.value,
+      ...payload.data,
 
-const isLoading = ref(false);
+      // 🔥 convert YES/NO → boolean (important)
+      over18: payload.data?.over18 === "YES",
 
-async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
-    isLoading.value = true;
-    console.log(payload.data);
-    try {
-        await $fetch("/api/auth/sign-up", {
-            method: "POST",
-            body: {
-                name: payload.data.name,
-                email: payload.data.email,
-                password: payload.data.password,
-                phone: payload.data.phone,
-                languages: payload.data.languages,
-                gender: payload.data.gender,
-                ethinicity: payload.data.ethinicity,
-                availability: payload.data.availability,
-            },
-        });
-        await nextTick();
-        await navigateTo("/volunteer/");
-    } catch (error: unknown) {
-        console.log(error);
-        errorMessage.value = (error as { message: string }).message;
-    } finally {
-        isLoading.value = false;
+      hasVolunteered: payload.data?.hasVolunteered === "YES",
+      attendedTraining: payload.data?.attendedTraining === "YES",
     }
+
+    await $fetch("/api/volunteer/application", {
+      method: "POST",
+      body: finalData,
+    })
+
+    await navigateTo("/auth/thank-you")
+
+  } catch (err) {
+    console.error(err)
+    errorMessage.value = "Submission failed"
+  }
 }
 </script>
 
 <template>
-    <div class="flex flex-col items-center justify-center p-8 my-8 ">
-        <UAuthForm
-class="w-full max-w-md"
-            :schema="signUpSchema"
-            :fields="signUpFields"
-            :providers="authProviders"
-            title="Let's get you started to be a Volunteer!"
-            icon="i-lucide-user"
-            :separator="{
-                icon: 'i-lucide-mail'
-            }"  
-            :submit="{ label: 'Sign up', block: true, color: 'neutral' }"
+  <div class="flex flex-col items-center justify-center p-8 my-8">
 
-            @submit="onSubmit"
-        >
-        <template #description>
-          Already a Volunteer? <ULink to="/auth/login" class="text-primary font-medium">Log In</ULink>.
-        </template>
-        <template #password-hint>
-          <ULink to="#" class="text-primary font-medium" tabindex="-1">Forgot password?</ULink>
-        </template>
-        <template #validation>
-          <UAlert v-if="errorMessage" color="error" icon="i-lucide-info" :title="errorMessage" />
-        </template>
-        <template #footer>
-          By signing in, you agree to our <ULink to="#" class="text-primary font-medium">Terms of Service</ULink>.
-        </template>
-        </UAuthForm>
+    <!-- STEP 1 -->
+    <UAuthForm
+      v-if="step === 1"
+      class="w-full max-w-md"
+      :schema="signUpSchema"
+      :fields="signUpFields"
+      :providers="authProviders"
+      title="Let's get you started"
+      :submit="{ label: 'Next', block: true }"
+      @submit="handleStep1"
+    />
+
+    <!-- STEP 2 -->
+    <div v-if="step === 2" class="w-full max-w-2xl pb-32">
+
+      <button
+        class="text-sm text-primary mb-4"
+        @click="step = 1"
+      >
+        ← Back
+      </button>
+
+      <UAuthForm
+        :schema="applicationSchema"
+        :fields="applicationFields"
+        title="Volunteer Application"
+        :submit="{ label: 'Submit Application', block: true }"
+        @submit="submitAll"
+      />
+
+      <p v-if="errorMessage" class="text-red-400 mt-4">
+        {{ errorMessage }}
+      </p>
+
     </div>
+  </div>
 </template>
+
+<style scoped>
+.section {
+  background: #111c33;
+  padding: 20px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+h3 {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+input, select, textarea {
+  padding: 10px;
+  border-radius: 6px;
+  background: #0b1324;
+  color: white;
+}
+
+.checkbox {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.submit-btn {
+  background: #4ade80;
+  padding: 12px;
+  border-radius: 8px;
+  width: 100%;
+  font-weight: bold;
+}
+</style>

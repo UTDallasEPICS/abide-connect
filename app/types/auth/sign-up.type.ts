@@ -3,14 +3,10 @@ import { Gender, Availability, Ethinicity, Language } from '~~/server/utils/gene
 import type { InputMenuItem, AuthFormField } from "@nuxt/ui"
 
 export const signUpSchema = z.object({
-    name: z.string().optional(),
-    email: z.email('Invalid email'),
-    password: z.string().min(8, "Must be at least 8 characters"),
+    email: z.email('Invalid email').optional(),
+    password: z.string().min(8, "Must be at least 8 characters").optional(),
     phone: z.e164('Invalid phone number').optional().nullable(),
-    languages: z.array(z.enum(Language)).nullable(),
-    gender: z.enum(Gender).nullable(),
-    ethinicity: z.enum(Ethinicity).nullable(),
-    availability: z.enum(Availability).array().nullable()
+    languages: z.array(z.enum(Language)).nullable().optional(),
 })
 
 export type SignUpSchema = z.output<typeof signUpSchema>
@@ -32,26 +28,10 @@ const languageItems: InputMenuItem[] = Object.values(Language).map((language) =>
   id: language,
   label: formatEnumLabel(language),
 }))
-const genderItems: InputMenuItem[] = Object.values(Gender).map((gender) => ({
-  id: gender,
-  label: formatEnumLabel(gender),
-}))
-const ethinicityItems: InputMenuItem[] = Object.values(Ethinicity).map((ethinicity) => ({
-  id: ethinicity,
-  label: formatEnumLabel(ethinicity),
-}))
-const availabilityItems: InputMenuItem[] = Object.values(Availability).map((availability) => ({
-  id: availability,
-  label: formatEnumLabel(availability),
-}))
+
 
 export const signUpFields: AuthFormField[] = ([{
-  name: 'name',
-  type: 'text',
-  label: 'Name',
-  placeholder: 'Enter your full name',
-  required: false
-},{
+  
   name: 'email',
   type: 'email',
   label: 'Email',
@@ -78,31 +58,6 @@ export const signUpFields: AuthFormField[] = ([{
   valueKey: 'id',
   items: languageItems,
   multiple: true        
-}, {
-  name: "gender",
-  label: 'Gender',
-  type: 'select',
-  placeholder: "What is your gender?",
-  valueKey: 'id',
-  items: genderItems,
-  required: true
-},{
-  name: "ethinicity",
-  label: 'Ethinicity',
-  type: 'select',
-  placeholder: "What is your ethinicity?",
-  valueKey: 'id',
-  items: ethinicityItems,
-  required: true
-},{
-  name: "availability",
-  label: 'Availability',
-  type: 'select',
-  placeholder: "What is your availability?",
-  valueKey: 'id',
-  items: availabilityItems,
-  required: true,
-  multiple: true
 },] as unknown) as AuthFormField[]
 
 

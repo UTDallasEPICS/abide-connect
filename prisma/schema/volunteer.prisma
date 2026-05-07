@@ -127,3 +127,38 @@ enum Language {
   MALAY
   FILIPINO
 }
+
+model VolunteerApplication {
+  id        String   @id @default(uuid())
+
+  firstName String?
+  lastName  String?
+  email     String?
+  phone     String?
+
+  gender     Gender?
+  ethinicity Ethinicity?
+
+  hasVolunteered   Boolean? @default(false)
+  attendedTraining Boolean? @default(false)
+  trainingDate     DateTime?
+
+  languages      String?
+  areas          String?
+  certifications String?
+  availability   String?
+
+  emergencyContact String?
+
+  // 🔥 FIX: make these OPTIONAL with defaults
+  over18          Boolean? @default(false)
+  backgroundCheck Boolean? @default(false)
+  agreement       Boolean? @default(false)
+
+  status    ApprovalStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("volunteer_applications")
+}

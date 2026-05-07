@@ -1,27 +1,31 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watchEffect } from 'vue'
 
 type Volunteer = {
   id: number
   name: string
+  email: string
   verified: boolean
 }
 
 const volunteers = ref<Volunteer[]>([])
 
-const { data } = await useFetch('/api/admin/training')
+const { data, refresh } = await useFetch('/api/admin/training')
 
-volunteers.value =
-  data.value?.map((v: any) => ({
-    id: v.id,
-    name: v.name || 'Unknown Volunteer',
-    verified: v.status === 'APPROVED'
-  })) || []
-  const newName = ref('')
+watchEffect(() => {
+  volunteers.value =
+    data.value?.map((v: any) => ({
+      id: v.id,
+      name: v.name?.trim() || 'Unknown Volunteer',
+      email: v.email,
+      verified: v.status === 'APPROVED'
+    })) || []
+})
+
+const newName = ref('')
 const newEmail = ref('')
 
 async function addVolunteer() {
-
   const newVolunteer = await $fetch('/api/admin/training', {
     method: 'POST',
     body: {
@@ -33,6 +37,7 @@ async function addVolunteer() {
   volunteers.value.push({
     id: newVolunteer.id,
     name: newVolunteer.name,
+    email: newVolunteer.email,
     verified: false
   })
 
@@ -41,20 +46,25 @@ async function addVolunteer() {
 }
 
 async function toggle(v: Volunteer) {
+  const newStatus = v.verified ? 'APPROVED' : 'PENDING'
 
-v.verified = !v.verified
+  await $fetch('/api/admin/training', {
+    method: 'PATCH',
+    body: {
+      id: v.id,
+      status: newStatus
+    }
+  })
 
-await $fetch('/api/admin/volunteer', {
-  method: 'PATCH',
-  body: {
-    id: v.id,
-    verified: v.verified
-  }
-})
+  await refresh()
 }
 
-function removePerson(id: number) {
-  volunteers.value = volunteers.value.filter(v => v.id !== id)
+async function removePerson(id: number) {
+  await $fetch(`/api/admin/training?id=${id}`, {
+    method: 'DELETE'
+  })
+
+  await refresh()
 }
 </script>
 
@@ -62,31 +72,40 @@ function removePerson(id: number) {
   <div class="page">
     <h1>Volunteer Verification</h1>
 
- <div class="add-form">
-    <input v-model="newName" placeholder="Volunteer Name" />
-    <input v-model="newEmail" placeholder="Email" />
-    <button @click="addVolunteer">Add Volunteer</button>
-  </div>
+    <!-- FORM -->
+    <div class="add-form">
+      <input v-model="newName" placeholder="Volunteer Name" />
+      <input v-model="newEmail" placeholder="Email" />
+      <button @click="addVolunteer">Add Volunteer</button>
+    </div>
 
+    <!-- CARDS -->
     <div 
       class="card" 
       v-for="v in volunteers" 
       :key="v.id"
       :class="{ verified: v.verified }"
     >
+      <!-- LEFT -->
       <div class="left">
-        <span>{{ v.name }}</span>
-        <small v-if="v.verified">Verified</small>
-        <small v-else>Pending</small>
+        <span class="name">{{ v.name }}</span>
+        <small class="email">{{ v.email }}</small>
+
+        <!-- STATUS ROW (checkbox LEFT of status) -->
+        <div class="status-row">
+          <input 
+            type="checkbox" 
+            v-model="v.verified"
+            @change="toggle(v)"
+          />
+          <small class="status">
+            {{ v.verified ? 'Verified' : 'Pending' }}
+          </small>
+        </div>
       </div>
 
-      <div class="actions">
-        <input 
-          type="checkbox" 
-          :checked="v.verified"
-          @change="toggle(v)"
-        />
-
+      <!-- RIGHT -->
+      <div class="right">
         <button @click="removePerson(v.id)">Delete</button>
       </div>
     </div>
@@ -96,16 +115,50 @@ function removePerson(id: number) {
 <style scoped>
 .page {
   max-width: 650px;
-  margin: 120px auto 40px; /* pushes content down */
+  margin: 120px auto 40px;
+  padding: 0 16px;
   color: white;
 }
 
+/* FORM */
+.add-form {
+  display: flex;
+  gap: 12px;
+  margin: 0 auto 20px;
+  max-width: 600px;
+}
 
+.add-form input {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid #2a3b55;
+  background: #0f1b2d;
+  color: white;
+  font-size: 14px;
+}
+
+.add-form input:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: #3b82f6;
+}
+
+.add-form button {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+}
+
+/* CARD */
 .card {
   background: #0f1b2d;
-  padding: 14px 18px;
+  padding: 16px 18px;
   border-radius: 10px;
   margin-bottom: 12px;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -115,27 +168,53 @@ function removePerson(id: number) {
   border-left: 6px solid #4ade80;
 }
 
+/* LEFT */
 .left {
   display: flex;
   flex-direction: column;
+  gap: 6px;
 }
 
-small {
+.name {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.email {
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+/* STATUS ROW */
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status {
   font-size: 12px;
   opacity: 0.8;
 }
 
-.actions {
+/* RIGHT */
+.right {
   display: flex;
   align-items: center;
-  gap: 12px;
 }
 
+/* checkbox */
+.status-row input {
+  transform: scale(1.3);
+  cursor: pointer;
+}
+
+/* BUTTON */
 button {
   background: #ef4444;
   border: none;
   color: white;
-  padding: 6px 12px;
+  padding: 6px 14px;
   border-radius: 6px;
   cursor: pointer;
 }
@@ -144,7 +223,14 @@ button:hover {
   opacity: 0.85;
 }
 
-input {
-  transform: scale(1.4);
+/* MOBILE */
+@media (max-width: 600px) {
+  .add-form {
+    flex-direction: column;
+  }
+
+  .card {
+    flex-direction: row; /* keep layout consistent */
+  }
 }
 </style>
