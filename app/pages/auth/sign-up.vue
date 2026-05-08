@@ -1,36 +1,28 @@
 <script setup lang="ts">
 import { ref } from "vue"
-import { applicationFields, applicationSchema } from "~/types/auth/application.type"
-import { signUpFields, signUpSchema } from "~/types/auth/sign-up.type"
-import { authProviders } from "~/types/auth/providers.type"
 
-const step = ref(1)
-const form = ref<any>({})
-const errorMessage = ref<string | null>(null)
+const form = ref({
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+})
 
-/* STEP 1 */
-function handleStep1(payload: any) {
-  form.value = { ...payload.data }
-  step.value = 2
-}
+const loading = ref(false)
+const errorMessage = ref("")
 
-/* FINAL SUBMIT */
-async function submitAll(payload: any) {
+async function submitApplication() {
   try {
-    const finalData = {
-      ...form.value,
-      ...payload.data,
+    loading.value = true
 
-      // 🔥 convert YES/NO → boolean (important)
-      over18: payload.data?.over18 === "YES",
-
-      hasVolunteered: payload.data?.hasVolunteered === "YES",
-      attendedTraining: payload.data?.attendedTraining === "YES",
-    }
-
-    await $fetch("/api/volunteer/application", {
+    await $fetch("/api/admin/application", {
       method: "POST",
-      body: finalData,
+      body: {
+        firstName: form.value.firstName,
+        lastName: form.value.lastName,
+        email: form.value.email,
+        phone: form.value.phone,
+      },
     })
 
     await navigateTo("/auth/thank-you")
@@ -38,6 +30,8 @@ async function submitAll(payload: any) {
   } catch (err) {
     console.error(err)
     errorMessage.value = "Submission failed"
+  } finally {
+    loading.value = false
   }
 }
 </script>
@@ -45,37 +39,79 @@ async function submitAll(payload: any) {
 <template>
   <div class="flex flex-col items-center justify-center p-8 my-8">
 
-    <!-- STEP 1 -->
-    <UAuthForm
-      v-if="step === 1"
-      class="w-full max-w-md"
-      :schema="signUpSchema"
-      :fields="signUpFields"
-      :providers="authProviders"
-      title="Let's get you started"
-      :submit="{ label: 'Next', block: true }"
-      @submit="handleStep1"
-    />
-
-    <!-- STEP 2 -->
-    <div v-if="step === 2" class="w-full max-w-2xl pb-32">
+    <div class="w-full max-w-2xl pb-32">
 
       <button
-        class="text-sm text-primary mb-4"
-        @click="step = 1"
+        class="mb-6 text-cyan-400 hover:text-cyan-300"
+        @click="navigateTo('/auth/login')"
       >
-        ← Back
+        ← Back to Login
       </button>
 
-      <UAuthForm
-        :schema="applicationSchema"
-        :fields="applicationFields"
-        title="Volunteer Application"
-        :submit="{ label: 'Submit Application', block: true }"
-        @submit="submitAll"
-      />
+      <h1 class="text-5xl font-bold mb-8">
+        Volunteer Application
+      </h1>
 
-      <p v-if="errorMessage" class="text-red-400 mt-4">
+      <form
+        class="flex flex-col gap-6"
+        @submit.prevent="submitApplication"
+      >
+
+        <!-- FIRST NAME -->
+        <div class="section">
+          <label>1. First Name</label>
+
+          <input
+            v-model="form.firstName"
+            type="text"
+          />
+        </div>
+
+        <!-- LAST NAME -->
+        <div class="section">
+          <label>2. Last Name</label>
+
+          <input
+            v-model="form.lastName"
+            type="text"
+          />
+        </div>
+
+        <!-- EMAIL -->
+        <div class="section">
+          <label>3. Email</label>
+
+          <input
+            v-model="form.email"
+            type="email"
+          />
+        </div>
+
+        <!-- PHONE -->
+        <div class="section">
+          <label>4. Phone Number</label>
+
+          <input
+            v-model="form.phone"
+            type="text"
+          />
+        </div>
+
+        <!-- SUBMIT -->
+        <button
+          type="submit"
+          class="submit-btn"
+          :disabled="loading"
+        >
+          {{ loading ? "Submitting..." : "Submit Application" }}
+        </button>
+
+      </form>
+
+      <p
+        v-if="errorMessage"
+        class="text-red-400 mt-4"
+      >
         {{ errorMessage }}
       </p>
 
@@ -86,36 +122,35 @@ async function submitAll(payload: any) {
 <style scoped>
 .section {
   background: #111c33;
-  padding: 20px;
-  border-radius: 10px;
+  padding: 30px;
+  border-radius: 20px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
+  border: 1px solid #1d3557;
 }
 
-h3 {
+label {
   font-weight: bold;
-  margin-bottom: 10px;
+  font-size: 20px;
 }
 
-input, select, textarea {
-  padding: 10px;
-  border-radius: 6px;
-  background: #0b1324;
+input {
+  padding: 18px;
+  border-radius: 12px;
+  background: #020d2b;
   color: white;
-}
-
-.checkbox {
-  display: flex;
-  gap: 10px;
-  align-items: center;
+  border: 1px solid #1d3557;
+  font-size: 18px;
 }
 
 .submit-btn {
   background: #4ade80;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 18px;
+  border-radius: 12px;
   width: 100%;
   font-weight: bold;
+  color: black;
+  font-size: 20px;
 }
 </style>

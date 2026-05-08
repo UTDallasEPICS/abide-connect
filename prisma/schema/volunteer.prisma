@@ -12,6 +12,9 @@ model Volunteer {
   hourLogs       Volunteer_Hour_Log[]
   events         RSVP[]
 
+  trainingCertificates TrainingCertificate[]
+
+
   emailVerified Boolean   @default(false)
   zoomVerified  Boolean   @default(false)   
   imageURL      String?

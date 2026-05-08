@@ -91,7 +91,7 @@ async function removePerson(id: number) {
         <span class="name">{{ v.name }}</span>
         <small class="email">{{ v.email }}</small>
 
-        <!-- STATUS ROW (checkbox LEFT of status) -->
+        <!-- STATUS ROW  -->
         <div class="status-row">
           <input 
             type="checkbox" 
@@ -230,7 +230,7 @@ button:hover {
   }
 
   .card {
-    flex-direction: row; /* keep layout consistent */
+    flex-direction: row; 
   }
 }
 </style>

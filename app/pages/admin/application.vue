@@ -1,31 +1,90 @@
 <script setup lang="ts">
-type Application = {
-  id: string
-  firstName: string
-  email: string
-  languages?: string
+const { data, pending, error, refresh } = await useFetch("/api/admin/application")
+
+async function deleteApplication(id: string) {
+  try {
+    await $fetch(`/api/admin/application?id=${id}`, {
+      method: "DELETE",
+    })
+
+    await refresh()
+
+  } catch (err) {
+    console.error(err)
+  }
 }
-
-const { data, pending, error } = await useFetch<Application[]>('/api/admin/application')
 </script>
-
 <template>
-  <div class="p-6 text-white">
+  <div class="p-10 text-white">
 
-    <h1 class="text-2xl mb-6">Volunteer Applications</h1>
+    <h1 class="text-4xl font-bold mb-8">
+      Volunteer Applications
+    </h1>
 
-    <div v-if="pending">Loading...</div>
-    <div v-else-if="error">Error loading data</div>
+    <!-- LOADING -->
+    <div v-if="pending">
+      Loading applications...
+    </div>
 
-    <table v-else-if="data && data.length" class="w-full">
-      <tr v-for="app in data" :key="app.id">
-        <td>{{ app.firstName }}</td>
-        <td>{{ app.email }}</td>
-        <td>{{ app.languages }}</td>
-      </tr>
+    <!-- ERROR -->
+    <div v-else-if="error">
+      Error loading applications
+    </div>
+
+    <!-- DATA -->
+    <table
+      v-else-if="data && data.length"
+      class="w-full border-collapse"
+    >
+      <thead>
+        <tr class="bg-[#111c33]">
+          <th class="p-4 text-left">First Name</th>
+          <th class="p-4 text-left">Last Name</th>
+          <th class="p-4 text-left">Email</th>
+          <th class="p-4 text-left">Phone</th>
+          <th class="p-4 text-left">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr
+          v-for="app in data"
+          :key="app.id"
+          class="border-b border-gray-700"
+        >
+          <td class="p-4">
+            {{ app.firstName }}
+          </td>
+
+          <td class="p-4">
+            {{ app.lastName }}
+          </td>
+
+          <td class="p-4">
+            {{ app.email }}
+          </td>
+
+          <td class="p-4">
+            {{ app.phone || "N/A" }}
+          </td>
+
+          <td class="p-4">
+            <button
+              class="bg-red-500 px-4 py-2 rounded"
+              @click="deleteApplication(app.id)"
+            >
+              Delete
+            </button>
+          </td>
+
+        </tr>
+      </tbody>
     </table>
 
-    <div v-else>No applications yet</div>
+    <!-- EMPTY -->
+    <div v-else>
+      No applications yet
+    </div>
 
   </div>
 </template>

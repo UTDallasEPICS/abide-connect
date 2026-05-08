@@ -1,7 +1,9 @@
-import prisma from "~~/server/utils/prisma";
+import prisma from "~~/server/utils/prisma"
 
 export default defineEventHandler(async () => {
   return await prisma.volunteerApplication.findMany({
-    orderBy: { createdAt: "desc" },
-  });
-});
+    orderBy: {
+      createdAt: "desc"
+    }
+  })
+})
