@@ -8,7 +8,19 @@ export default defineEventHandler(async (event) => {
       name: body.name,
       email: body.email,
       fileUrl: "",
-      status: "PENDING"
+      status: "PENDING",
+
+      volunteer: {
+        connectOrCreate: {
+          where: {
+            email: body.email
+          },
+          create: {
+            email: body.email,
+            name: body.name
+          }
+        }
+      }
     }
   });
 });
