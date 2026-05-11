@@ -24,7 +24,7 @@ const nav = ref([
 </script>
 <template>
     <UFooter
-        class="fixed bottom-0 left-0 right-0 z-60 flex **justify-between** items-center **px-4** h-12 border-t border-gray-200 bg-white"
+        class="fixed bottom-0 left-0 right-0 z-60 flex justify-between items-center px-4 h-12 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
     >
         <template #default>
             <UButton

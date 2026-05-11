@@ -1,6 +1,12 @@
 <script setup lang="ts">
+
 import type { DateValue } from "@internationalized/date";
 import { getLocalTimeZone, today } from "@internationalized/date";
+
+
+definePageMeta({
+  middleware: 'auth'
+})
 
 const tz = getLocalTimeZone();
 
@@ -44,10 +50,10 @@ const showPending = ref(false);
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-white">
+  <div class="min-h-screen flex flex-col bg-white dark:bg-gray-900">
     <main class="flex-1 px-4 pt-24 pb-24">
       <div class="max-w-4xl mx-auto space-y-6">
-        <h2 class="text-center text-2xl font-bold text-brand4 mb-4">
+        <h2 class="text-center text-2xl font-bold text-brand4 dark:text-teal-400">
           Welcome back, {{ volunteer?.name }}
         </h2>
         <!-- Calendar Card -->
