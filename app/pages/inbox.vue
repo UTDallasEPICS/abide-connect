@@ -47,8 +47,8 @@ watch(
   { immediate: true },
 )
 
-console.log('sessionData:', sessionData.value)
-console.log('userId:', userId.value)
+// console.log('sessionData:', sessionData.value)
+// console.log('userId:', userId.value)
 
 // map to uaccordion items
 const accordionItems = computed(() =>
@@ -56,6 +56,7 @@ const accordionItems = computed(() =>
     id: n.id,
     label: n.title,
     content: n.content,
+    // icon: "i-heroicons-bell",
     time: formatTime(n.createdAt),
     isRead: n.isRead,
   })),
@@ -95,7 +96,9 @@ const formatTime = (timestamp: string) => {
         :items="accordionItems"
         :ui="{
           item: 'border-none pr-2 mt-5',
-          header: 'pr-5',
+          header: true
+            ? 'text-[20px] font-extrabold text-[#3a696e]'
+            : 'text-[20px] font-semibold text-[#3a696e]',
           trigger: 'block w-full text-left p-0',
           trailingIcon: 'hidden pointer-events-none',
         }"
@@ -149,22 +152,13 @@ const formatTime = (timestamp: string) => {
           </div>
         </template>
         <!-- body message -->
-        <template #content="{ item, open }">
-          <div
-            class="mt-5 pl-7"
-            :class="
-              open
-                ? 'grid-rows-[1fr] opacity-100'
-                : 'grid-rows-[0fr] opacity-0'
-            "
-          >
-            <div class="overflow-hidden">
-              <div
-                class="font-semibold text-[13px] text-gray-600 leading-relaxed"
-              >
-                {{ item.content }}
-              </div>
-            </div>
+        <template #content="{ item }">
+          <div class="overflow-hidden">
+            <p
+              class="font-semibold text-[13px] text-gray-600 leading-relaxed"
+            >
+              {{ item.content }}
+            </p>
           </div>
         </template>
       </UAccordion>

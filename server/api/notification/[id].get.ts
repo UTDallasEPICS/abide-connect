@@ -2,26 +2,34 @@ import prisma from '~~/server/utils/prisma'
 
 export default eventHandler(async (event) => {
   try {
-    const userId = getRouterParam(event, 'id')
-
-    if (!userId) {
+    const session = await auth.api.getSession({ headers: event.headers })
+    if (!session) {
       throw createError({
-        statusCode: 400,
-        statusMessage: 'Notification ID and User ID are required',
+        statusCode: 401,
+        statusMessage: 'Unauthorized',
       })
     }
+    const volunteerId = session.user.id
+    const user = await prisma.volunteer.findUnique({
+      where: {
+        id: volunteerId,
+      },
+      select: {
+        userId: true,
+      },
+    })
     const notifications = await prisma.notification.findMany({
       where: {
         users: {
           some: {
-            userId,
+            userId: user?.userId ?? 'default',
           },
         },
       },
       include: {
         users: {
           where: {
-            userId,
+            userId: user?.userId ?? 'default',
           },
           select: {
             isRead: true,
@@ -32,6 +40,7 @@ export default eventHandler(async (event) => {
         createdAt: 'desc',
       },
     })
+    console.log(notifications)
 
     // format the response
     const formattedNotifications = notifications.map(notification => ({

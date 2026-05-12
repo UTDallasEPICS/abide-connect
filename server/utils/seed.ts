@@ -1,5 +1,11 @@
 import fs from 'fs'
-import type { Language, Gender, Availability, Ethinicity, ApprovalStatus } from './generated/prisma/client.ts'
+import type {
+  Language,
+  Gender,
+  Availability,
+  Ethinicity,
+  ApprovalStatus,
+} from './generated/prisma/client.ts'
 import { PrismaClient } from './generated/prisma/client.ts'
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
 
@@ -67,7 +73,9 @@ type RawNotification = {
 async function main() {
   // Seed 5 events (3 future, 2 past) + images
   console.log('Seeding events...')
-  const rawEvents: RawEvent[] = JSON.parse(fs.readFileSync('prisma/seed/events.json').toString())
+  const rawEvents: RawEvent[] = JSON.parse(
+    fs.readFileSync('prisma/seed/events.json').toString(),
+  )
   // Convert each event into an upsertable format
   const events = rawEvents.map((event) => {
     return {
@@ -107,7 +115,9 @@ async function main() {
 
   // Seed two users + attended events + languages
   console.log('Seeding users...')
-  const rawUsers: RawUser[] = JSON.parse(fs.readFileSync('prisma/seed/users.json').toString())
+  const rawUsers: RawUser[] = JSON.parse(
+    fs.readFileSync('prisma/seed/users.json').toString(),
+  )
   // Convert each user into an upsertable format
   const users = rawUsers.map((user) => {
     return {
@@ -138,7 +148,9 @@ async function main() {
 
   // Seed one volunteer (ENSURE that each volunteer is linked to an existing user by email)
   console.log('Seeding volunteers...')
-  const rawVolunteers: RawVolunteer[] = JSON.parse(fs.readFileSync('prisma/seed/volunteers.json').toString())
+  const rawVolunteers: RawVolunteer[] = JSON.parse(
+    fs.readFileSync('prisma/seed/volunteers.json').toString(),
+  )
   // Convert each volunteer into an upsertable format
   const volunteers = rawVolunteers.map((volunteer) => {
     return {
@@ -201,7 +213,9 @@ async function main() {
 
   // Seed six notifications - UNFINISHED
   console.log('Seeding notifications...')
-  const rawNotifications: RawNotification[] = JSON.parse(fs.readFileSync('prisma/seed/notifications.json').toString())
+  const rawNotifications: RawNotification[] = JSON.parse(
+    fs.readFileSync('prisma/seed/notifications.json').toString(),
+  )
   const allUsers = await prisma.user.findMany()
   for (const notification of rawNotifications) {
     const notificationResult = await prisma.notification.upsert({
