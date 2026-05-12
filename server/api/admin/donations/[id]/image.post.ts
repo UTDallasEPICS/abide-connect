@@ -39,10 +39,10 @@ export default defineEventHandler(async (event) => {
   const uniqueFilename = `${randomUUID()}${ext}`
   const filePath = path.join(dirPath, uniqueFilename)
 
-console.log('filename:', file.filename)
-console.log('ext:', ext)
-console.log('uniqueFilename:', uniqueFilename)
-console.log('saving to:', filePath)
+  console.log('filename:', file.filename)
+  console.log('ext:', ext)
+  console.log('uniqueFilename:', uniqueFilename)
+  console.log('saving to:', filePath)
 
   fs.writeFileSync(filePath, file.data)
 
