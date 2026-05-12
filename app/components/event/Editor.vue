@@ -37,21 +37,21 @@ function deleteEvent() {
   <div class="space-y-4">
     <h3 class="text-xl font-semibold">Edit Event</h3>
 
-    <UFormGroup label="Event Name">
+    <UFormField label="Event Name">
       <UInput v-model="editedEvent.name" />
-    </UFormGroup>
+    </UFormField>
 
-    <UFormGroup label="Date">
+    <UFormField label="Date">
       <UInput v-model="editedEvent.date" type="date" />
-    </UFormGroup>
+    </UFormField>
 
-    <UFormGroup label="Location">
+    <UFormField label="Location">
       <UInput v-model="editedEvent.location" />
-    </UFormGroup>
+    </UFormField>
 
-    <UFormGroup label="Image URL">
+    <UFormField label="Image URL">
       <UInput v-model="editedEvent.image" />
-    </UFormGroup>
+    </UFormField>
 
     <!-- Preview image if URL provided -->
     <div v-if="editedEvent.image" class="mt-2">

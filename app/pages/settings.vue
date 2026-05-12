@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+
 definePageMeta({
   layout: 'secondary',
-})
+}) 
+
+
 
 // type for the select
 type NotificationType = 'General Events' | 'Volunteer Events' | 'Both'
@@ -19,7 +21,7 @@ const notificationOptions = [
 </script>
 
 <template>
-    <div class="flex flex-col w-screen h-screen bg-white items-stretch">
+    <div class="min-h-screen flex flex-col bg-white dark:bg-gray-900">
          <!-- top nav bar with back button -->
         <main class="flex-1 px-5 pt-20 pb-24">
             <h2 class="text-xl font-semibold mb-6 text-brand7">
@@ -29,7 +31,7 @@ const notificationOptions = [
             <section class="space-y-5">
 
                 <div class="w-full rounded-3xl border border-gray-2-400 bg-slate-100 px-4 py-4 flex items-center justify-between">
-                    <span class="text-sm font-semibold text-brand4">Enable Notifications</span>
+                    <span class="text-sm font-semibold text-">Enable Notifications</span>
 
                     <USwitch 
                         v-model="notificationEnabled" 

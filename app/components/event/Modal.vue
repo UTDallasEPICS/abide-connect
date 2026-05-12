@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from "vue"
+import FileUpload from 'primevue/fileupload'
 
 const emit = defineEmits(["save", "close"])
 
@@ -146,52 +147,52 @@ function cancel() {
       <label class="block text-sm font-medium text-gray-700 mb-1">
         Event Title <span class="text-red-500">*</span>
       </label>
-      <UFormGroup>
+      <UFormField>
         <UInput v-model="newEvent.title" placeholder="Enter event title" />
-      </UFormGroup>
+      </UFormField>
     </div>
 
     <div>
       <label class="block text-sm font-medium text-gray-700 mb-1">Short Description</label>
-      <UFormGroup>
+      <UFormField>
         <UInput v-model="newEvent.shortDesc" placeholder="Brief description" />
-      </UFormGroup>
+      </UFormField>
     </div>
 
     <div>
       <label class="block text-sm font-medium text-gray-700 mb-1">Full Description</label>
-      <UFormGroup>
+      <UFormField>
         <UTextarea v-model="newEvent.description" placeholder="Detailed description" :rows="4" />
-      </UFormGroup>
+      </UFormField>
     </div>
 
     <div>
       <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
-      <UFormGroup>
+      <UFormField>
         <UInput v-model="newEvent.location" placeholder="Enter location address" />
-      </UFormGroup>
+      </UFormField>
     </div>
 
-    <div class="grid grid-cols-2 gap-4">
+    <div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">
           Start Date & Time <span class="text-red-500">*</span>
         </label>
-        <UFormGroup>
+        <UFormField>
           <UInput v-model="newEvent.startTime" type="datetime-local" />
-        </UFormGroup>
+        </UFormField>
       </div>
 
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">
           End Date & Time <span class="text-red-500">*</span>
         </label>
-        <UFormGroup>
+        <UFormField>
           <UInput v-model="newEvent.endTime" type="datetime-local" />
-        </UFormGroup>
+        </UFormField>
       </div>
     </div>
-
+    
     <div class="space-y-2">
       <label class="flex items-center gap-2 cursor-pointer">
         <UCheckbox v-model="newEvent.allowVolunteers" />
@@ -205,45 +206,21 @@ function cancel() {
     </div>
 
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-2">Event Images</label>
-      <input
-        type="file"
-        multiple
-        accept="image/*"
-        class="block w-full text-sm text-gray-500
-          file:mr-4 file:py-2 file:px-4
-          file:rounded-full file:border-0
-          file:text-sm file:font-semibold
-          file:bg-primary-50 file:text-brand4
-          hover:file:bg-primary-100
-          cursor-pointer"
-        @change="handleFileChange"
-      >
-    </div>
-
-    <!-- Preview images if uploaded -->
-    <div v-if="newEvent.eventAssets.length > 0" class="mt-2">
-      <p class="text-sm text-gray-600 mb-2">Image Previews:</p>
-      <div class="grid grid-cols-2 gap-2">
-        <div
-          v-for="(asset, index) in newEvent.eventAssets"
-          :key="index"
-          class="relative group"
+      <UFormField label="Event Images">
+        <FileUpload 
+        mode = "advanced"
+        :multiple = "true"
+        accept = "image/*"
+        :auto = "false"
+        :customUpload = "true"
+        @select = "handleFileChange($event.files)"
+        @remove = "removeImage($event.index)"
         >
-          <img 
-            :src="asset.imageUrl" 
-            alt="Event preview" 
-            class="w-full h-32 object-cover rounded-lg"
-          >
-          <button
-            class="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-            type="button"
-            @click="removeImage(index)"
-          >
-            <UIcon name="i-lucide-x" class="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+          <template #empty>
+            <span>Drag and drop files to here to upload.</span>
+          </template>
+        </FileUpload>
+      </UFormField>
     </div>
 
     <div class="flex justify-end gap-2 pt-4 border-t">

@@ -44,6 +44,7 @@
 </template>
 
 <script setup>
+
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 const style = '/mapstyles.json'
