@@ -27,21 +27,30 @@
         :snap-points="snapPoints"
       >
         <template #content>
-          <EventTile
-            v-if="pastEvents.length === 0"
-            class="w-11/12 mx-auto my-4 cursor-pointer"
-            title="No past events"
-            subtitle="Check back later for updates!"
-          />
-          <EventTile
-            v-for="event in pastEvents"
-            v-else
-            :key="event.id"
-            class="w-11/12 mx-auto my-4 cursor-pointer"
-            :title="event.title"
-            :subtitle="new Date(event.startTime).toLocaleString()"
-            @click="() => mapAdjust(event)"
-          />
+          <div
+            class="max-h-[55vh] overflow-y-auto space-y-2 px-2 pb-4"
+          >
+            <EventTile
+              v-if="upcomingEvents.length === 0"
+              class="w-11/12 mx-auto my-4 cursor-pointer"
+              title="No upcoming events"
+              subtitle="Check back later for updates!"
+            />
+            <EventTile
+              v-for="event in upcomingEvents"
+              v-else
+              :key="event.id"
+              class="w-11/12 mx-auto my-4 cursor-pointer"
+              :title="event.title"
+              :subtitle="
+                new Date(event.startTime).toLocaleString()
+              "
+              button-type="arrow"
+              :event-id="event.eventId"
+              @add="eventClick"
+              @click="handleTileClick(event)"
+            />
+          </div>
         </template>
       </UDrawer>
     </div>
@@ -58,14 +67,57 @@ const zoom = ref(15)
 // Pixel values
 const snapPoints = ['230', '340', '450']
 
-const pastEvents = ref([])
 const upcomingEvents = ref([])
 
-// Load all events from API on mount
+// Load both events and mobile clinic schedule on mount
 onMounted(async () => {
-  console.log('✅ Page mounted - Loading events from API')
+  console.log('✅ Page mounted - Loading events and mobile clinic schedule')
   await loadEvents()
+  await loadMobileClinicSchedule()
 })
+
+const eventClick = (id) => {
+  if (!id) return
+  navigateTo(`/events/${id}`)
+}
+
+const handleTileClick = (event) => {
+  if (!event?.location) return
+  mapAdjust(event.location)
+}
+
+const setUpcomingItems = (items) => {
+  upcomingEvents.value = items
+    .map(item => ({
+      ...item,
+      subtitle:
+                item.subtitle ?? new Date(item.startTime).toLocaleString(),
+    }))
+    .sort(
+      (a, b) =>
+        new Date(a.startTime).getTime()
+          - new Date(b.startTime).getTime(),
+    )
+}
+
+async function loadMobileClinicSchedule() {
+  try {
+    const schedule = await $fetch('/api/mobile-clinic/schedule')
+    console.log('✅ Loaded mobile clinic schedule:', schedule)
+
+    const scheduleItems = schedule.map(item => ({
+      ...item,
+      title: `Mobile Clinic`,
+      eventId: null,
+    }))
+
+    setUpcomingItems([...upcomingEvents.value, ...scheduleItems])
+    console.log('📅 Combined schedule items:', scheduleItems.length)
+  }
+  catch (error) {
+    console.error('❌ Error loading mobile clinic schedule:', error)
+  }
+}
 
 async function loadEvents() {
   try {
@@ -74,28 +126,27 @@ async function loadEvents() {
 
     const now = new Date()
 
-    pastEvents.value = allEvents.filter((event) => {
-      const endTime = new Date(event.endTime)
-      return endTime < now
-    })
+    const eventItems = allEvents
+      .filter(event => event.mobileClinicId !== null)
+      .filter(event => new Date(event.endTime) >= now)
+      .map(event => ({
+        ...event,
+        eventId: event.id,
+      }))
 
-    upcomingEvents.value = allEvents.filter((event) => {
-      const endTime = new Date(event.endTime)
-      return endTime >= now
-    })
-
-    console.log('📅 Past events:', pastEvents.value.length)
-    console.log('📅 Upcoming events:', upcomingEvents.value.length)
+    setUpcomingItems([...upcomingEvents.value, ...eventItems])
+    console.log('📅 Upcoming events:', eventItems.length)
   }
   catch (error) {
     console.error('❌ Error loading events:', error)
   }
 }
 
-async function mapAdjust() {
-  const lng = -96.749788
-  const lat = 32.985141
+async function mapAdjust(location) {
+  const lng = location.longitude
+  const lat = location.latitude
 
+  console.log(`📍 Adjusting map to event location: [${lng}, ${lat}]`)
   center.value = [lng, lat]
   zoom.value = 17
 }

@@ -64,6 +64,19 @@ type RawVolunteer = {
   }[]
 }
 
+type RawSchedule = {
+  mobileClinic: {
+    id: string
+  }
+  location: {
+    longitude: number
+    latitude: number
+    address: string
+  }
+  startTime: string
+  endTime: string
+}
+
 type RawNotification = {
   id: string
   title: string
@@ -209,6 +222,49 @@ async function main() {
       create: volunteer,
     })
     console.log(volunteerResult)
+  }
+
+  // seed mobile clinic schedule
+  console.log('Seeding mobile clinic schedule...')
+  const rawSchedules: RawSchedule[] = JSON.parse(
+    fs.readFileSync('prisma/seed/schedule.json').toString(),
+  )
+  const schedules = rawSchedules.map((schedule) => {
+    return {
+      ...schedule,
+      startTime: new Date(schedule.startTime),
+      endTime: new Date(schedule.endTime),
+      location: {
+        connectOrCreate: {
+          where: {
+            address: schedule.location.address,
+          },
+          create: {
+            longitude: schedule.location.longitude,
+            latitude: schedule.location.latitude,
+            address: schedule.location.address,
+          },
+        },
+      },
+      mobileClinic: {
+        connectOrCreate: {
+          where: {
+            id: schedule.mobileClinic.id,
+          },
+          create: {
+            id: schedule.mobileClinic.id,
+          },
+        },
+      },
+    }
+  })
+  for (const schedule of schedules) {
+    const scheduleResult = await prisma.mobile_Clinic_Schedule.upsert({
+      where: { startTime: schedule.startTime },
+      update: {},
+      create: schedule,
+    })
+    console.log(scheduleResult)
   }
 
   // Seed six notifications - UNFINISHED

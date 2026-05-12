@@ -27,19 +27,32 @@ watch(filesToUpload, async (newFiles) => {
     return
   }
   const previews = await Promise.all(
-    Array.from(newFiles).map(file => new Promise((resolve) => {
-      const reader = new FileReader()
-      reader.onload = e => resolve({ imageUrl: e.target.result, fileName: file.name })
-      reader.readAsDataURL(file)
-    })),
+    Array.from(newFiles).map(
+      file =>
+        new Promise((resolve) => {
+          const reader = new FileReader()
+          reader.onload = e =>
+            resolve({
+              imageUrl: e.target.result,
+              fileName: file.name,
+            })
+          reader.readAsDataURL(file)
+        }),
+    ),
   )
   newEvent.value.eventAssets = previews
 })
 
 async function saveEvent() {
   // Validate required fields
-  if (!newEvent.value.title || !newEvent.value.startTime || !newEvent.value.endTime) {
-    alert('Please fill in all required fields (Title, Start Time, End Time)')
+  if (
+    !newEvent.value.title
+    || !newEvent.value.startTime
+    || !newEvent.value.endTime
+  ) {
+    alert(
+      'Please fill in all required fields (Title, Start Time, End Time)',
+    )
     return
   }
 
@@ -80,7 +93,10 @@ async function saveEvent() {
           console.log(`✅ Uploaded: ${file.name}`)
         }
         catch (uploadError) {
-          console.error(`❌ Failed to upload ${file.name}:`, uploadError)
+          console.error(
+            `❌ Failed to upload ${file.name}:`,
+            uploadError,
+          )
         }
       }
     }
@@ -236,7 +252,7 @@ function cancel() {
         :loading="isSaving"
         @click="saveEvent"
       >
-        {{ isSaving ? 'Creating...' : 'Create Event' }}
+        {{ isSaving ? "Creating..." : "Create Event" }}
       </UButton>
     </div>
   </div>

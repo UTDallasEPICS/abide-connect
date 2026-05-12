@@ -3,7 +3,6 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import { ref, computed, onMounted } from 'vue'
 
 const route = useRoute()
-const router1 = useRouter()
 
 // Get the ID from the route params
 const eventId = route.params.id
@@ -13,7 +12,7 @@ const loading = ref(true)
 const notFound = ref(false)
 
 const isEditMode = ref(false)
-const editForm = ref({})
+const editForm = ref({ mobileClinic: false })
 
 // placeholder until we implement auth
 const admin = true
@@ -26,7 +25,10 @@ onMounted(async () => {
     // Fetch event from your backend API
     event.value = await $fetch(`/api/events/${eventId}`)
 
-    editForm.value = { ...event.value }
+    editForm.value = {
+      ...event.value,
+      mobileClinic: Boolean(event.value?.mobileClinicId),
+    }
 
     console.log('✅ Event loaded:', event.value)
     loading.value = false
@@ -74,7 +76,10 @@ const zoom = 15
 function toggleEditMode() {
   if (isEditMode.value) {
     // Cancel editing - reset form to original event data
-    editForm.value = { ...event.value }
+    editForm.value = {
+      ...event.value,
+      mobileClinic: Boolean(event.value?.mobileClinicId),
+    }
   }
   isEditMode.value = !isEditMode.value
 }
@@ -84,7 +89,7 @@ async function saveChanges() {
     console.log('💾 Saving changes...')
 
     // Update event via API
-    await $fetch(`/api/events/${event.value.id}`, {
+    const _updatedEvent = await $fetch(`/api/events/${event.value.id}`, {
       method: 'PATCH',
       body: {
         title: editForm.value.title,
@@ -95,6 +100,7 @@ async function saveChanges() {
         endTime: new Date(editForm.value.endTime).toISOString(),
         allowVolunteers: editForm.value.allowVolunteers,
         allowAttendees: editForm.value.allowAttendees,
+        mobileClinic: editForm.value.mobileClinic,
       },
     })
 
@@ -219,9 +225,9 @@ const fetchedItems = event.value?.eventAssets.map(
 
 const items = (fetchedItems?.length || 0) > 0 ? fetchedItems : placeholders
 
-// const backNavigate = computed(() => {
-//     return admin ? "/events/manage" : "/events";
-// });
+const backNavigate = computed(() => {
+  return admin ? '/events/manage' : '/events'
+})
 </script>
 
 <template>
@@ -277,7 +283,7 @@ const items = (fetchedItems?.length || 0) > 0 ? fetchedItems : placeholders
             icon="i-lucide-arrow-left"
             variant="ghost"
             class="text-brand4"
-            @click="router1.back()"
+            @click="navigateTo(backNavigate)"
           />
 
           <div
@@ -559,7 +565,8 @@ const items = (fetchedItems?.length || 0) > 0 ? fetchedItems : placeholders
                     Volunteer Sign-ups
                   </p>
                   <p class="text-sm text-gray-500">
-                    Allow people to volunteer for this event
+                    Allow people to volunteer for this
+                    event?
                   </p>
                 </div>
               </div>
@@ -586,7 +593,7 @@ const items = (fetchedItems?.length || 0) > 0 ? fetchedItems : placeholders
                     Attendee Registration
                   </p>
                   <p class="text-sm text-gray-500">
-                    Allow people to register as attendees
+                    Allow people to register as attendees?
                   </p>
                 </div>
               </div>
@@ -605,6 +612,44 @@ const items = (fetchedItems?.length || 0) > 0 ? fetchedItems : placeholders
               >
                 <UCheckbox
                   :model-value="event.allowAttendees"
+                  color="brand4"
+                  disabled
+                />
+              </label>
+            </div>
+
+            <div
+              class="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
+            >
+              <div class="flex items-center gap-3">
+                <UIcon
+                  name="i-lucide-ticket"
+                  class="w-5 h-5 text-brand4"
+                />
+                <div>
+                  <p class="font-medium text-gray-900">
+                    Mobile Clinic
+                  </p>
+                  <p class="text-sm text-gray-500">
+                    Will this event have a mobile clinic?
+                  </p>
+                </div>
+              </div>
+              <label
+                v-if="isEditMode"
+                class="flex items-center gap-2 cursor-pointer"
+              >
+                <UCheckbox
+                  v-model="editForm.mobileClinic"
+                  color="brand4"
+                />
+              </label>
+              <label
+                v-else
+                class="flex items-center gap-2"
+              >
+                <UCheckbox
+                  :model-value="Boolean(event.mobileClinicId)"
                   color="brand4"
                   disabled
                 />

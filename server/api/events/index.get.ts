@@ -8,6 +8,7 @@ export default defineEventHandler(async (_event) => {
         eventAssets: true,
         volunteerHours: true,
         participants: true,
+        location: true,
       },
       orderBy: {
         startTime: 'asc',
