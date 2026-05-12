@@ -1,4 +1,5 @@
 import prisma from "~~/server/utils/prisma";
+
 // Geocode location using Nominatim
 async function geocodeLocation(location: string) {
   try {
@@ -44,7 +45,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: "Missing event ID" });
   }
 
-  //check if location has already been fetched
+  // check if location has already been fetched
   const locationData =
     (await prisma.location.findUnique({
       where: {

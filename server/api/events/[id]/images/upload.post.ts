@@ -5,20 +5,19 @@ import prisma from '~~/server/utils/prisma'
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   const form = await readMultipartFormData(event)
-  
 
   if (!id) {
     throw createError({ statusCode: 400, message: 'Missing event ID' })
   }
 
   if (!form) {
-    throw createError({ statusCode: 400, statusMessage: "No form data" })
+    throw createError({ statusCode: 400, statusMessage: 'No form data' })
   }
 
-  const file = form.find(i => i.name === "file")
+  const file = form.find(i => i.name === 'file')
 
   if (!file || !file.data) {
-    throw createError({ statusCode: 400, statusMessage: "File missing" })
+    throw createError({ statusCode: 400, statusMessage: 'File missing' })
   }
 
   const foundEvent = await prisma.event.findUnique({
@@ -31,13 +30,19 @@ export default defineEventHandler(async (event) => {
   }
 
   // Save file to public/images
-  const dirPath = path.join(process.env.IMAGE_STORAGE_PATH || "public/images", id)
+  const dirPath = path.join(
+    process.env.IMAGE_STORAGE_PATH || 'public/images',
+    id,
+  )
 
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true })
   }
 
-  const filePath = path.join(dirPath, decodeURIComponent(file.filename || "failed.png"))
+  const filePath = path.join(
+    dirPath,
+    decodeURIComponent(file.filename || 'failed.png'),
+  )
 
   if (fs.existsSync(filePath)) {
     throw createError({ statusCode: 400, message: 'Image already exists.' })
@@ -51,20 +56,20 @@ export default defineEventHandler(async (event) => {
     },
     data: {
       eventAssets: {
-        create: [{
-          imageUrl: path.join(id, file.filename || "failed.png")
-        }]
-      }
-    }
+        create: [
+          {
+            imageUrl: path.join(id, 'images', file.filename || 'failed.png'),
+          },
+        ],
+      },
+    },
   })
 
   console.log(addedImage)
-  
 
-  setResponseStatus(event, 201);
+  setResponseStatus(event, 201)
 
   return {
-    message: "Added file to event."
+    message: 'Added file to event.',
   }
-
 })

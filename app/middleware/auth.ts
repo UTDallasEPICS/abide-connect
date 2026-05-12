@@ -4,16 +4,17 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   try {
     const data = await $fetch('/api/auth/get-session', {
-      cache: 'no-store',  // ← forces fresh request every time
+      cache: 'no-store', // ← forces fresh request every time
       headers: {
-        'Cache-Control': 'no-cache'
-      }
+        'Cache-Control': 'no-cache',
+      },
     })
-    
+
     if (!data?.session) {
       return navigateTo('/auth/login')
     }
-  } catch {
+  }
+  catch {
     return navigateTo('/auth/login')
   }
 })

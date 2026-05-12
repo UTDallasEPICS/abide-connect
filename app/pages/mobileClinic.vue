@@ -45,17 +45,18 @@
             </UDrawer>
         </div>
     </div>
+  </div>
 </template>
 
 <script setup>
-import "maplibre-gl/dist/maplibre-gl.css";
+import 'maplibre-gl/dist/maplibre-gl.css'
 
-const style = "/mapstyles.json";
-const center = ref([-96.77049780046936, 32.772891246510596]);
-const zoom = ref(15);
+const style = '/mapstyles.json'
+const center = ref([-96.77049780046936, 32.772891246510596])
+const zoom = ref(15)
 
 // Pixel values
-const snapPoints = ["230", "340", "450"];
+const snapPoints = ['230', '340', '450']
 
 const upcomingEvents = ref([]);
 

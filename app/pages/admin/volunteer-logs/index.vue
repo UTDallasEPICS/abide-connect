@@ -114,7 +114,7 @@ function confirmAction(id: string) {
                 Volunteer Log <span class="text-teal-600">Approvals</span>
             </h1>
 
-            <!-- tabs-->
+            <!-- tabs -->
             <div class="flex gap-3 mt-6">
                 <button
                     v-for="tab in tabs"
