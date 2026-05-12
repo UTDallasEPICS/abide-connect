@@ -1,4 +1,4 @@
-import prisma from "~~/server/utils/prisma";
+import prisma from '~~/server/utils/prisma'
 
 // Geocode location using Nominatim
 async function geocodeLocation(location: string) {
@@ -7,47 +7,48 @@ async function geocodeLocation(location: string) {
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`,
       {
         headers: {
-          "User-Agent": "Abide-Connect/1.0",
+          'User-Agent': 'Abide-Connect/1.0',
         },
       },
-    );
+    )
 
     if (!response.ok) {
-      console.warn(`Nominatim API error: ${response.status}`);
-      return null;
+      console.warn(`Nominatim API error: ${response.status}`)
+      return null
     }
 
-    const results = await response.json();
+    const results = await response.json()
 
     if (results.length === 0) {
-      console.warn(`No geocoding results found for: ${location}`);
-      return null;
+      console.warn(`No geocoding results found for: ${location}`)
+      return null
     }
 
-    const topResult = results[0];
+    const topResult = results[0]
 
     return {
       latitude: parseFloat(topResult.lat),
       longitude: parseFloat(topResult.lon),
       address: location,
-    };
-  } catch (error) {
-    console.error("❌ Geocoding error:", error);
-    return null;
+    }
+  }
+  catch (error) {
+    console.error('❌ Geocoding error:', error)
+    return null
   }
 }
 
 export default defineEventHandler(async (event) => {
-  const id = getRouterParam(event, "id");
-  const body = await readBody(event);
+  const id = getRouterParam(event, 'id')
+  const body = await readBody(event)
 
   if (!id) {
-    throw createError({ statusCode: 400, message: "Missing event ID" });
+    throw createError({ statusCode: 400, message: 'Missing event ID' })
   }
 
   // check if location has already been fetched
-  const locationData =
-    (await prisma.location.findUnique({
+  const locationData
+    = (await prisma.location.findUnique({
       where: {
         address: body.location.address || null,
       },
@@ -56,49 +57,50 @@ export default defineEventHandler(async (event) => {
         longitude: true,
         address: true,
       },
-    })) || (await geocodeLocation(body.location.address));
+    })) || (await geocodeLocation(body.location.address))
 
   if (!locationData) {
     throw createError({
       statusCode: 500,
-      message: "Failed to retrieve or create location data",
-    });
+      message: 'Failed to retrieve or create location data',
+    })
   }
 
-  console.log("📍 Location data from DB:", locationData);
+  console.log('📍 Location data from DB:', locationData)
 
   if (!locationData) {
     throw createError({
       statusCode: 400,
-      message: "Invalid location provided and geocoding failed",
-    });
+      message: 'Invalid location provided and geocoding failed',
+    })
   }
 
   try {
     // Check if event exists
     const foundEvent = await prisma.event.findUnique({
       where: { id },
-    });
+    })
 
     if (!foundEvent) {
-      throw createError({ statusCode: 404, message: "Event not found" });
+      throw createError({ statusCode: 404, message: 'Event not found' })
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mobileClinicUpdate: Record<string, any> = {};
+    const mobileClinicUpdate: Record<string, any> = {}
 
-    if (typeof body.mobileClinic === "boolean") {
+    if (typeof body.mobileClinic === 'boolean') {
       if (body.mobileClinic) {
         if (!foundEvent.mobileClinicId) {
           mobileClinicUpdate.mobileClinic = {
             create: {},
-          };
+          }
         }
-      } else {
+      }
+      else {
         if (foundEvent.mobileClinicId) {
           mobileClinicUpdate.mobileClinic = {
             disconnect: true,
-          };
+          }
         }
       }
     }
@@ -122,15 +124,16 @@ export default defineEventHandler(async (event) => {
         eventAssets: true,
         location: true,
       },
-    });
+    })
 
-    console.log("✅ Event updated:", updatedEvent);
-    return updatedEvent;
-  } catch (error) {
-    console.error("❌ Error updating event:", error);
+    console.log('✅ Event updated:', updatedEvent)
+    return updatedEvent
+  }
+  catch (error) {
+    console.error('❌ Error updating event:', error)
     throw createError({
       statusCode: 500,
-      message: "Failed to update event",
-    });
+      message: 'Failed to update event',
+    })
   }
-});
+})

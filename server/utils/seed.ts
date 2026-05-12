@@ -1,94 +1,94 @@
-import fs from "fs";
+import fs from 'fs'
 import type {
   Language,
   Gender,
   Availability,
   Ethinicity,
   ApprovalStatus,
-} from "./generated/prisma/client.ts";
-import { PrismaClient } from "./generated/prisma/client.ts";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+} from './generated/prisma/client.ts'
+import { PrismaClient } from './generated/prisma/client.ts'
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
 
 const adapter = new PrismaBetterSqlite3({
   url: process.env.DATABASE_URL,
-});
-const prisma = new PrismaClient({ adapter });
+})
+const prisma = new PrismaClient({ adapter })
 
 type RawEvent = {
-  id: string;
-  title: string;
-  shortDesc: string;
-  description: string;
-  startTime: string;
-  endTime: string;
+  id: string
+  title: string
+  shortDesc: string
+  description: string
+  startTime: string
+  endTime: string
   location: {
-    longitude: number;
-    latitude: number;
-    address: string;
-  };
-  allowVolunteers: boolean;
-  allowAttendees: boolean;
-  eventAssets: string[];
-};
+    longitude: number
+    latitude: number
+    address: string
+  }
+  allowVolunteers: boolean
+  allowAttendees: boolean
+  eventAssets: string[]
+}
 
 type RawUser = {
-  name: string;
-  contactEmail: string;
-  phone: string;
+  name: string
+  contactEmail: string
+  phone: string
   RSVPs: {
-    isVolunteer?: boolean;
-    id: string;
-  }[];
-};
+    isVolunteer?: boolean
+    id: string
+  }[]
+}
 
 type RawVolunteer = {
-  id: string;
+  id: string
   user: {
-    contactEmail: string;
-  };
-  email: string;
-  languages: string[];
-  gender: string;
-  ethinicity: string;
-  profileURL: string;
-  availabilities: string[];
-  certifications: string[];
+    contactEmail: string
+  }
+  email: string
+  languages: string[]
+  gender: string
+  ethinicity: string
+  profileURL: string
+  availabilities: string[]
+  certifications: string[]
   hourLogs: {
     event: {
-      id: string;
-    };
-    date: string;
-    hours: number;
-    approvalStatus: string;
-    comment?: string;
-  }[];
-};
+      id: string
+    }
+    date: string
+    hours: number
+    approvalStatus: string
+    comment?: string
+  }[]
+}
 
 type RawSchedule = {
   mobileClinic: {
-    id: string;
-  };
+    id: string
+  }
   location: {
-    longitude: number;
-    latitude: number;
-    address: string;
-  };
-  startTime: string;
-  endTime: string;
-};
+    longitude: number
+    latitude: number
+    address: string
+  }
+  startTime: string
+  endTime: string
+}
 
 type RawNotification = {
-  id: string;
-  title: string;
-  content: string;
-};
+  id: string
+  title: string
+  content: string
+}
 
 async function main() {
   // Seed 5 events (3 future, 2 past) + images
-  console.log("Seeding events...");
+  console.log('Seeding events...')
   const rawEvents: RawEvent[] = JSON.parse(
-    fs.readFileSync("prisma/seed/events.json").toString(),
-  );
+    fs.readFileSync('prisma/seed/events.json').toString(),
+  )
   // Convert each event into an upsertable format
   const events = rawEvents.map((event) => {
     return {
@@ -99,7 +99,7 @@ async function main() {
         create: event.eventAssets.map((imageUrl) => {
           return {
             imageUrl: imageUrl,
-          };
+          }
         }),
       },
       location: {
@@ -114,23 +114,23 @@ async function main() {
           },
         },
       },
-    };
-  });
+    }
+  })
   // Upsert each event
   for (const event of events) {
     const eventResult = await prisma.event.upsert({
       where: { id: event.id },
       update: {},
       create: event,
-    });
-    console.log(eventResult);
+    })
+    console.log(eventResult)
   }
 
   // Seed two users + attended events + languages
-  console.log("Seeding users...");
+  console.log('Seeding users...')
   const rawUsers: RawUser[] = JSON.parse(
-    fs.readFileSync("prisma/seed/users.json").toString(),
-  );
+    fs.readFileSync('prisma/seed/users.json').toString(),
+  )
   // Convert each user into an upsertable format
   const users = rawUsers.map((user) => {
     return {
@@ -144,26 +144,26 @@ async function main() {
                 id: event.id,
               },
             },
-          };
+          }
         }),
       },
-    };
-  });
+    }
+  })
   // Upsert each user
   for (const user of users) {
     const userResult = await prisma.user.upsert({
       where: { contactEmail: user.contactEmail },
       update: {},
       create: user,
-    });
-    console.log(userResult);
+    })
+    console.log(userResult)
   }
 
   // Seed one volunteer (ENSURE that each volunteer is linked to an existing user by email)
-  console.log("Seeding volunteers...");
+  console.log('Seeding volunteers...')
   const rawVolunteers: RawVolunteer[] = JSON.parse(
-    fs.readFileSync("prisma/seed/volunteers.json").toString(),
-  );
+    fs.readFileSync('prisma/seed/volunteers.json').toString(),
+  )
   // Convert each volunteer into an upsertable format
   const volunteers = rawVolunteers.map((volunteer) => {
     return {
@@ -174,14 +174,14 @@ async function main() {
         create: volunteer.languages.map((lang) => {
           return {
             language: lang as Language,
-          };
+          }
         }),
       },
       availabilities: {
         create: volunteer.availabilities.map((avail) => {
           return {
             availability: avail as Availability,
-          };
+          }
         }),
       },
       hourLogs: {
@@ -197,14 +197,14 @@ async function main() {
                 id: log.event.id,
               },
             },
-          };
+          }
         }),
       },
       certifications: {
         create: volunteer.certifications.map((cert) => {
           return {
             certification: cert,
-          };
+          }
         }),
       },
       user: {
@@ -212,23 +212,23 @@ async function main() {
           contactEmail: volunteer.user.contactEmail,
         },
       },
-    };
-  });
+    }
+  })
   // Upsert each volunteer
   for (const volunteer of volunteers) {
     const volunteerResult = await prisma.volunteer.upsert({
       where: { id: volunteer.id },
       update: {},
       create: volunteer,
-    });
-    console.log(volunteerResult);
+    })
+    console.log(volunteerResult)
   }
 
-  //seed mobile clinic schedule
-  console.log("Seeding mobile clinic schedule...");
+  // seed mobile clinic schedule
+  console.log('Seeding mobile clinic schedule...')
   const rawSchedules: RawSchedule[] = JSON.parse(
-    fs.readFileSync("prisma/seed/schedule.json").toString(),
-  );
+    fs.readFileSync('prisma/seed/schedule.json').toString(),
+  )
   const schedules = rawSchedules.map((schedule) => {
     return {
       ...schedule,
@@ -256,23 +256,23 @@ async function main() {
           },
         },
       },
-    };
-  });
+    }
+  })
   for (const schedule of schedules) {
     const scheduleResult = await prisma.mobile_Clinic_Schedule.upsert({
       where: { startTime: schedule.startTime },
       update: {},
       create: schedule,
-    });
-    console.log(scheduleResult);
+    })
+    console.log(scheduleResult)
   }
 
   // Seed six notifications - UNFINISHED
-  console.log("Seeding notifications...");
+  console.log('Seeding notifications...')
   const rawNotifications: RawNotification[] = JSON.parse(
-    fs.readFileSync("prisma/seed/notifications.json").toString(),
-  );
-  const allUsers = await prisma.user.findMany();
+    fs.readFileSync('prisma/seed/notifications.json').toString(),
+  )
+  const allUsers = await prisma.user.findMany()
   for (const notification of rawNotifications) {
     const notificationResult = await prisma.notification.upsert({
       where: { id: notification.id },
@@ -282,7 +282,7 @@ async function main() {
         title: notification.title,
         content: notification.content,
       },
-    });
+    })
     // Link to all users
     for (const user of allUsers) {
       await prisma.user_Notification.upsert({
@@ -297,18 +297,18 @@ async function main() {
           userId: user.id,
           notificationId: notificationResult.id,
         },
-      });
+      })
     }
-    console.log(notificationResult);
+    console.log(notificationResult)
   }
 }
 
 main()
   .then(async () => {
-    await prisma.$disconnect();
+    await prisma.$disconnect()
   })
   .catch(async (e) => {
-    console.error(e);
-    await prisma.$disconnect();
-    process.exit(1);
-  });
+    console.error(e)
+    await prisma.$disconnect()
+    process.exit(1)
+  })
