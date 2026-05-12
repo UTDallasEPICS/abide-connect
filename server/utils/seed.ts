@@ -1,73 +1,73 @@
-import fs  from 'fs';
-import type { Language, Gender, Availability, Ethinicity, ApprovalStatus } from "./generated/prisma/client.ts";
-import { PrismaClient } from './generated/prisma/client.ts';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import fs from 'fs'
+import type { Language, Gender, Availability, Ethinicity, ApprovalStatus } from './generated/prisma/client.ts'
+import { PrismaClient } from './generated/prisma/client.ts'
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
 
 const adapter = new PrismaBetterSqlite3({
-    url: process.env.DATABASE_URL
-  })
-  const prisma = new PrismaClient({ adapter })
+  url: process.env.DATABASE_URL,
+})
+const prisma = new PrismaClient({ adapter })
 
 type RawEvent = {
-  id: string,
-  title: string,
-  shortDesc: string,
-  description: string,
-  startTime: string,
-  endTime: string,
+  id: string
+  title: string
+  shortDesc: string
+  description: string
+  startTime: string
+  endTime: string
   location: {
-    longitude: number,
-    latitude: number,
+    longitude: number
+    latitude: number
     address: string
-  },
-  allowVolunteers: boolean,
-  allowAttendees: boolean,
+  }
+  allowVolunteers: boolean
+  allowAttendees: boolean
   eventAssets: string[]
 }
 
 type RawUser = {
-  name: string,
-  contactEmail: string,
-  phone: string,
+  name: string
+  contactEmail: string
+  phone: string
   RSVPs: {
-    isVolunteer?: boolean,
+    isVolunteer?: boolean
     id: string
   }[]
 }
 
 type RawVolunteer = {
-  id: string,
+  id: string
   user: {
-    contactEmail: string,
-  },
-  email: string,
-  languages: string[],
-  gender: string,
-  ethinicity: string,
-  profileURL: string,
-  availabilities: string[],
-  certifications: string[],
+    contactEmail: string
+  }
+  email: string
+  languages: string[]
+  gender: string
+  ethinicity: string
+  profileURL: string
+  availabilities: string[]
+  certifications: string[]
   hourLogs: {
     event: {
       id: string
-    },
-    date: string,
-    hours: number,
-    approvalStatus: string,
+    }
+    date: string
+    hours: number
+    approvalStatus: string
     comment?: string
   }[]
 }
 
- type RawNotification = {
-   id: string,
-   title: string,
-   content: string,
- }
+type RawNotification = {
+  id: string
+  title: string
+  content: string
+}
 
 async function main() {
   // Seed 5 events (3 future, 2 past) + images
-  console.log("Seeding events...")
-  const rawEvents: RawEvent[] = JSON.parse(fs.readFileSync('prisma/seed/events.json').toString());
+  console.log('Seeding events...')
+  const rawEvents: RawEvent[] = JSON.parse(fs.readFileSync('prisma/seed/events.json').toString())
   // Convert each event into an upsertable format
   const events = rawEvents.map((event) => {
     return {
@@ -77,67 +77,68 @@ async function main() {
       eventAssets: {
         create: event.eventAssets.map((imageUrl) => {
           return {
-            imageUrl: imageUrl
+            imageUrl: imageUrl,
           }
-        })
+        }),
       },
       location: {
-        connectOrCreate:{
+        connectOrCreate: {
           where: {
-            address: event.location.address
+            address: event.location.address,
           },
           create: {
             longitude: event.location.longitude,
             latitude: event.location.latitude,
-            address: event.location.address
-          }
-        }
-      }
-    };
+            address: event.location.address,
+          },
+        },
+      },
+    }
   })
   // Upsert each event
-  for(const event of events) {
+  for (const event of events) {
     const eventResult = await prisma.event.upsert({
       where: { id: event.id },
       update: {},
-      create: event
+      create: event,
     })
     console.log(eventResult)
   }
 
   // Seed two users + attended events + languages
-  console.log("Seeding users...")
-  const rawUsers: RawUser[] = JSON.parse(fs.readFileSync('prisma/seed/users.json').toString());
+  console.log('Seeding users...')
+  const rawUsers: RawUser[] = JSON.parse(fs.readFileSync('prisma/seed/users.json').toString())
   // Convert each user into an upsertable format
   const users = rawUsers.map((user) => {
     return {
       ...user,
       RSVPs: {
         create: user.RSVPs.map((event) => {
-        return {
+          return {
             isVolunteer: event.isVolunteer || false,
             event: {
               connect: {
-                id: event.id
-              }
-            }
-        }})
-      }
+                id: event.id,
+              },
+            },
+          }
+        }),
+      },
     }
   })
   // Upsert each user
-  for(const user of users) {
+  for (const user of users) {
     const userResult = await prisma.user.upsert({
       where: { contactEmail: user.contactEmail },
       update: {},
-      create: user
+      create: user,
     })
     console.log(userResult)
   }
 
   // Seed one volunteer (ENSURE that each volunteer is linked to an existing user by email)
-  console.log("Seeding volunteers...")
-  const rawVolunteers: RawVolunteer[] = JSON.parse(fs.readFileSync('prisma/seed/volunteers.json').toString());
+  console.log('Seeding volunteers...')
+  const rawVolunteers: RawVolunteer[] = JSON.parse(fs.readFileSync('prisma/seed/volunteers.json').toString())
   // Convert each volunteer into an upsertable format
   const volunteers = rawVolunteers.map((volunteer) => {
     return {
@@ -146,17 +147,17 @@ async function main() {
       ethinicity: volunteer.ethinicity as Ethinicity,
       languages: {
         create: volunteer.languages.map((lang) => {
-            return {
-            language: lang as Language
+          return {
+            language: lang as Language,
           }
-        })
+        }),
       },
       availabilities: {
         create: volunteer.availabilities.map((avail) => {
           return {
-            availability: avail as Availability
+            availability: avail as Availability,
           }
-        })
+        }),
       },
       hourLogs: {
         create: volunteer.hourLogs.map((log) => {
@@ -168,39 +169,39 @@ async function main() {
             comment: log.comment,
             event: {
               connect: {
-                id: log.event.id
-              }
-            }
+                id: log.event.id,
+              },
+            },
           }
-        })
+        }),
       },
       certifications: {
         create: volunteer.certifications.map((cert) => {
           return {
-            certification: cert
+            certification: cert,
           }
-        })
+        }),
       },
       user: {
         connect: {
-          contactEmail: volunteer.user.contactEmail
-        }
+          contactEmail: volunteer.user.contactEmail,
+        },
       },
     }
-  });
+  })
   // Upsert each volunteer
-  for(const volunteer of volunteers) {
+  for (const volunteer of volunteers) {
     const volunteerResult = await prisma.volunteer.upsert({
       where: { id: volunteer.id },
       update: {},
-      create: volunteer
+      create: volunteer,
     })
     console.log(volunteerResult)
   }
 
   // Seed six notifications - UNFINISHED
-   console.log("Seeding notifications...")
-  const rawNotifications: RawNotification[] = JSON.parse(fs.readFileSync('prisma/seed/notifications.json').toString());
+  console.log('Seeding notifications...')
+  const rawNotifications: RawNotification[] = JSON.parse(fs.readFileSync('prisma/seed/notifications.json').toString())
   const allUsers = await prisma.user.findMany()
   for (const notification of rawNotifications) {
     const notificationResult = await prisma.notification.upsert({
@@ -210,7 +211,7 @@ async function main() {
         id: notification.id,
         title: notification.title,
         content: notification.content,
-      }
+      },
     })
     // Link to all users
     for (const user of allUsers) {
@@ -218,14 +219,14 @@ async function main() {
         where: {
           userId_notificationId: {
             userId: user.id,
-            notificationId: notificationResult.id
-          }
+            notificationId: notificationResult.id,
+          },
         },
         update: {},
         create: {
           userId: user.id,
           notificationId: notificationResult.id,
-        }
+        },
       })
     }
     console.log(notificationResult)

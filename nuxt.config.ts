@@ -1,21 +1,8 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  compatibilityDate: '2025-07-15',
+  modules: ['@nuxt/ui', '@nuxt/eslint', 'nuxt-maplibre'],
   devtools: { enabled: true },
-  modules: [
-    '@nuxt/ui',
-    '@nuxt/eslint',
-    'nuxt-maplibre'
-  ],
   css: ['~/assets/css/main.css'],
-  eslint: {
-    // additional options here
-  },
-  vite: {
-    optimizeDeps: {
-      include: ["maplibre-gl"],
-    },
-  },
   // css: ['assets/css/main.css']
   ui: {
     theme: {
@@ -33,8 +20,20 @@ export default defineNuxtConfig({
         'brand4',
         'brand5',
         'brand6',
-        'brand7'
-      ]
-    }
-  }
+        'brand7',
+      ],
+    },
+  },
+  compatibilityDate: '2025-07-15',
+  vite: {
+    optimizeDeps: {
+      include: ['maplibre-gl'],
+    },
+  },
+  eslint: {
+    checker: true,
+    config: {
+      stylistic: true,
+    },
+  },
 })
