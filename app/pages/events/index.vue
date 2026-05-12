@@ -43,29 +43,29 @@ const isDateDisabled = (d: DateValue) =>
           <EventTile
             title="Community Health Fair"
             subtitle="Tap to view details"
-            buttonType="arrow"
-            eventId="event1"
+            button-type="arrow"
+            event-id="event1"
             @add="eventClick"
           />
           <EventTile
             title="Support Workshop"
             subtitle="Tap to view details"
-            buttonType="arrow"
-            eventId="event2"
+            button-type="arrow"
+            event-id="event2"
             @add="eventClick"
           />
           <EventTile
             title="Family Clinic"
             subtitle="Tap to view details"
-            buttonType="arrow"
-            eventId="event3"
+            button-type="arrow"
+            event-id="event3"
             @add="eventClick"
           />
           <EventTile
             title="Wellness Check"
             subtitle="Tap to view details"
-            buttonType="arrow"
-            eventId="event4"
+            button-type="arrow"
+            event-id="event4"
             @add="eventClick"
           />
         </div>

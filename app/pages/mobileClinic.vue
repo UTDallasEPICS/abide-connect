@@ -32,7 +32,7 @@
                 :title="event.title"
                 :subtitle="new Date(event.startTime).toLocaleString()"
                 button-type="arrow"
-                :eventId="event.eventId"
+                :event-id="event.eventId"
                 @add="eventClick"
                 @click="handleTileClick(event)"
               />

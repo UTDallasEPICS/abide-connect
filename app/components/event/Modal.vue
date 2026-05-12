@@ -212,7 +212,7 @@ function cancel() {
         :multiple = "true"
         accept = "image/*"
         :auto = "false"
-        :customUpload = "true"
+        :custom-upload = "true"
         @select = "handleFileChange($event.files)"
         @remove = "removeImage($event.index)"
         >

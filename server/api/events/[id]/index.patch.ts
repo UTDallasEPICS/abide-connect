@@ -85,6 +85,7 @@ export default defineEventHandler(async (event) => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mobileClinicUpdate: Record<string, any> = {};
+
     if (typeof body.mobileClinic === "boolean") {
       if (body.mobileClinic) {
         if (!foundEvent.mobileClinicId) {
