@@ -72,7 +72,6 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-
   try {
     // Create the event in the database
     const newEvent = await prisma.event.create({

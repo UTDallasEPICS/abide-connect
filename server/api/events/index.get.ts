@@ -1,4 +1,4 @@
-import prisma from '~~/server/utils/prisma'
+import prisma from "~~/server/utils/prisma";
 
 export default defineEventHandler(async (_event) => {
   try {
@@ -7,12 +7,12 @@ export default defineEventHandler(async (_event) => {
         location: true,
         eventAssets: true,
         volunteerHours: true,
-        participants: true
+        participants: true,
       },
       orderBy: {
-        startTime: 'asc'
-      }
-    })
+        startTime: "asc",
+      },
+    });
 
     console.log(`Fetched ${allEvents.length} events`)
     return allEvents
@@ -24,4 +24,4 @@ export default defineEventHandler(async (_event) => {
       message: 'Failed to fetch events' 
     })
   }
-})
+});

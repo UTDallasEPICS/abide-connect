@@ -4,6 +4,16 @@
 import 'vue3-carousel/dist/carousel.css'
 import { Carousel, Slide, Pagination } from 'vue3-carousel'
 
+const { data: donations, pending: donationsPending, error: donationsError } = await useFetch<{
+  id: string
+  name: string
+  link: string
+  startDate: string
+  endDate: string
+  imageUrl: string
+}[]>('/api/admin/donations')
+
+
 const carouselConfig = {
   itemsToShow: 1,
   wrapAround: true,
@@ -198,6 +208,32 @@ const events = computed(() =>
               >
               <div class="absolute inset-x-0 bottom-0 w-full bg-linear-to-t from-black/60 to-transparent p-2">
                 <p class="text-white text-sm font-semibold truncate" >{{ service.name }}</p>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+      <!-- Donations -->
+      <div class="px-2 pb-4 pt-4 pl-4">
+        <h3 class="text-2xl font-semibold text-brand4 mb-4">DONATIONS</h3>
+        <div v-if="donationsPending" class="text-gray-400 text-sm">Loading...</div>
+        <div v-else-if="donationsError" class="text-red-500 text-sm">Failed to load donations.</div>
+        <div v-else class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+          <a
+            v-for="donation in donations"
+            :key="donation.id"
+            :href="donation.link"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="shrink-0 w-[190px] rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer">
+            <div class="h-35 relative overflow-hidden">
+              <img
+                :src="`/api/admin/donations/${donation.id}/image`"
+                :alt="donation.name"
+                class="w-full h-full object-cover transition-transform duration-300"
+              >
+              <div class="absolute inset-x-0 bottom-0 w-full bg-linear-to-t from-black/60 to-transparent p-2">
+                <p class="text-white text-sm font-semibold truncate">{{ donation.name }}</p>
               </div>
             </div>
           </a>
