@@ -98,10 +98,20 @@ async function saveChanges() {
     
     // Update local event data
     event.value = { ...editForm.value }
+
+    //update map center if location changed
+    if (editForm.value.location.address !== event.value.location.address) {
+      center.value = [editForm.value.location.longitude, editForm.value.location.latitude]
+    }
+    
     isEditMode.value = false
     
     console.log('✅ Event updated successfully')
   } catch (error) {
+    if(error.status === 500){
+      alert('Failed to geocode the provided location. Please check the address and try again.')
+      return
+    }
     console.error('❌ Error updating event:', error)
     alert('Error updating event. Please try again.')
   }
