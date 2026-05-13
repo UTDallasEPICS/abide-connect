@@ -1,6 +1,6 @@
 import path from 'path'
 import fs from 'fs'
-import prisma from '~~/server/utils/prisma'
+import prisma from '#server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')

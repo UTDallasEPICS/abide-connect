@@ -1,4 +1,4 @@
-import prisma from '~~/server/utils/prisma'
+import prisma from '#server/utils/prisma'
 
 // Geocode location using Nominatim
 async function geocodeLocation(location: string) {

@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import prisma from '~~/server/utils/prisma'
+import prisma from '#server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
   const fileName = getRouterParam(event, 'name')

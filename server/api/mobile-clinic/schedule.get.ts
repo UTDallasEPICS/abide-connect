@@ -1,4 +1,4 @@
-import prisma from '~~/server/utils/prisma'
+import prisma from '#server/utils/prisma'
 
 const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000
 const MAX_OCCURRENCES = 8
