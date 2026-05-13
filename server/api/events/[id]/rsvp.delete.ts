@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
       eventId: id,
       email: body.email.toLowerCase(),
       isVolunteer: body.isVolunteer ?? false,
-    }
+    },
   })
 
   if (!rsvp) {
@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
   }
 
   await prisma.guestRSVP.delete({
-    where: { id: rsvp.id }
+    where: { id: rsvp.id },
   })
 
   return { message: 'RSVP removed successfully' }

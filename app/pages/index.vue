@@ -1,336 +1,360 @@
 <script setup lang="ts">
-import "vue3-carousel/dist/carousel.css";
-import { Carousel, Slide, Pagination } from "vue3-carousel";
+import 'vue3-carousel/dist/carousel.css'
+import { Carousel, Slide, Pagination } from 'vue3-carousel'
 
 const {
-    data: donations,
-    pending: donationsPending,
-    error: donationsError,
+  data: donations,
+  pending: donationsPending,
+  error: donationsError,
 } = await useFetch<
-    {
-        id: string;
-        name: string;
-        link: string;
-        startDate: string;
-        endDate: string;
-        imageUrl: string;
-    }[]
->("/api/admin/donations");
+  {
+    id: string
+    name: string
+    link: string
+    startDate: string
+    endDate: string
+    imageUrl: string
+  }[]
+>('/api/admin/donations')
 
 const carouselConfig = {
-    itemsToShow: 1,
-    wrapAround: true,
-    mouseDrag: true,
-    touchDrag: true,
-    autoplay: 6000,
-};
+  itemsToShow: 1,
+  wrapAround: true,
+  mouseDrag: true,
+  touchDrag: true,
+  autoplay: 6000,
+}
 
 type Event = {
-    id: string;
-    title: string;
-    startTime: string;
-    location: {
-        id: string;
-        address: string;
-        latitude: number;
-        longitude: number;
-    };
-    eventAssets: {
-        id: string;
-        imageUrl: string;
-    }[];
-};
+  id: string
+  title: string
+  startTime: string
+  location: {
+    id: string
+    address: string
+    latitude: number
+    longitude: number
+  }
+  eventAssets: {
+    id: string
+    imageUrl: string
+  }[]
+}
 
-const { data: eventsData } = await useFetch<Event[]>("/api/events", {
-    default: () => [],
-});
+const { data: eventsData } = await useFetch<Event[]>('/api/events', {
+  default: () => [],
+})
 
 const slides = ref([
-    { id: 1, src: "/images/image1.jpeg", alt: "Slide 1" },
-    { id: 2, src: "/images/image1.jpeg", alt: "Slide 2" },
-    { id: 3, src: "/images/image1.jpeg", alt: "Slide 3" },
-    { id: 4, src: "/images/image1.jpeg", alt: "Slide 4" },
-]);
+  { id: 1, src: '/images/image1.jpeg', alt: 'Slide 1' },
+  { id: 2, src: '/images/image1.jpeg', alt: 'Slide 2' },
+  { id: 3, src: '/images/image1.jpeg', alt: 'Slide 3' },
+  { id: 4, src: '/images/image1.jpeg', alt: 'Slide 4' },
+])
 
 const handleSignUp = () => {
-    navigateTo("/auth/sign-up");
-};
+  navigateTo('/auth/sign-up')
+}
 
 const services = ref([
-    {
-        id: 1,
-        name: "Prenatal Care",
-        image: "/images/image1.jpeg",
-        href: "https://www.abidewomen.org/prenatalcare",
-    },
-    {
-        id: 2,
-        name: "Postpatrum Care",
-        image: "/images/image1.jpeg",
-        href: "https://www.abidewomen.org/postpartumcare",
-    },
-    {
-        id: 3,
-        name: "Childbirth Education",
-        image: "/images/image1.jpeg",
-        href: "https://www.abidewomen.org/childbirthed",
-    },
-    {
-        id: 4,
-        name: "Mobile Clinic",
-        image: "/images/image1.jpeg",
-        href: "https://www.abidewomen.org/mobile-clinic",
-    },
-]);
+  {
+    id: 1,
+    name: 'Prenatal Care',
+    image: '/images/image1.jpeg',
+    href: 'https://www.abidewomen.org/prenatalcare',
+  },
+  {
+    id: 2,
+    name: 'Postpatrum Care',
+    image: '/images/image1.jpeg',
+    href: 'https://www.abidewomen.org/postpartumcare',
+  },
+  {
+    id: 3,
+    name: 'Childbirth Education',
+    image: '/images/image1.jpeg',
+    href: 'https://www.abidewomen.org/childbirthed',
+  },
+  {
+    id: 4,
+    name: 'Mobile Clinic',
+    image: '/images/image1.jpeg',
+    href: 'https://www.abidewomen.org/mobile-clinic',
+  },
+])
 
 const imageAPI = (url: string | undefined) => {
-    return url ? `/api/events/${url}` : undefined;
-};
+  return url ? `/api/events/${url}` : undefined
+}
 
 const events = computed(() =>
-    (eventsData.value || [])
-        .filter((e) => new Date(e.startTime).getTime() >= Date.now())
-        .sort(
-            (a, b) =>
-                new Date(a.startTime).getTime() -
-                new Date(b.startTime).getTime(),
-        )
-        .slice(0, 6)
-        .map((e) => ({
-            id: e.id,
-            title: e.title,
-            date: new Date(e.startTime).toLocaleDateString("en-US", {
-                month: "short",
-                day: "2-digit",
-                year: "numeric",
-            }),
-            location: e.location,
-            image:
-                imageAPI(e.eventAssets?.[0]?.imageUrl) ?? "/images/image1.jpeg",
-        })),
-);
+  (eventsData.value || [])
+    .filter(e => new Date(e.startTime).getTime() >= Date.now())
+    .sort(
+      (a, b) =>
+        new Date(a.startTime).getTime()
+          - new Date(b.startTime).getTime(),
+    )
+    .slice(0, 6)
+    .map(e => ({
+      id: e.id,
+      title: e.title,
+      date: new Date(e.startTime).toLocaleDateString('en-US', {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric',
+      }),
+      location: e.location,
+      image:
+                imageAPI(e.eventAssets?.[0]?.imageUrl) ?? '/images/image1.jpeg',
+    })),
+)
 
 const handleEventClick = (event: Event) => {
-    navigateTo(`/events/${event.id}`);
-};
+  navigateTo(`/events/${event.id}`)
+}
 </script>
 
 <template>
-    <div class="min-h-screen flex flex-col bg-white dark:bg-gray-900">
-        <div class="flex-1 mt-12 mb-12 pt-4 w-full h-full overflow-y-auto">
-            <!-- Hero / Carousel Section -->
-            <div class="w-full max-h-[600px] overflow-y-auto">
-                <Carousel
-                    v-bind="carouselConfig"
-                    class="flex-1 max-h-full overflow-y-auto rounded-3xl"
-                >
-                    <Slide
-                        v-for="slide in slides"
-                        :key="slide.id"
-                        class="max-h-full px-4 overflow-y-hidden rounded-3xl"
-                    >
-                        <img
-                            :src="slide.src"
-                            :alt="slide.alt"
-                            class="max-h-full object-cover rounded-3xl px-1"
-                        />
-                    </Slide>
-
-                    <template #addons>
-                        <!-- <Navigation /> -->
-                        <Pagination />
-                    </template>
-                </Carousel>
-            </div>
-
-            <!-- Upcoming Events -->
-            <div class="px-2 pb-4 pl-4 pt-4 w-full relative">
-                <h3 class="text-2xl font-semibold text-brand4 mb-4">
-                    UPCOMING EVENTS
-                </h3>
-                <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                    <div
-                        v-for="event in events"
-                        :key="event.id"
-                        @click="handleEventClick(event)"
-                        class="shrink-0 w-40 rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer"
-                    >
-                        <!-- Event Image Placeholder -->
-                        <div class="h-35 relative overflow-hidden">
-                            <img
-                                :src="event.image"
-                                class="w-full h-full object-cover"
-                            />
-                        </div>
-
-                        <!-- Event Content -->
-                        <div class="p-2">
-                            <h4
-                                class="text-sm font_semibold text-brand4 mb-1.5"
-                            >
-                                {{ event.title }}
-                            </h4>
-                            <div class="space-y-2">
-                                <!-- Date -->
-                                <div
-                                    class="flex items-center text-gray-600 text-[12px]"
-                                >
-                                    <svg
-                                        class="w-4 h-4 mr-2 text-teal-600"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <rect
-                                            x="3"
-                                            y="4"
-                                            width="18"
-                                            height="18"
-                                            rx="2"
-                                            ry="2"
-                                        />
-                                        <line x1="16" y1="2" x2="16" y2="6" />
-                                        <line x1="8" y1="2" x2="8" y2="6" />
-                                        <line x1="3" y1="10" x2="21" y2="10" />
-                                    </svg>
-                                    <span>{{ event.date }}</span>
-                                </div>
-
-                                <!-- Location -->
-                                <div
-                                    class="flex items-start text-gray-600 text-[10px]"
-                                >
-                                    <svg
-                                        class="w-3 h-3 mr-2 ml-0.5 mt-0.5 text-teal-600 shrink-0"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"
-                                        />
-                                        <circle cx="12" cy="10" r="3" />
-                                    </svg>
-                                    <span class="leading-tight">
-                                        {{ event.location.address }}</span
-                                    >
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- Volunteer Sign Up -->
-            <div
-                class="bg-rose-800 text-center py-4 px-4 relative overflow-hidden items-center justify-center min-h-[100px]"
+  <div class="min-h-screen flex flex-col bg-white dark:bg-gray-900">
+    <div class="flex-1 mt-12 mb-12 pt-4 w-full h-full overflow-y-auto">
+      <!-- Hero / Carousel Section -->
+      <div class="w-full max-h-[600px] overflow-y-auto">
+        <Carousel
+          v-bind="carouselConfig"
+          class="flex-1 max-h-full overflow-y-auto rounded-3xl"
+        >
+          <Slide
+            v-for="slide in slides"
+            :key="slide.id"
+            class="max-h-full px-4 overflow-y-hidden rounded-3xl"
+          >
+            <img
+              :src="slide.src"
+              :alt="slide.alt"
+              class="max-h-full object-cover rounded-3xl px-1"
             >
-                <p class="text-white font-bold text-lg mb-1">
-                    Become A Volunteer
-                </p>
-                <!-- Sign up Button -->
-                <button
-                    class="group relative bg-white text-rose-700 font-bold px-7 py-2 mb-1 rounded-full shadow-lg hover:shadow-2xl transition-transform hover:scale-105 active:scale-100 duration-300 overflow-hidden"
-                    @click="handleSignUp"
-                >
-                    <span
-                        class="absolute inset-0 z-0 opacity-0 scale-95 rounded-full group-hover:opacity-100 group-hover:scale-100 transition-transform duration-300 bg-rose"
-                    />
-                    <span
-                        class="relative z-10 flex items-center justify-center gap-1 text-lg"
-                    >
-                        <span>Sign Up</span>
-                        <svg
-                            class="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            stroke-width="3"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M13 7l5 5m0 0l-5 5m5-5H5"
-                            />
-                        </svg>
-                    </span>
-                </button>
+          </Slide>
+
+          <template #addons>
+            <!-- <Navigation /> -->
+            <Pagination />
+          </template>
+        </Carousel>
+      </div>
+
+      <!-- Upcoming Events -->
+      <div class="px-2 pb-4 pl-4 pt-4 w-full relative">
+        <h3 class="text-2xl font-semibold text-brand4 mb-4">
+          UPCOMING EVENTS
+        </h3>
+        <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+          <div
+            v-for="event in events"
+            :key="event.id"
+            class="shrink-0 w-40 rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer"
+            @click="handleEventClick(event)"
+          >
+            <!-- Event Image Placeholder -->
+            <div class="h-35 relative overflow-hidden">
+              <img
+                :src="event.image"
+                class="w-full h-full object-cover"
+              >
             </div>
 
-            <!-- Services -->
-            <div class="px-2 pb-4 pt-4 pl-4">
-                <h3 class="text-2xl font-semibold text-brand4 mb-4">
-                    SERVICES
-                </h3>
-                <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                    <a
-                        v-for="service in services"
-                        :key="service.id"
-                        :href="service.href"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="shrink-0 w-[190px] rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer"
-                    >
-                        <div class="h-35 relative overflow-hidden">
-                            <img
-                                :src="service.image"
-                                :alt="service.name"
-                                class="w-full h-full object-cover transition-transform duration-300"
-                            />
-                            <div
-                                class="absolute inset-x-0 bottom-0 w-full bg-linear-to-t from-black/60 to-transparent p-2"
-                            >
-                                <p
-                                    class="text-white text-sm font-semibold truncate"
-                                >
-                                    {{ service.name }}
-                                </p>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-            </div>
-            <!-- Donations -->
-            <div class="px-2 pb-4 pt-4 pl-4">
-                <h3 class="text-2xl font-semibold text-brand4 mb-4">
-                    DONATIONS
-                </h3>
-                <div v-if="donationsPending" class="text-gray-400 text-sm">
-                    Loading...
-                </div>
-                <div v-else-if="donationsError" class="text-red-500 text-sm">
-                    Failed to load donations.
-                </div>
+            <!-- Event Content -->
+            <div class="p-2">
+              <h4
+                class="text-sm font_semibold text-brand4 mb-1.5"
+              >
+                {{ event.title }}
+              </h4>
+              <div class="space-y-2">
+                <!-- Date -->
                 <div
-                    v-else
-                    class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide"
+                  class="flex items-center text-gray-600 text-[12px]"
                 >
-                    <a
-                        v-for="donation in donations"
-                        :key="donation.id"
-                        :href="donation.link"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="shrink-0 w-[190px] rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer"
-                    >
-                        <div class="h-35 relative overflow-hidden">
-                            <img
-                                :src="`/api/admin/donations/${donation.id}/image`"
-                                :alt="donation.name"
-                                class="w-full h-full object-cover transition-transform duration-300"
-                            />
-                            <div
-                                class="absolute inset-x-0 bottom-0 w-full bg-linear-to-t from-black/60 to-transparent p-2"
-                            >
-                                <p
-                                    class="text-white text-sm font-semibold truncate"
-                                >
-                                    {{ donation.name }}
-                                </p>
-                            </div>
-                        </div>
-                    </a>
+                  <svg
+                    class="w-4 h-4 mr-2 text-teal-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <rect
+                      x="3"
+                      y="4"
+                      width="18"
+                      height="18"
+                      rx="2"
+                      ry="2"
+                    />
+                    <line
+                      x1="16"
+                      y1="2"
+                      x2="16"
+                      y2="6"
+                    />
+                    <line
+                      x1="8"
+                      y1="2"
+                      x2="8"
+                      y2="6"
+                    />
+                    <line
+                      x1="3"
+                      y1="10"
+                      x2="21"
+                      y2="10"
+                    />
+                  </svg>
+                  <span>{{ event.date }}</span>
                 </div>
+
+                <!-- Location -->
+                <div
+                  class="flex items-start text-gray-600 text-[10px]"
+                >
+                  <svg
+                    class="w-3 h-3 mr-2 ml-0.5 mt-0.5 text-teal-600 shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"
+                    />
+                    <circle
+                      cx="12"
+                      cy="10"
+                      r="3"
+                    />
+                  </svg>
+                  <span class="leading-tight">
+                    {{ event.location.address }}</span>
+                </div>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
+      <!-- Volunteer Sign Up -->
+      <div
+        class="bg-rose-800 text-center py-4 px-4 relative overflow-hidden items-center justify-center min-h-[100px]"
+      >
+        <p class="text-white font-bold text-lg mb-1">
+          Become A Volunteer
+        </p>
+        <!-- Sign up Button -->
+        <button
+          class="group relative bg-white text-rose-700 font-bold px-7 py-2 mb-1 rounded-full shadow-lg hover:shadow-2xl transition-transform hover:scale-105 active:scale-100 duration-300 overflow-hidden"
+          @click="handleSignUp"
+        >
+          <span
+            class="absolute inset-0 z-0 opacity-0 scale-95 rounded-full group-hover:opacity-100 group-hover:scale-100 transition-transform duration-300 bg-rose"
+          />
+          <span
+            class="relative z-10 flex items-center justify-center gap-1 text-lg"
+          >
+            <span>Sign Up</span>
+            <svg
+              class="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              stroke-width="3"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M13 7l5 5m0 0l-5 5m5-5H5"
+              />
+            </svg>
+          </span>
+        </button>
+      </div>
+
+      <!-- Services -->
+      <div class="px-2 pb-4 pt-4 pl-4">
+        <h3 class="text-2xl font-semibold text-brand4 mb-4">
+          SERVICES
+        </h3>
+        <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+          <a
+            v-for="service in services"
+            :key="service.id"
+            :href="service.href"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="shrink-0 w-[190px] rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer"
+          >
+            <div class="h-35 relative overflow-hidden">
+              <img
+                :src="service.image"
+                :alt="service.name"
+                class="w-full h-full object-cover transition-transform duration-300"
+              >
+              <div
+                class="absolute inset-x-0 bottom-0 w-full bg-linear-to-t from-black/60 to-transparent p-2"
+              >
+                <p
+                  class="text-white text-sm font-semibold truncate"
+                >
+                  {{ service.name }}
+                </p>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+      <!-- Donations -->
+      <div class="px-2 pb-4 pt-4 pl-4">
+        <h3 class="text-2xl font-semibold text-brand4 mb-4">
+          DONATIONS
+        </h3>
+        <div
+          v-if="donationsPending"
+          class="text-gray-400 text-sm"
+        >
+          Loading...
+        </div>
+        <div
+          v-else-if="donationsError"
+          class="text-red-500 text-sm"
+        >
+          Failed to load donations.
+        </div>
+        <div
+          v-else
+          class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide"
+        >
+          <a
+            v-for="donation in donations"
+            :key="donation.id"
+            :href="donation.link"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="shrink-0 w-[190px] rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer"
+          >
+            <div class="h-35 relative overflow-hidden">
+              <img
+                :src="`/api/admin/donations/${donation.id}/image`"
+                :alt="donation.name"
+                class="w-full h-full object-cover transition-transform duration-300"
+              >
+              <div
+                class="absolute inset-x-0 bottom-0 w-full bg-linear-to-t from-black/60 to-transparent p-2"
+              >
+                <p
+                  class="text-white text-sm font-semibold truncate"
+                >
+                  {{ donation.name }}
+                </p>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
     </div>
+  </div>
 </template>

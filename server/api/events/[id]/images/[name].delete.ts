@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // imageUrl stored in DB is just the fileName
-  const imageUrl = decodeURIComponent(fileName)
+  const imageUrl = path.join(eventId, 'images', fileName)
 
   // Check the asset exists in DB
   const asset = await prisma.event_Asset.findUnique({
@@ -23,8 +23,8 @@ export default defineEventHandler(async (event) => {
       eventId_imageUrl: {
         eventId,
         imageUrl,
-      }
-    }
+      },
+    },
   })
 
   if (!asset) {
@@ -37,8 +37,8 @@ export default defineEventHandler(async (event) => {
       eventId_imageUrl: {
         eventId,
         imageUrl,
-      }
-    }
+      },
+    },
   })
 
   // Delete file from disk

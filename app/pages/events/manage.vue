@@ -1,4 +1,6 @@
-<script setup lang="ts">
+<script setup>
+import { ref, onMounted } from 'vue'
+
 const showAddModal = ref(false)
 
 const pastEvents = ref([])
@@ -53,8 +55,7 @@ async function navigateToEvent(eventId) {
 function getEventImage(event) {
   if (event.eventAssets && event.eventAssets.length > 0) {
     const imageUrl = event.eventAssets[0].imageUrl
-    const encoded = encodeURIComponent(imageUrl)
-    return `/api/events/${event.id}/images/${encoded}`
+    return `/api/events/${imageUrl}`
   }
   return null
 }
@@ -171,33 +172,18 @@ function getEventDate(event) {
                 class="flex items-center justify-center h-full text-white text-2xl"
               >📅</span>
             </div>
-
-            <<<<<<< HEAD
-            <div class="flex flex-col text-left pointer-events-none">
+            <div
+              class="flex flex-col text-left pointer-events-none"
+            >
               <p class="text-gray-800 font-semibold">
                 {{ event.title }}
               </p>
               <p class="text-gray-500 text-sm">
-                {{ event.location?.address }}
+                {{ event.location.address }}
               </p>
               <p class="text-gray-400 text-xs">
                 {{ getEventDate(event) }}
               </p>
-              =======
-              <div
-                class="flex flex-col text-left pointer-events-none"
-              >
-                <p class="text-gray-800 font-semibold">
-                  {{ event.title }}
-                </p>
-                <p class="text-gray-500 text-sm">
-                  {{ event.location.address }}
-                </p>
-                <p class="text-gray-400 text-xs">
-                  {{ getEventDate(event) }}
-                </p>
-                >>>>>>> spring26
-              </div>
             </div>
           </button>
         </div>

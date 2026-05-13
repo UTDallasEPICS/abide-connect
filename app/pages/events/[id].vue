@@ -7,8 +7,11 @@ const eventId = route.params.id as string
 // Single fetch — no onMounted duplicate
 const { data: event, error, refresh } = await useFetch(`/api/events/${eventId}`)
 
+const notFound = ref(false)
+
 if (error.value) {
   console.error('Failed to load event:', error.value)
+  notFound.value = true
 }
 
 const isEditMode = ref(false)
@@ -114,7 +117,7 @@ const formattedDate = computed(() => {
 const carouselItems = computed(() => {
   const assets = event.value?.eventAssets || []
   if (assets.length > 0) {
-    return assets.map((a: any) => `/api/events/${eventId}/images/${a.imageUrl}`)
+    return assets.map((a: any) => `/api/events/${a.imageUrl}`)
   }
   return [
     'https://picsum.photos/640/640?random=1',
@@ -207,7 +210,7 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
               <UButton
                 variant="ghost"
                 color="brand4"
-                @click="toggleEditMode"
+                @click="cancelEdit"
               >
                 Cancel
               </UButton>
@@ -217,7 +220,6 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
                 @click="
                   async () => {
                     await saveChanges();
-                    await uploadNewImages();
                   }
                 "
               >
@@ -370,7 +372,7 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
           class="h-60 relative overflow-hidden justify-center items-center mb-6"
         >
           <MapInteractive
-            :style="style"
+            :style="mapStyle"
             :center="center"
             :zoom="zoom"
           />

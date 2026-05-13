@@ -91,8 +91,7 @@ const isDateDisabled = (d: DateValue) =>
 function getEventImage(event: any) {
   if (event.eventAssets && event.eventAssets.length > 0) {
     const imageUrl = event.eventAssets[0].imageUrl
-    const encoded = encodeURIComponent(imageUrl)
-    return `/api/events/${event.id}/images/${encoded}`
+    return `/api/events/${imageUrl}`
   }
   return undefined
 }

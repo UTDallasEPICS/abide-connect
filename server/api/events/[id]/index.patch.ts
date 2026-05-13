@@ -41,6 +41,7 @@ async function geocodeLocation(location: string) {
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   const body = await readBody(event)
+  console.log(body)
 
   if (!id) {
     throw createError({ statusCode: 400, message: 'Missing event ID' })
@@ -50,14 +51,14 @@ export default defineEventHandler(async (event) => {
   const locationData
     = (await prisma.location.findUnique({
       where: {
-        address: body.location.address || null,
+        address: body.location || '',
       },
       select: {
         latitude: true,
         longitude: true,
         address: true,
       },
-    })) || (await geocodeLocation(body.location.address))
+    })) || (await geocodeLocation(body.location))
 
   if (!locationData) {
     throw createError({
@@ -113,7 +114,7 @@ export default defineEventHandler(async (event) => {
         location: {
           connectOrCreate: {
             where: {
-              address: body.location.address,
+              address: body.location || '',
             },
             create: locationData!,
           },

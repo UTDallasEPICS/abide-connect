@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const foundEvent = await prisma.event.findUnique({
-    where: { id }
+    where: { id },
   })
 
   if (!foundEvent) {
@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
       eventId: id,
       email: body.email.toLowerCase(),
       isVolunteer: body.isVolunteer ?? false,
-    }
+    },
   })
 
   if (existing) {
@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
       name: body.name.trim(),
       email: body.email.toLowerCase().trim(),
       isVolunteer: body.isVolunteer ?? false,
-    }
+    },
   })
 
   setResponseStatus(event, 201)

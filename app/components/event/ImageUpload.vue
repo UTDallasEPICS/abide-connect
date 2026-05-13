@@ -42,22 +42,23 @@ function onFilesChanged(files: File[] | null | undefined) {
   emit('filesChanged', safeFiles)
 }
 
+function getAssetUrl(asset: ServerAsset) {
+  return `/api/events/${asset.imageUrl}`
+}
+
 async function deleteExistingAsset(asset: ServerAsset) {
   if (!props.eventId) return
 
   try {
-    await $fetch(`/api/events/${props.eventId}/images/${asset.imageUrl}`, {
-      method: 'DELETE'
+    await $fetch(getAssetUrl(asset), {
+      method: 'DELETE',
     })
     remainingAssets.value = remainingAssets.value.filter(a => a.imageUrl !== asset.imageUrl)
     emit('assetDeleted', asset.imageUrl)
-  } catch (err) {
+  }
+  catch (err) {
     console.error('Failed to delete image:', err)
   }
-}
-
-function getAssetUrl(asset: ServerAsset) {
-  return `/api/events/${props.eventId}/images/${asset.imageUrl}`
 }
 </script>
 
@@ -65,7 +66,9 @@ function getAssetUrl(asset: ServerAsset) {
   <div class="space-y-4">
     <!-- Existing server images -->
     <div v-if="remainingAssets.length > 0">
-      <p class="text-sm text-gray-500 mb-2">Current Images</p>
+      <p class="text-sm text-gray-500 mb-2">
+        Current Images
+      </p>
       <div class="grid grid-cols-3 gap-2">
         <div
           v-for="asset in remainingAssets"
@@ -82,7 +85,10 @@ function getAssetUrl(asset: ServerAsset) {
             type="button"
             @click="deleteExistingAsset(asset)"
           >
-            <UIcon name="i-lucide-trash-2" class="w-3 h-3" />
+            <UIcon
+              name="i-lucide-trash-2"
+              class="w-3 h-3"
+            />
           </button>
         </div>
       </div>

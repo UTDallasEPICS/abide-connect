@@ -5,6 +5,7 @@ const props = defineProps<{
   subtitle?: string
   buttonType?: 'plus' | 'arrow'
   eventId?: string
+  imageUrl?: string
 }>()
 
 const iconName = computed(() =>
@@ -12,6 +13,10 @@ const iconName = computed(() =>
     ? 'i-heroicons-arrow-right-20-solid'
     : 'i-heroicons-plus',
 )
+
+function getAssetUrl(imageUrl: string) {
+  return `/api/events/${imageUrl}`
+}
 </script>
 
 <template>

@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
 
   const rsvps = await prisma.guestRSVP.findMany({
     where: { eventId: id },
-    orderBy: { createdAt: 'asc' }
+    orderBy: { createdAt: 'asc' },
   })
 
   const volunteers = rsvps.filter(r => r.isVolunteer)

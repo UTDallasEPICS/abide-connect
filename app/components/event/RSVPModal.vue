@@ -28,12 +28,14 @@ async function submit() {
         name: name.value,
         email: email.value,
         isVolunteer: props.isVolunteer,
-      }
+      },
     })
     emit('success')
-  } catch (err: any) {
+  }
+  catch (err: any) {
     error.value = err?.data?.message || 'Something went wrong. Please try again.'
-  } finally {
+  }
+  finally {
     isSubmitting.value = false
   }
 }
@@ -52,20 +54,41 @@ async function submit() {
     </p>
 
     <UFormField label="Full Name">
-      <UInput v-model="name" placeholder="Your name" />
+      <UInput
+        v-model="name"
+        placeholder="Your name"
+      />
     </UFormField>
 
     <UFormField label="Email">
-      <UInput v-model="email" type="email" placeholder="your@email.com" />
+      <UInput
+        v-model="email"
+        type="email"
+        placeholder="your@email.com"
+      />
     </UFormField>
 
-    <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+    <p
+      v-if="error"
+      class="text-sm text-red-500"
+    >
+      {{ error }}
+    </p>
 
     <div class="flex justify-end gap-2 pt-2 border-t">
-      <UButton variant="ghost" color="brand4" :disabled="isSubmitting" @click="$emit('close')">
+      <UButton
+        variant="ghost"
+        color="brand4"
+        :disabled="isSubmitting"
+        @click="$emit('close')"
+      >
         Cancel
       </UButton>
-      <UButton color="brand4" :loading="isSubmitting" @click="submit">
+      <UButton
+        color="brand4"
+        :loading="isSubmitting"
+        @click="submit"
+      >
         {{ isVolunteer ? 'Sign Up' : 'Register' }}
       </UButton>
     </div>

@@ -17,29 +17,11 @@ const newEvent = ref({
 const isSaving = ref(false)
 
 // Store actual File objects for upload
-const filesToUpload = ref([])
+const filesToUpload = ref([] as File[])
 
-watch(filesToUpload, async (newFiles) => {
-  if (!newFiles || newFiles.length === 0) {
-    newEvent.value.eventAssets = []
-    return
-  }
-  const previews = await Promise.all(
-    Array.from(newFiles).map(
-      file =>
-        new Promise((resolve) => {
-          const reader = new FileReader()
-          reader.onload = e =>
-            resolve({
-              imageUrl: e.target.result,
-              fileName: file.name,
-            })
-          reader.readAsDataURL(file)
-        }),
-    ),
-  )
-  newEvent.value.eventAssets = previews
-})
+function onFilesChanged(files: File[]) {
+  filesToUpload.value = files
+}
 
 async function saveEvent() {
   // Validate required fields
