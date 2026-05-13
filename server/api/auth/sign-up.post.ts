@@ -1,6 +1,6 @@
-import { auth } from '~~/server/utils/auth'
-import prisma from '~~/server/utils/prisma'
-import type { Language, Availability } from '~~/server/utils/generated/prisma/client'
+import { auth } from '#server/utils/auth'
+import prisma from '#server/utils/prisma'
+import type { Language, Availability } from '#server/utils/generated/prisma/client'
 import type { H3Event } from 'h3'
 import { appendHeader, setHeader } from 'h3'
 

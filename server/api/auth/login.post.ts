@@ -1,4 +1,4 @@
-import { auth } from '~~/server/utils/auth'
+import { auth } from '#server/utils/auth'
 import type { H3Event } from 'h3'
 import { appendHeader, setHeader } from 'h3'
 
