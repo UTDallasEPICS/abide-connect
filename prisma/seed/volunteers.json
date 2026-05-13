@@ -22,8 +22,8 @@
                 "event": {
                     "id": "pastEvent1"
                 },
-                "clockIn": "2025-08-21T10:00:00.000Z",
-                "clockOut": "2025-08-21T15:00:00.000Z",
+                "date": "2025-08-21T10:00:00.000Z",
+                "hours": 5,
                 "approvalStatus": "PENDING",
                 "comment": "Good work Bob."
             }

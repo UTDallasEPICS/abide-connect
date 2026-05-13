@@ -1,4 +1,4 @@
-import prisma from '~~/server/utils/prisma'
+import prisma from '#server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
 
   const foundEvent = await prisma.event.findUnique({
     where: { id },
-    include: { 
+    include: {
       eventAssets: true,
       location: true,
     },

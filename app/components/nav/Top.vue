@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { authClient } from '~~/server/utils/auth-client'
+import { authClient } from '#server/utils/auth-client'
 
 const colorMode = useColorMode()
 
 const onInboxClick = async (_e?: MouseEvent) => {
-  await navigateTo('/inbox') 
+  await navigateTo('/inbox')
 }
 const onSettingsClick = async (_e?: MouseEvent) => {
   await navigateTo('/settings')
@@ -19,17 +19,22 @@ const toggleDarkMode = () => {
 </script>
 
 <template>
-  <UHeader 
-    :ui="{ toggle: 'hidden' }" 
-    class="fixed top-0 z-50 h-12 w-full bg-white dark:bg-gray-900">
+  <UHeader
+    :ui="{ toggle: 'hidden' }"
+    class="fixed top-0 z-50 h-12 w-full bg-white dark:bg-gray-900"
+  >
     <template #left>
       <div class="">
         <UButton
           color="neutral"
           variant="ghost"
           aria-label="Settings"
-          @click="onSettingsClick">
-          <UIcon name="i-lucide-settings" class="w-7 h-7 text-teal-900 dark:text-teal-400" />
+          @click="onSettingsClick"
+        >
+          <UIcon
+            name="i-lucide-settings"
+            class="w-7 h-7 text-teal-900 dark:text-teal-400"
+          />
         </UButton>
       </div>
     </template>
@@ -40,9 +45,13 @@ const toggleDarkMode = () => {
           <UButton
             color="neutral"
             variant="ghost"
-            aria-label="Inbox" 
-            @click="onInboxClick">
-            <UIcon name="i-lucide-bell" class="w-7 h-7 text-teal-900 dark:text-teal-400" />
+            aria-label="Inbox"
+            @click="onInboxClick"
+          >
+            <UIcon
+              name="i-lucide-bell"
+              class="w-7 h-7 text-teal-900 dark:text-teal-400"
+            />
           </UButton>
         </slot>
 
@@ -51,18 +60,24 @@ const toggleDarkMode = () => {
           color="neutral"
           variant="ghost"
           aria-label="Toggle dark mode"
-          @click="toggleDarkMode">
-          <UIcon 
-            :name="colorMode.value === 'dark' ? 'i-lucide-sun' : 'i-lucide-moon'" 
-            class="w-7 h-7 text-teal-900 dark:text-teal-400" />
+          @click="toggleDarkMode"
+        >
+          <UIcon
+            :name="colorMode.value === 'dark' ? 'i-lucide-sun' : 'i-lucide-moon'"
+            class="w-7 h-7 text-teal-900 dark:text-teal-400"
+          />
         </UButton>
 
         <UButton
           color="neutral"
           variant="ghost"
           aria-label="Logout"
-          @click="onLogout">
-          <UIcon name="i-lucide-log-out" class="w-7 h-7 text-teal-900 dark:text-teal-400" />
+          @click="onLogout"
+        >
+          <UIcon
+            name="i-lucide-log-out"
+            class="w-7 h-7 text-teal-900 dark:text-teal-400"
+          />
         </UButton>
       </div>
     </template>
