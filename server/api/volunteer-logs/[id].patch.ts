@@ -1,4 +1,4 @@
-import prisma from "~~/server/utils/prisma";
+import prisma from '~~/server/utils/prisma'
 
 export default eventHandler(async (event) => {
   try {
@@ -9,7 +9,7 @@ export default eventHandler(async (event) => {
     if (!id || !status) {
       throw createError({
         statusCode: 400,
-        statusMessage: "Log ID and status are required"
+        statusMessage: 'Log ID and status are required',
       })
     }
 
@@ -17,19 +17,20 @@ export default eventHandler(async (event) => {
       where: { id: Number(id) },
       data: {
         approvalStatus: status,
-        comment: comment ?? null
-      }
+        comment: comment ?? null,
+      },
     })
 
     return {
       success: true,
-      log: updated
+      log: updated,
     }
-  } catch (error) {
+  }
+  catch (error) {
     throw createError({
       statusCode: 500,
-      statusMessage: "Failed to update volunteer log",
-      cause: error
+      statusMessage: 'Failed to update volunteer log',
+      cause: error,
     })
   }
 })

@@ -1,16 +1,25 @@
-<script setup lang="ts">
-import { ref, watch } from "vue"
+<script setup>
+import { ref, watch } from 'vue'
 
-const props = defineProps<{
-  event: any
-}>()
+const props = defineProps({
+  event: {
+    type: Object,
+    default: null,
+  },
+})
 
-const emit = defineEmits(["save", "delete"])
+const emit = defineEmits(['save', 'delete'])
 
 const editedEvent = ref<any>({})
 const filesToUpload = ref<File[]>([])
 // Build asset list for the uploader from the real event assets
-const eventAssets = ref<{ imageUrl: string; isPreview?: boolean; fileName?: string }[]>([])
+const eventAssets = ref<{ imageUrl: string, isPreview?: boolean, fileName?: string }[]>([])
+const editedEvent = ref({
+  name: '',
+  date: '',
+  location: '',
+  image: '',
+})
 
 watch(() => props.event, (newEvent) => {
   if (newEvent) {
@@ -38,49 +47,71 @@ async function saveEvent() {
       try {
         await $fetch(`/api/events/${editedEvent.value.id}/images/upload`, {
           method: 'POST',
-          body: formData
+          body: formData,
         })
-      } catch (err) {
+      }
+      catch (err) {
         console.error(`Failed to upload ${file.name}:`, err)
       }
     }
     filesToUpload.value = []
   }
 
-  emit("save", { ...editedEvent.value })
+  emit('save', { ...editedEvent.value })
 }
 
 function deleteEvent() {
-  emit("delete", editedEvent.value.id)
+  emit('delete', editedEvent.value.id)
 }
 </script>
 
 <template>
   <div class="space-y-4">
-    <h3 class="text-xl font-semibold">Edit Event</h3>
+    <h3 class="text-xl font-semibold">
+      Edit Event
+    </h3>
 
     <UFormGroup label="Event Title">
-      <UInput v-model="editedEvent.title" placeholder="Event title" />
+      <UInput
+        v-model="editedEvent.title"
+        placeholder="Event title"
+      />
     </UFormGroup>
 
     <UFormGroup label="Short Description">
-      <UInput v-model="editedEvent.shortDesc" placeholder="Brief description" />
+      <UInput
+        v-model="editedEvent.shortDesc"
+        placeholder="Brief description"
+      />
     </UFormGroup>
 
     <UFormGroup label="Full Description">
-      <UTextarea v-model="editedEvent.description" :rows="4" placeholder="Full description" />
+      <UTextarea
+        v-model="editedEvent.description"
+        :rows="4"
+        placeholder="Full description"
+      />
     </UFormGroup>
 
     <UFormGroup label="Location">
-      <UInput v-model="editedEvent.location.address" placeholder="Location address" />
+      <UInput
+        v-model="editedEvent.location.address"
+        placeholder="Location address"
+      />
     </UFormGroup>
 
     <div class="grid grid-cols-2 gap-4">
       <UFormGroup label="Start Date & Time">
-        <UInput v-model="editedEvent.startTime" type="datetime-local" />
+        <UInput
+          v-model="editedEvent.startTime"
+          type="datetime-local"
+        />
       </UFormGroup>
       <UFormGroup label="End Date & Time">
-        <UInput v-model="editedEvent.endTime" type="datetime-local" />
+        <UInput
+          v-model="editedEvent.endTime"
+          type="datetime-local"
+        />
       </UFormGroup>
     </div>
 
@@ -104,8 +135,19 @@ function deleteEvent() {
     </UFormGroup>
 
     <div class="flex justify-between pt-2">
-      <UButton color="brand1" variant="soft" @click="deleteEvent">Delete Event</UButton>
-      <UButton color="primary" @click="saveEvent">Save Changes</UButton>
+      <UButton
+        color="red"
+        variant="soft"
+        @click="deleteEvent"
+      >
+        Delete Event
+      </UButton>
+      <UButton
+        color="primary"
+        @click="saveEvent"
+      >
+        Save Changes
+      </UButton>
     </div>
   </div>
 </template>

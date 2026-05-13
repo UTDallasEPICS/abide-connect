@@ -1,10 +1,17 @@
 <script setup lang="ts">
 defineEmits(['add', 'click'])
-defineProps<{
-  title: string
+const props = defineProps<{
+  title?: string
   subtitle?: string
-  imageUrl?: string
+  buttonType?: 'plus' | 'arrow'
+  eventId?: string
 }>()
+
+const iconName = computed(() =>
+  props.buttonType === 'arrow'
+    ? 'i-heroicons-arrow-right-20-solid'
+    : 'i-heroicons-plus',
+)
 </script>
 
 <template>
@@ -22,7 +29,10 @@ defineProps<{
         alt="Event image"
         class="w-full h-full object-cover"
       >
-      <span v-else class="flex items-center justify-center h-full text-xl">📅</span>
+      <span
+        v-else
+        class="flex items-center justify-center h-full text-xl"
+      >📅</span>
     </div>
 
     <!-- Text lines -->
@@ -35,14 +45,17 @@ defineProps<{
       </p>
     </div>
 
-    <!-- Plus button -->
+    <!-- Action button -->
     <button
       class="grid place-items-center rounded-xl h-9 w-9 flex-shrink-0 border border-gray-800/70 dark:border-gray-700/60
              hover:bg-gray-100/70 dark:hover:bg-gray-800/70 transition"
       type="button"
       @click.stop="$emit('add')"
     >
-      <UIcon name="i-heroicons-plus" class="w-5 h-5" />
+      <UIcon
+        :name="iconName"
+        class="w-5 h-5"
+      />
     </button>
   </div>
 </template>

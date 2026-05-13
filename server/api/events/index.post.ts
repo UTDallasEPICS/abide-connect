@@ -7,33 +7,32 @@ async function geocodeLocation(location: string) {
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`,
       {
         headers: {
-          'User-Agent': 'Abide-Connect/1.0'
-        }
-      }
+          'User-Agent': 'Abide-Connect/1.0',
+        },
+      },
     )
-    
+
     if (!response.ok) {
       console.warn(`Nominatim API error: ${response.status}`)
       return null
     }
 
     const results = await response.json()
-    
+
     if (results.length === 0) {
       console.warn(`No geocoding results found for: ${location}`)
       return null
     }
 
     const topResult = results[0]
-    console.log("latitude:", parseFloat(topResult.lat), "longitude:", parseFloat(topResult.lon))
+    console.log('latitude:', parseFloat(topResult.lat), 'longitude:', parseFloat(topResult.lon))
     return {
       latitude: parseFloat(topResult.lat),
       longitude: parseFloat(topResult.lon),
-      address: location
+      address: location,
     }
-    
-      
-  } catch (error) {
+  }
+  catch (error) {
     console.error('❌ Geocoding error:', error)
     return null
   }
@@ -44,34 +43,32 @@ export default defineEventHandler(async (event) => {
 
   // Validate required fields
   if (!body.title || !body.startTime || !body.endTime) {
-    throw createError({ 
-      statusCode: 400, 
-      message: 'Missing required fields: title, startTime, endTime' 
+    throw createError({
+      statusCode: 400,
+      message: 'Missing required fields: title, startTime, endTime',
     })
   }
 
-  //check if location has already been fetched
+  // check if location has already been fetched
   const locationData = await prisma.location.findUnique({
     where: {
-      address: body.location || null
+      address: body.location || null,
     },
     select: {
       latitude: true,
       longitude: true,
-      address: true
-    }
+      address: true,
+    },
   }) || await geocodeLocation(body.location)
 
   console.log('📍 Location data from DB:', locationData)
 
-
   if (!locationData) {
-    throw createError({ 
-      statusCode: 400, 
-      message: 'Invalid location provided and geocoding failed' 
+    throw createError({
+      statusCode: 400,
+      message: 'Invalid location provided and geocoding failed',
     })
   }
-
 
   try {
     // Create the event in the database
@@ -83,10 +80,10 @@ export default defineEventHandler(async (event) => {
         location: {
           connectOrCreate: {
             where: {
-              address: body.location || null
+              address: body.location || null,
             },
-            create: locationData!
-          }
+            create: locationData!,
+          },
         },
         startTime: new Date(body.startTime),
         endTime: new Date(body.endTime),
@@ -94,20 +91,20 @@ export default defineEventHandler(async (event) => {
         allowAttendees: body.allowAttendees || false,
       },
       include: {
-        eventAssets: true
-      }
+        eventAssets: true,
+      },
     })
 
     console.log('✅ Event created:', newEvent)
 
     setResponseStatus(event, 201)
     return newEvent
-    
-  } catch (error) {
+  }
+  catch (error) {
     console.error('❌ Error creating event:', error)
-    throw createError({ 
-      statusCode: 500, 
-      message: 'Failed to create event' 
+    throw createError({
+      statusCode: 500,
+      message: 'Failed to create event',
     })
   }
 })

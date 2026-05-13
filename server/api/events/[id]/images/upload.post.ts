@@ -29,19 +29,20 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'Event not found' })
   }
 
-  const fileName = decodeURIComponent(file.filename || 'upload.png')
-
-  // Use absolute path to ensure files are written to the right place
-  const storageRoot = path.resolve(process.cwd(), process.env.IMAGE_STORAGE_PATH || 'public/images')
-  const dirPath = path.join(storageRoot, id)
-
-  console.log('📁 Writing image to:', dirPath)
+  // Save file to public/images
+  const dirPath = path.join(
+    process.env.IMAGE_STORAGE_PATH || 'public/images',
+    id,
+  )
 
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true })
   }
 
-  const filePath = path.join(dirPath, fileName)
+  const filePath = path.join(
+    dirPath,
+    decodeURIComponent(file.filename || 'failed.png'),
+  )
 
   if (fs.existsSync(filePath)) {
     throw createError({ statusCode: 400, message: 'Image already exists.' })
@@ -50,15 +51,24 @@ export default defineEventHandler(async (event) => {
   fs.writeFileSync(filePath, file.data)
   console.log('✅ File written:', filePath)
 
-  await prisma.event.update({
+  const addedImage = await prisma.event.update({
     where: { id },
     data: {
       eventAssets: {
-        create: [{ imageUrl: fileName }]
-      }
-    }
+        create: [
+          {
+            imageUrl: path.join(id, 'images', file.filename || 'failed.png'),
+          },
+        ],
+      },
+    },
   })
 
+  console.log(addedImage)
+
   setResponseStatus(event, 201)
-  return { message: 'Added file to event.' }
+
+  return {
+    message: 'Added file to event.',
+  }
 })

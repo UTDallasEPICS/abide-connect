@@ -31,7 +31,8 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@nuxt/eslint": "^1.9.0",
+    "@iconify-json/heroicons": "^1.2.3",
+    "@nuxt/eslint": "^1.15.0",
     "@types/node": "^24.3.1",
     "@types/parse-path": "^7.1.0",
     "autoprefixer": "^10.4.21",

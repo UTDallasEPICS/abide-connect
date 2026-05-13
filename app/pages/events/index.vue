@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
 import type { DateValue } from '@internationalized/date'
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
 
@@ -17,7 +16,7 @@ const upcomingEvents = computed(() => {
 
 // Dates that have events — used to highlight calendar
 const eventDates = computed(() => {
-  return (allEvents.value || []).map(event => {
+  return (allEvents.value || []).map((event) => {
     const d = new Date(event.startTime)
     return new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate())
   })
@@ -26,7 +25,7 @@ const eventDates = computed(() => {
 // Events on the selected calendar date
 const eventsOnSelectedDate = computed(() => {
   if (!selectedDate.value) return upcomingEvents.value
-  return (allEvents.value || []).filter(event => {
+  return (allEvents.value || []).filter((event) => {
     const d = new Date(event.startTime)
     const cal = new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate())
     return cal.compare(selectedDate.value) === 0
@@ -38,6 +37,53 @@ const displayedEvents = computed(() => {
   if (eventsOnSelectedDate.value.length > 0) return eventsOnSelectedDate.value
   return upcomingEvents.value
 })
+
+type Event = {
+  id: string
+  title: string
+  startTime: string
+  location: {
+    id: string
+    address: string
+    latitude: number
+    longitude: number
+  }
+  eventAssets: {
+    id: string
+    imageUrl: string
+  }[]
+}
+
+const { data: eventsData } = await useFetch<Event[]>('/api/events', {
+  default: () => [],
+})
+
+const imageAPI = (url: string | undefined) => {
+  return url ? `/api/events/${url}` : undefined
+}
+
+const events = computed(() =>
+  (eventsData.value || [])
+    .filter(e => new Date(e.startTime).getTime() >= Date.now())
+    .sort(
+      (a, b) =>
+        new Date(a.startTime).getTime()
+          - new Date(b.startTime).getTime(),
+    )
+    .slice(0, 6)
+    .map(e => ({
+      id: e.id,
+      title: e.title,
+      date: new Date(e.startTime).toLocaleDateString('en-US', {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric',
+      }),
+      location: e.location,
+      image:
+                imageAPI(e.eventAssets?.[0]?.imageUrl) ?? '/images/image1.jpeg',
+    })),
+)
 
 const isDateDisabled = (d: DateValue) =>
   d.toDate(tz) < new Date(new Date().setHours(0, 0, 0, 0))
@@ -51,12 +97,11 @@ function getEventImage(event: any) {
   return undefined
 }
 
-
 function getEventSubtitle(event: any) {
   const date = new Date(event.startTime).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
-    year: 'numeric'
+    year: 'numeric',
   })
   const location = event.location?.address || ''
   return [date, location].filter(Boolean).join(' · ')
@@ -90,11 +135,17 @@ function goToEvent(id: string) {
         {{ eventsOnSelectedDate.length > 0 ? 'Events on this day' : 'Upcoming Events' }}
       </h3>
 
-      <div v-if="displayedEvents.length === 0" class="text-center text-gray-500 py-8">
+      <div
+        v-if="displayedEvents.length === 0"
+        class="text-center text-gray-500 py-8"
+      >
         No upcoming events
       </div>
 
-      <div v-else class="space-y-4">
+      <div
+        v-else
+        class="space-y-4"
+      >
         <EventTile
           v-for="event in displayedEvents"
           :key="event.id"

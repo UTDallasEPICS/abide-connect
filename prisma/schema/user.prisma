@@ -17,6 +17,8 @@ model User_Notification {
   notification   Notification @relation(fields: [notificationId], references: [id])
   notificationId String
 
+  isRead        Boolean       @default(false)
+
   @@id([userId, notificationId])
   @@map("user_notifications")
 }

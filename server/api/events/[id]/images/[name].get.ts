@@ -13,11 +13,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Missing eventID' })
   }
 
-  const storageRoot = path.resolve(process.cwd(), process.env.IMAGE_STORAGE_PATH || 'public/images')
-  const filePath = path.join(storageRoot, eventID, decodeURIComponent(fileName))
-
-  console.log('🖼 Serving image from:', filePath)
-  console.log('📂 File exists:', fs.existsSync(filePath))
+  // Get file path relative to project root
+  const filePath = path.join(
+    process.env.IMAGE_STORAGE_PATH || 'public/images',
+    eventID,
+    fileName,
+  )
 
   if (!fs.existsSync(filePath)) {
     throw createError({ statusCode: 404, statusMessage: 'File not found' })
@@ -26,12 +27,16 @@ export default defineEventHandler(async (event) => {
   const fileStream = fs.createReadStream(filePath)
 
   const ext = path.extname(filePath).toLowerCase()
-  const mime =
-    ext === '.png' ? 'image/png' :
-    ext === '.jpg' || ext === '.jpeg' ? 'image/jpeg' :
-    ext === '.gif' ? 'image/gif' :
-    ext === '.webp' ? 'image/webp' :
-    'application/octet-stream'
+  const mime
+    = ext === '.png'
+      ? 'image/png'
+      : ext === '.jpg' || ext === '.jpeg'
+        ? 'image/jpeg'
+        : ext === '.gif'
+          ? 'image/gif'
+          : ext === '.webp'
+            ? 'image/webp'
+            : 'application/octet-stream'
 
   setHeader(event, 'Content-Type', mime)
 

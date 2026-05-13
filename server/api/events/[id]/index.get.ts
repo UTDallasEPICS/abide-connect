@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
 
   const foundEvent = await prisma.event.findUnique({
     where: { id },
-    include: { 
+    include: {
       eventAssets: true,
       location: true,
     },
