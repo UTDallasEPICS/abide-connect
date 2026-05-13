@@ -6,3 +6,5 @@ allowBuilds:
   prisma: true
   unrs-resolver: true
   vue-demi: true
+  publicHoistPattern:
+    - "*types*"
