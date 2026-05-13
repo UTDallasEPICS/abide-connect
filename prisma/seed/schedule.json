@@ -1,0 +1,15 @@
+[
+    {
+        "mobileClinic": {
+            "id": "mobile_clinic_1"
+        },
+        "location":{
+            "longitude": -97.302784,
+            "latitude": 32.707596,
+            "address": "3001 S Riverside Dr, Fort Worth, TX 76119"
+        },
+        "startTime": "2026-05-01T14:00:00.000Z",
+        "endTime": "2026-05-01T22:00:00.000Z"
+    }
+
+]

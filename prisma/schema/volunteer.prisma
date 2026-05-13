@@ -39,13 +39,13 @@ model Volunteer_Hour_Log {
   volunteerId    String
   event          Event          @relation(fields: [eventId], references: [id])
   eventId        String
-  clockIn        DateTime
-  clockOut       DateTime?
+  date           DateTime
+  hours          Float
   approvalStatus ApprovalStatus @default(PENDING)
   comment        String?
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  updatedAt DateTime @updatedAt
 
   @@map("volunteer_hour_logs")
 }
