@@ -35,7 +35,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   vite: {
     optimizeDeps: {
-      include: ['maplibre-gl', 'vue3-carousel'],
+      include: ['maplibre-gl', 'vue3-carousel', 'better-auth/vue'],
     },
   },
   eslint: {
