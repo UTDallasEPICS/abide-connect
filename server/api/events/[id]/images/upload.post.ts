@@ -49,11 +49,10 @@ export default defineEventHandler(async (event) => {
   }
 
   fs.writeFileSync(filePath, file.data)
+  console.log('✅ File written:', filePath)
 
   const addedImage = await prisma.event.update({
-    where: {
-      id: id,
-    },
+    where: { id },
     data: {
       eventAssets: {
         create: [

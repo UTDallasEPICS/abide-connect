@@ -1,15 +1,42 @@
 <script setup lang="ts">
 import type { DateValue } from '@internationalized/date'
-import { CalendarDate, getLocalTimeZone } from '@internationalized/date'
+import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
 
 const tz = getLocalTimeZone()
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const selectedDate = ref<any>(today(tz))
 
-const value = ref<DateValue>(new CalendarDate(2022, 2, 3))
+// Load all events from API
+const { data: allEvents } = await useFetch('/api/events')
 
-async function navigateToEvent(eventId) {
-  console.log('Navigating to event:', eventId)
-  await navigateTo(`/events/${eventId}`)
-}
+const upcomingEvents = computed(() => {
+  const now = new Date()
+  return (allEvents.value || []).filter(event => new Date(event.endTime) >= now)
+})
+
+// Dates that have events — used to highlight calendar
+const eventDates = computed(() => {
+  return (allEvents.value || []).map((event) => {
+    const d = new Date(event.startTime)
+    return new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate())
+  })
+})
+
+// Events on the selected calendar date
+const eventsOnSelectedDate = computed(() => {
+  if (!selectedDate.value) return upcomingEvents.value
+  return (allEvents.value || []).filter((event) => {
+    const d = new Date(event.startTime)
+    const cal = new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate())
+    return cal.compare(selectedDate.value) === 0
+  })
+})
+
+// Show date-filtered events if a date with events is selected, otherwise show all upcoming
+const displayedEvents = computed(() => {
+  if (eventsOnSelectedDate.value.length > 0) return eventsOnSelectedDate.value
+  return upcomingEvents.value
+})
 
 type Event = {
   id: string
@@ -60,20 +87,40 @@ const events = computed(() =>
 
 const isDateDisabled = (d: DateValue) =>
   d.toDate(tz) < new Date(new Date().setHours(0, 0, 0, 0))
+
+function getEventImage(event: any) {
+  if (event.eventAssets && event.eventAssets.length > 0) {
+    const imageUrl = event.eventAssets[0].imageUrl
+    return `/api/events/${imageUrl}`
+  }
+  return undefined
+}
+
+function getEventSubtitle(event: any) {
+  const date = new Date(event.startTime).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+  const location = event.location?.address || ''
+  return [date, location].filter(Boolean).join(' · ')
+}
+
+function goToEvent(id: string) {
+  navigateTo(`/events/${id}`)
+}
 </script>
 
 <template>
   <div class="min-h-screen flex flex-col bg-white dark:bg-gray-900">
     <div class="w-full h-full mt-12 mb-12 px-4 py-12 overflow-y-auto">
-      <h2
-        class="text-center text-2xl font-bold text-brand4 dark:text-teal-400"
-      >
+      <h2 class="text-center text-2xl font-bold text-brand4 dark:text-teal-400 mb-6">
         Events
       </h2>
 
-      <UCard class="max-w-4xl mx-auto mb-4">
+      <UCard class="max-w-4xl mx-auto mb-6">
         <UCalendar
-          :v-model="value"
+          v-model="selectedDate"
           color="brand7"
           :is-date-disabled="isDateDisabled"
           locale="en-US"
@@ -82,100 +129,31 @@ const isDateDisabled = (d: DateValue) =>
           class="rounded-2xl"
         />
       </UCard>
-      <!-- Upcoming Events -->
-      <div class="px-2 pb-4 pl-4 pt-4 w-full relative">
-        <h3 class="text-2xl font-semibold text-brand4 mb-4">
-          UPCOMING EVENTS
-        </h3>
-        <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-          <div
-            v-for="event in events"
-            :key="event.id"
-            class="shrink-0 w-40 rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer"
-            @click.stop="navigateToEvent(event.id)"
-          >
-            <!-- Event Image Placeholder -->
-            <div class="h-35 relative overflow-hidden">
-              <img
-                :src="event.image"
-                class="w-full h-full object-cover"
-              >
-            </div>
 
-            <!-- Event Content -->
-            <div class="p-2">
-              <h4
-                class="text-sm font_semibold text-brand4 mb-1.5"
-              >
-                {{ event.title }}
-              </h4>
-              <div class="space-y-2">
-                <!-- Date -->
-                <div
-                  class="flex items-center text-gray-600 text-[12px]"
-                >
-                  <svg
-                    class="w-4 h-4 mr-2 text-teal-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <rect
-                      x="3"
-                      y="4"
-                      width="18"
-                      height="18"
-                      rx="2"
-                      ry="2"
-                    />
-                    <line
-                      x1="16"
-                      y1="2"
-                      x2="16"
-                      y2="6"
-                    />
-                    <line
-                      x1="8"
-                      y1="2"
-                      x2="8"
-                      y2="6"
-                    />
-                    <line
-                      x1="3"
-                      y1="10"
-                      x2="21"
-                      y2="10"
-                    />
-                  </svg>
-                  <span>{{ event.date }}</span>
-                </div>
+      <h3 class="text-lg font-semibold text-brand4 mb-4">
+        {{ eventsOnSelectedDate.length > 0 ? 'Events on this day' : 'Upcoming Events' }}
+      </h3>
 
-                <!-- Location -->
-                <div
-                  class="flex items-start text-gray-600 text-[10px]"
-                >
-                  <svg
-                    class="w-3 h-3 mr-2 ml-0.5 mt-0.5 text-teal-600 shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"
-                    />
-                    <circle
-                      cx="12"
-                      cy="10"
-                      r="3"
-                    />
-                  </svg>
-                  <span class="leading-tight">
-                    {{ event.location.address }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div
+        v-if="displayedEvents.length === 0"
+        class="text-center text-gray-500 py-8"
+      >
+        No upcoming events
+      </div>
+
+      <div
+        v-else
+        class="space-y-4"
+      >
+        <EventTile
+          v-for="event in displayedEvents"
+          :key="event.id"
+          :title="event.title"
+          :subtitle="getEventSubtitle(event)"
+          :image-url="getEventImage(event)"
+          @click="goToEvent(event.id)"
+          @add="goToEvent(event.id)"
+        />
       </div>
     </div>
   </div>

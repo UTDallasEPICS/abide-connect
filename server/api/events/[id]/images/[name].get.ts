@@ -26,9 +26,7 @@ export default defineEventHandler(async (event) => {
 
   const fileStream = fs.createReadStream(filePath)
 
-  // Set content type based on file extension
   const ext = path.extname(filePath).toLowerCase()
-
   const mime
     = ext === '.png'
       ? 'image/png'

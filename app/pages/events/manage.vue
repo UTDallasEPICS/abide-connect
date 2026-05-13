@@ -55,7 +55,7 @@ async function navigateToEvent(eventId) {
 function getEventImage(event) {
   if (event.eventAssets && event.eventAssets.length > 0) {
     const imageUrl = event.eventAssets[0].imageUrl
-    return `/api/events/${event.id}/images/${imageUrl.split('/').pop()}`
+    return `/api/events/${imageUrl}`
   }
   return null
 }
@@ -172,7 +172,6 @@ function getEventDate(event) {
                 class="flex items-center justify-center h-full text-white text-2xl"
               >📅</span>
             </div>
-
             <div
               class="flex flex-col text-left pointer-events-none"
             >

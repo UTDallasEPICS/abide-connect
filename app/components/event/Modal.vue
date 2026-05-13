@@ -1,6 +1,4 @@
-<script setup>
-import { ref, watch } from 'vue'
-
+<script setup lang="ts">
 const emit = defineEmits(['save', 'close'])
 
 const newEvent = ref({
@@ -19,29 +17,11 @@ const newEvent = ref({
 const isSaving = ref(false)
 
 // Store actual File objects for upload
-const filesToUpload = ref([])
+const filesToUpload = ref([] as File[])
 
-watch(filesToUpload, async (newFiles) => {
-  if (!newFiles || newFiles.length === 0) {
-    newEvent.value.eventAssets = []
-    return
-  }
-  const previews = await Promise.all(
-    Array.from(newFiles).map(
-      file =>
-        new Promise((resolve) => {
-          const reader = new FileReader()
-          reader.onload = e =>
-            resolve({
-              imageUrl: e.target.result,
-              fileName: file.name,
-            })
-          reader.readAsDataURL(file)
-        }),
-    ),
-  )
-  newEvent.value.eventAssets = previews
-})
+function onFilesChanged(files: File[]) {
+  filesToUpload.value = files
+}
 
 async function saveEvent() {
   // Validate required fields
@@ -59,7 +39,7 @@ async function saveEvent() {
   isSaving.value = true
 
   try {
-    // Step 1: Create the event in the database
+    // Step 1: Create the event
     const response = await $fetch('/api/events', {
       method: 'POST',
       body: {
@@ -75,9 +55,7 @@ async function saveEvent() {
       },
     })
 
-    console.log('✅ Event created:', response)
-
-    // Step 2: Upload images if event was created successfully
+    // Step 2: Upload images
     if (response.id && filesToUpload.value.length > 0) {
       console.log(`📤 Uploading ${filesToUpload.value.length} images...`)
 
@@ -101,7 +79,7 @@ async function saveEvent() {
       }
     }
 
-    // Step 3: Fetch the complete event with images from the server
+    // Step 3: Fetch complete event with images
     const completeEvent = await $fetch(`/api/events/${response.id}`)
 
     console.log('✅ Complete event fetched:', completeEvent)
@@ -201,7 +179,6 @@ function cancel() {
           />
         </UFormField>
       </div>
-
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">
           End Date & Time <span class="text-red-500">*</span>
@@ -213,47 +190,42 @@ function cancel() {
           />
         </UFormField>
       </div>
-    </div>
 
-    <div class="space-y-2">
-      <label class="flex items-center gap-2 cursor-pointer">
-        <UCheckbox v-model="newEvent.allowVolunteers" />
-        <span class="text-sm font-medium text-gray-700">Allow Volunteers</span>
-      </label>
+      <div class="space-y-2">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <UCheckbox v-model="newEvent.allowVolunteers" />
+          <span class="text-sm font-medium text-gray-700">Allow Volunteers</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <UCheckbox v-model="newEvent.allowAttendees" />
+          <span class="text-sm font-medium text-gray-700">Allow Attendees to Register</span>
+        </label>
+      </div>
 
-      <label class="flex items-center gap-2 cursor-pointer">
-        <UCheckbox v-model="newEvent.allowAttendees" />
-        <span class="text-sm font-medium text-gray-700">Allow Attendees to Register</span>
-      </label>
-    </div>
-
-    <div>
-      <UFormField label="Event Images">
-        <UFileUpload
-          v-model="filesToUpload"
-          multiple
-          accept="image/*"
-          placeholder="Upload images"
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Event Images</label>
+        <EventImageUpload
+          @files-changed="onFilesChanged"
         />
-      </UFormField>
-    </div>
+      </div>
 
-    <div class="flex justify-end gap-2 pt-4 border-t">
-      <UButton
-        variant="ghost"
-        color="brand4"
-        :disabled="isSaving"
-        @click="cancel"
-      >
-        Cancel
-      </UButton>
-      <UButton
-        color="brand4"
-        :loading="isSaving"
-        @click="saveEvent"
-      >
-        {{ isSaving ? "Creating..." : "Create Event" }}
-      </UButton>
+      <div class="flex justify-end gap-2 pt-4 border-t">
+        <UButton
+          variant="ghost"
+          color="brand4"
+          :disabled="isSaving"
+          @click="cancel"
+        >
+          Cancel
+        </UButton>
+        <UButton
+          color="brand4"
+          :loading="isSaving"
+          @click="saveEvent"
+        >
+          {{ isSaving ? "Creating..." : "Create Event" }}
+        </UButton>
+      </div>
     </div>
   </div>
 </template>

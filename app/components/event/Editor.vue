@@ -10,6 +10,10 @@ const props = defineProps({
 
 const emit = defineEmits(['save', 'delete'])
 
+const editedEvent = ref<any>({})
+const filesToUpload = ref<File[]>([])
+// Build asset list for the uploader from the real event assets
+const eventAssets = ref<{ imageUrl: string, isPreview?: boolean, fileName?: string }[]>([])
 const editedEvent = ref({
   name: '',
   date: '',
@@ -17,14 +21,42 @@ const editedEvent = ref({
   image: '',
 })
 
-// Watch for changes to the event prop and update the form
 watch(() => props.event, (newEvent) => {
   if (newEvent) {
     editedEvent.value = { ...newEvent }
+    // Map existing server assets to uploader format
+    // imageUrl in DB is just the fileName (after the upload fix)
+    eventAssets.value = (newEvent.eventAssets || []).map((a: any) => ({
+      imageUrl: `/api/events/${newEvent.id}/images/${a.imageUrl}`,
+      fileName: a.imageUrl,
+      isPreview: false,
+    }))
   }
 }, { immediate: true })
 
-function saveEvent() {
+function onFilesChanged(files: File[]) {
+  filesToUpload.value = files
+}
+
+async function saveEvent() {
+  // Upload any pending files first
+  if (filesToUpload.value.length > 0) {
+    for (const file of filesToUpload.value) {
+      const formData = new FormData()
+      formData.append('file', file)
+      try {
+        await $fetch(`/api/events/${editedEvent.value.id}/images/upload`, {
+          method: 'POST',
+          body: formData,
+        })
+      }
+      catch (err) {
+        console.error(`Failed to upload ${file.name}:`, err)
+      }
+    }
+    filesToUpload.value = []
+  }
+
   emit('save', { ...editedEvent.value })
 }
 
@@ -39,40 +71,68 @@ function deleteEvent() {
       Edit Event
     </h3>
 
-    <UFormField label="Event Name">
-      <UInput v-model="editedEvent.name" />
-    </UFormField>
-
-    <UFormField label="Date">
+    <UFormGroup label="Event Title">
       <UInput
-        v-model="editedEvent.date"
-        type="date"
+        v-model="editedEvent.title"
+        placeholder="Event title"
       />
-    </UFormField>
+    </UFormGroup>
 
-    <UFormField label="Location">
-      <UInput v-model="editedEvent.location" />
-    </UFormField>
+    <UFormGroup label="Short Description">
+      <UInput
+        v-model="editedEvent.shortDesc"
+        placeholder="Brief description"
+      />
+    </UFormGroup>
 
-    <UFormField label="Image URL">
-      <UInput v-model="editedEvent.image" />
-    </UFormField>
+    <UFormGroup label="Full Description">
+      <UTextarea
+        v-model="editedEvent.description"
+        :rows="4"
+        placeholder="Full description"
+      />
+    </UFormGroup>
 
-    <!-- Preview image if URL provided -->
-    <div
-      v-if="editedEvent.image"
-      class="mt-2"
-    >
-      <p class="text-sm text-gray-600 mb-2">
-        Image Preview:
-      </p>
-      <img
-        :src="editedEvent.image"
-        alt="Event preview"
-        class="w-full h-32 object-cover rounded-lg"
-        @error="$event.target.style.display = 'none'"
-      >
+    <UFormGroup label="Location">
+      <UInput
+        v-model="editedEvent.location.address"
+        placeholder="Location address"
+      />
+    </UFormGroup>
+
+    <div class="grid grid-cols-2 gap-4">
+      <UFormGroup label="Start Date & Time">
+        <UInput
+          v-model="editedEvent.startTime"
+          type="datetime-local"
+        />
+      </UFormGroup>
+      <UFormGroup label="End Date & Time">
+        <UInput
+          v-model="editedEvent.endTime"
+          type="datetime-local"
+        />
+      </UFormGroup>
     </div>
+
+    <div class="space-y-2">
+      <label class="flex items-center gap-2 cursor-pointer">
+        <UCheckbox v-model="editedEvent.allowVolunteers" />
+        <span class="text-sm font-medium text-gray-700">Allow Volunteers</span>
+      </label>
+      <label class="flex items-center gap-2 cursor-pointer">
+        <UCheckbox v-model="editedEvent.allowAttendees" />
+        <span class="text-sm font-medium text-gray-700">Allow Attendees</span>
+      </label>
+    </div>
+
+    <UFormGroup label="Event Images">
+      <EventImageUpload
+        :existing-assets="editedEvent.eventAssets"
+        :event-id="editedEvent.id"
+        @files-changed="onFilesChanged"
+      />
+    </UFormGroup>
 
     <div class="flex justify-between pt-2">
       <UButton

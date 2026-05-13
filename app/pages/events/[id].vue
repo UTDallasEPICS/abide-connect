@@ -1,233 +1,139 @@
-<script setup>
+<script setup lang="ts">
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { ref, computed, onMounted } from 'vue'
 
 const route = useRoute()
+const eventId = route.params.id as string
 
-// Get the ID from the route params
-const eventId = route.params.id
-const { data: event } = await useFetch(`/api/events/${route.params.id}`)
+// Single fetch — no onMounted duplicate
+const { data: event, error, refresh } = await useFetch(`/api/events/${eventId}`)
 
-const loading = ref(true)
 const notFound = ref(false)
 
-const isEditMode = ref(false)
-const editForm = ref({ mobileClinic: false })
+if (error.value) {
+  console.error('Failed to load event:', error.value)
+  notFound.value = true
+}
 
-// placeholder until we implement auth
+const isEditMode = ref(false)
+const editForm = ref<any>({})
+
+// Placeholder until auth is implemented
 const admin = true
 
-// Fetch event data from API on mount
-onMounted(async () => {
-  try {
-    console.log('📡 Loading event with ID:', eventId)
+// RSVP modal state
+const showRsvpModal = ref(false)
+const rsvpIsVolunteer = ref(false)
+const rsvpStatsRef = ref<any>(null)
 
-    // Fetch event from your backend API
-    event.value = await $fetch(`/api/events/${eventId}`)
+function openRsvpModal(isVolunteer: boolean) {
+  rsvpIsVolunteer.value = isVolunteer
+  showRsvpModal.value = true
+}
 
-    editForm.value = {
-      ...event.value,
-      mobileClinic: Boolean(event.value?.mobileClinicId),
-    }
+async function onRsvpSuccess() {
+  showRsvpModal.value = false
+  await rsvpStatsRef.value?.refresh()
+}
 
-    console.log('✅ Event loaded:', event.value)
-    loading.value = false
+// Assets shown in the edit uploader
+const filesToUpload = ref<File[]>([])
+
+function enterEditMode() {
+  editForm.value = {
+    ...event.value,
+    startTime: event.value?.startTime ? formatForInput(event.value.startTime) : '',
+    endTime: event.value?.endTime ? formatForInput(event.value.endTime) : '',
   }
-  catch (error) {
-    console.error('❌ Error fetching event:', error)
-    loading.value = false
-    notFound.value = true
-  }
-})
+  isEditMode.value = true
+}
 
-const formattedDate = computed(() => {
-  if (!event.value) return ''
+function cancelEdit() {
+  isEditMode.value = false
+  filesToUpload.value = []
+}
 
-  const start = new Date(event.value.startTime)
-  const end = new Date(event.value.endTime)
+function formatForInput(isoString: string) {
+  // Convert ISO date to datetime-local input format
+  return new Date(isoString).toISOString().slice(0, 16)
+}
 
-  const dateStr = start.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
-
-  const startTime = start.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  })
-
-  const endTime = end.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  })
-
-  return `${dateStr} • ${startTime} - ${endTime}`
-})
-
-const style = '/mapstyles.json'
-const center = computed(() => [
-  event.value.location.longitude,
-  event.value.location.latitude,
-])
-const zoom = 15
-
-function toggleEditMode() {
-  if (isEditMode.value) {
-    // Cancel editing - reset form to original event data
-    editForm.value = {
-      ...event.value,
-      mobileClinic: Boolean(event.value?.mobileClinicId),
-    }
-  }
-  isEditMode.value = !isEditMode.value
+function onFilesChanged(files: File[]) {
+  filesToUpload.value = files
 }
 
 async function saveChanges() {
   try {
-    console.log('💾 Saving changes...')
-
-    // Update event via API
-    const _updatedEvent = await $fetch(`/api/events/${event.value.id}`, {
+    await $fetch(`/api/events/${eventId}`, {
       method: 'PATCH',
       body: {
         title: editForm.value.title,
         shortDesc: editForm.value.shortDesc,
         description: editForm.value.description,
-        location: editForm.value.location,
+        location: editForm.value.location?.address || editForm.value.location,
         startTime: new Date(editForm.value.startTime).toISOString(),
         endTime: new Date(editForm.value.endTime).toISOString(),
         allowVolunteers: editForm.value.allowVolunteers,
         allowAttendees: editForm.value.allowAttendees,
-        mobileClinic: editForm.value.mobileClinic,
       },
     })
 
-    // Update local event data
-    event.value = { ...editForm.value }
-
-    // update map center if location changed
-    if (editForm.value.location.address !== event.value.location.address) {
-      center.value = [
-        editForm.value.location.longitude,
-        editForm.value.location.latitude,
-      ]
+    // Upload any new images
+    for (const file of filesToUpload.value) {
+      const formData = new FormData()
+      formData.append('file', file)
+      try {
+        await $fetch(`/api/events/${eventId}/images/upload`, {
+          method: 'POST',
+          body: formData,
+        })
+      }
+      catch (err) {
+        console.error(`Failed to upload ${file.name}:`, err)
+      }
     }
 
+    filesToUpload.value = []
     isEditMode.value = false
 
-    console.log('✅ Event updated successfully')
+    // Refresh event data
+    await refresh()
   }
   catch (error) {
-    if (error.status === 500) {
-      alert(
-        'Failed to geocode the provided location. Please check the address and try again.',
-      )
-      return
-    }
-    console.error('❌ Error updating event:', error)
-    alert('Error updating event. Please try again.')
+    console.error('Error updating event:', error)
   }
 }
 
-const placeholders = [
-  'https://picsum.photos/640/640?random=1',
-  'https://picsum.photos/640/640?random=2',
-  'https://picsum.photos/640/640?random=3',
-  'https://picsum.photos/640/640?random=4',
-  'https://picsum.photos/640/640?random=5',
-  'https://picsum.photos/640/640?random=6',
-]
-
-const filesToUpload = ref([])
-
-function handleImageUpload(event) {
-  const files = event.target?.files || event
-
-  if (!files || files.length === 0) return
-
-  // Store actual File objects for upload
-  filesToUpload.value = [...filesToUpload.value, ...Array.from(files)]
-
-  // Create preview URLs
-  const imagePromises = Array.from(files).map((file) => {
-    return new Promise((resolve) => {
-      const reader = new FileReader()
-      reader.onload = e =>
-        resolve({
-          imageUrl: e.target.result,
-          fileName: file.name,
-          isPreview: true,
-        })
-      reader.readAsDataURL(file)
-    })
-  })
-
-  Promise.all(imagePromises).then((images) => {
-    editForm.value.eventAssets = [
-      ...(editForm.value.eventAssets || []),
-      ...images,
-    ]
-  })
-}
-
-async function uploadNewImages() {
-  if (filesToUpload.value.length === 0) return
-
-  console.log(`📤 Uploading ${filesToUpload.value.length} new images...`)
-
-  for (const file of filesToUpload.value) {
-    const formData = new FormData()
-    formData.append('file', file)
-
-    try {
-      await $fetch(`/api/events/${event.value.id}/images/upload`, {
-        method: 'POST',
-        body: formData,
-      })
-      console.log(`✅ Uploaded: ${file.name}`)
-    }
-    catch (uploadError) {
-      console.error(`❌ Failed to upload ${file.name}:`, uploadError)
-    }
-  }
-
-  // Clear the upload queue
-  filesToUpload.value = []
-
-  // Reload event to get updated image URLs
-  const updatedEvent = await $fetch(`/api/events/${event.value.id}`)
-  event.value = updatedEvent
-  editForm.value = { ...updatedEvent }
-}
-
-function removeImage(index) {
-  // const asset = editForm.value.eventAssets[index]
-
-  // If it's a preview (not yet uploaded), just remove from array
-  editForm.value.eventAssets.splice(index, 1)
-  filesToUpload.value.splice(index, 1)
-}
-
-// Helper to get proper image URL
-function getImageUrl(asset) {
-  if (asset.isPreview) {
-    return asset.imageUrl // Base64 preview
-  }
-  // Use your backend image endpoint
-  return `/api/events/${event.value.id}/images/${asset.imageUrl.split('/').pop()}`
-}
-
-const fetchedItems = event.value?.eventAssets.map(
-  asset => '/api/events/' + asset.imageUrl,
-)
-
-const items = (fetchedItems?.length || 0) > 0 ? fetchedItems : placeholders
-
-const backNavigate = computed(() => {
-  return admin ? '/events/manage' : '/events'
+const formattedDate = computed(() => {
+  if (!event.value) return ''
+  const start = new Date(event.value.startTime)
+  const end = new Date(event.value.endTime)
+  const dateStr = start.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  const startTime = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  const endTime = end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  return `${dateStr} • ${startTime} - ${endTime}`
 })
+
+// Build carousel items from real assets, fall back to placeholders
+const carouselItems = computed(() => {
+  const assets = event.value?.eventAssets || []
+  if (assets.length > 0) {
+    return assets.map((a: any) => `/api/events/${a.imageUrl}`)
+  }
+  return [
+    'https://picsum.photos/640/640?random=1',
+    'https://picsum.photos/640/640?random=2',
+    'https://picsum.photos/640/640?random=3',
+  ]
+})
+
+const mapStyle = '/mapstyles.json'
+const center = computed(() => {
+  if (!event.value?.location) return [0, 0]
+  return [event.value.location.longitude, event.value.location.latitude]
+})
+const zoom = 15
+
+const backNavigate = computed(() => admin ? '/events/manage' : '/events')
 </script>
 
 <template>
@@ -273,8 +179,8 @@ const backNavigate = computed(() => {
     </div>
 
     <!-- Event Details -->
-    <div v-else>
-      <!-- Header with Edit Button -->
+    <div v-else-if="event">
+      <!-- Sticky Header -->
       <div class="bg-white shadow-sm sticky top-0 z-10 mt-16">
         <div
           class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between"
@@ -295,7 +201,7 @@ const backNavigate = computed(() => {
               icon="i-lucide-pencil"
               color="brand4"
               variant="soft"
-              @click="toggleEditMode"
+              @click="enterEditMode"
             >
               Edit Event
             </UButton>
@@ -304,7 +210,7 @@ const backNavigate = computed(() => {
               <UButton
                 variant="ghost"
                 color="brand4"
-                @click="toggleEditMode"
+                @click="cancelEdit"
               >
                 Cancel
               </UButton>
@@ -314,7 +220,6 @@ const backNavigate = computed(() => {
                 @click="
                   async () => {
                     await saveChanges();
-                    await uploadNewImages();
                   }
                 "
               >
@@ -326,7 +231,7 @@ const backNavigate = computed(() => {
       </div>
 
       <div class="max-w-4xl mx-auto px-4 py-8">
-        <!-- Event Title -->
+        <!-- Title -->
         <div class="mb-6">
           <h1
             v-if="!isEditMode"
@@ -334,13 +239,11 @@ const backNavigate = computed(() => {
           >
             {{ event.title }}
           </h1>
-
           <UInput
             v-else
             v-model="editForm.title"
             size="xl"
             placeholder="Event Title"
-            class="text-4xl font-bold"
           />
         </div>
 
@@ -358,80 +261,43 @@ const backNavigate = computed(() => {
           <UInput
             v-else
             v-model="editForm.shortDesc"
-            class="w-full"
             placeholder="Short Description"
             size="lg"
           />
         </div>
 
-        <!-- Event Images Carousel -->
-        <div class="mb-8">
+        <!-- Carousel (view mode) -->
+        <div
+          v-if="!isEditMode"
+          class="mb-8"
+        >
           <UCarousel
-            v-if="!isEditMode"
             v-slot="{ item }"
             dots
-            :items="items"
+            :items="carouselItems"
             class="h-80 max-w-xs mx-auto"
           >
             <img
               :src="item"
-              class="h-80 w-auto rounded-lg mx-auto"
+              class="h-80 w-auto rounded-lg mx-auto object-cover"
             >
           </UCarousel>
-
-          <!-- Edit Mode Images -->
-          <div
-            v-else
-            class="space-y-4"
-          >
-            <div
-              v-if="
-                editForm.eventAssets
-                  && editForm.eventAssets.length > 0
-              "
-              class="grid grid-cols-2 gap-4"
-            >
-              <div
-                v-for="(asset, index) in editForm.eventAssets"
-                :key="index"
-                class="relative h-48 rounded-xl overflow-hidden group"
-              >
-                <img
-                  :src="getImageUrl(asset)"
-                  alt="Event image"
-                  class="w-full h-full object-cover"
-                >
-                <button
-                  class="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                  type="button"
-                  @click="removeImage(index)"
-                >
-                  <UIcon
-                    name="i-lucide-x"
-                    class="w-4 h-4"
-                  />
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label
-                class="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Add Event Images
-              </label>
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-brand4 hover:file:bg-primary-100 cursor-pointer"
-                @change="handleImageUpload"
-              >
-            </div>
-          </div>
         </div>
 
-        <!-- Date & Location Card -->
+        <!-- Image management (edit mode) -->
+        <div
+          v-else
+          class="mb-8"
+        >
+          <label class="block text-sm font-medium text-gray-700 mb-2">Event Images</label>
+          <EventImageUpload
+            :existing-assets="event.eventAssets"
+            :event-id="eventId"
+            @files-changed="onFilesChanged"
+          />
+        </div>
+
+        <!-- Date & Location -->
         <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
           <div class="flex items-start gap-4 mb-4">
             <div class="bg-brand6 p-3 rounded-xl">
@@ -506,13 +372,13 @@ const backNavigate = computed(() => {
           class="h-60 relative overflow-hidden justify-center items-center mb-6"
         >
           <MapInteractive
-            :style="style"
+            :style="mapStyle"
             :center="center"
             :zoom="zoom"
           />
         </div>
 
-        <!-- Full Description -->
+        <!-- Description -->
         <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
           <h2 class="text-2xl font-semibold mb-4">
             About This Event
@@ -526,7 +392,6 @@ const backNavigate = computed(() => {
           <UTextarea
             v-else
             v-model="editForm.description"
-            class="w-full"
             placeholder="Full event description"
             :rows="6"
           />
@@ -658,7 +523,15 @@ const backNavigate = computed(() => {
           </div>
         </div>
 
-        <!-- Action Buttons for Attendees/Volunteers -->
+        <!-- RSVP Stats (admin only, view mode) -->
+        <EventRSVPStats
+          v-if="admin && !isEditMode"
+          ref="rsvpStatsRef"
+          :event-id="eventId"
+          :admin="admin"
+        />
+
+        <!-- Action Buttons (view mode) -->
         <div
           v-if="!isEditMode"
           class="flex gap-4"
@@ -669,10 +542,10 @@ const backNavigate = computed(() => {
             size="xl"
             block
             icon="i-lucide-heart-handshake"
+            @click="openRsvpModal(true)"
           >
             Sign Up as Volunteer
           </UButton>
-
           <UButton
             v-if="event.allowAttendees"
             color="brand4"
@@ -680,10 +553,29 @@ const backNavigate = computed(() => {
             size="xl"
             block
             icon="i-lucide-ticket"
+            @click="openRsvpModal(false)"
           >
             Register to Attend
           </UButton>
         </div>
+
+        <!-- RSVP Modal -->
+        <Teleport to="body">
+          <div
+            v-if="showRsvpModal"
+            class="fixed inset-0 z-50 flex items-center justify-center p-4"
+            @click.self="showRsvpModal = false"
+          >
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+              <EventRSVPModal
+                :event-id="eventId"
+                :is-volunteer="rsvpIsVolunteer"
+                @success="onRsvpSuccess"
+                @close="showRsvpModal = false"
+              />
+            </div>
+          </div>
+        </Teleport>
       </div>
     </div>
   </div>

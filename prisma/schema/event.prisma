@@ -17,6 +17,7 @@ model Event {
   eventAssets     Event_Asset[]
   participants    RSVP[]
   volunteerHours  Volunteer_Hour_Log[]
+  guestRSVPs      GuestRSVP[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -44,4 +45,16 @@ model RSVP {
 
   @@id([userId, eventId])
   @@map("rsvps")
+}
+
+model GuestRSVP {
+  id          String   @id @default(uuid())
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name        String
+  email       String
+  isVolunteer Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@map("guest_rsvps")
 }
