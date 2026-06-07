@@ -21,6 +21,7 @@ const newEvent = ref({
 
 const isSaving = ref(false)
 
+// Store actual File objects for upload
 const filesToUpload = ref([] as File[])
 
 function onFilesChanged(files: File[]) {
