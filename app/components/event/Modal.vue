@@ -28,6 +28,7 @@ function onFilesChanged(files: File[]) {
 }
 
 async function saveEvent() {
+  // Validate required fields
   if (
     !newEvent.value.title
     || !newEvent.value.startTime
@@ -40,6 +41,7 @@ async function saveEvent() {
   isSaving.value = true
 
   try {
+    // Step 1: Create the event
     const response = await $fetch('/api/events', {
       method: 'POST',
       body: {
@@ -55,6 +57,7 @@ async function saveEvent() {
       },
     })
 
+    // Step 2: Upload images
     if (response.id && filesToUpload.value.length > 0) {
       console.log(`📤 Uploading ${filesToUpload.value.length} images...`)
 
@@ -75,12 +78,15 @@ async function saveEvent() {
       }
     }
 
+    // Step 3: Fetch complete event with images
     const completeEvent = await $fetch(`/api/events/${response.id}`)
 
     console.log('✅ Complete event fetched:', completeEvent)
 
+    // Step 4: Emit the complete event to parent
     emit('save', completeEvent)
 
+    // Step 5: Reset form
     newEvent.value = {
       title: '',
       shortDesc: '',
