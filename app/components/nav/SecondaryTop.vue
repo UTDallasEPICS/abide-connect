@@ -5,7 +5,7 @@ const router = useRouter()
 <template>
   <UHeader
     :ui="{ toggle: 'hidden' }"
-    class="fixed top-0 z-50 h-12 w-full bg-white "
+    class="fixed top-0 z-50 h-12 w-full bg-white dark:bg-gray-900"
   >
     <!-- Left back button  -->
     <template #left>
@@ -18,7 +18,7 @@ const router = useRouter()
         >
           <UIcon
             name="i-heroicons-arrow-left"
-            class="w-7 h-7 text-teal-900"
+            class="w-7 h-7 text-teal-900 dark:text-teal-400 "
           />
         </UButton>
       </div>

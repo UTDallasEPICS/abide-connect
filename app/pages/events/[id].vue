@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import 'maplibre-gl/dist/maplibre-gl.css'
+import { useColorMode } from '#imports'
+
+const colorMode = useColorMode()
+const isDark = computed(() => colorMode.value === 'dark')
 
 const route = useRoute()
 const eventId = route.params.id as string
 
-// Single fetch — no onMounted duplicate
 const { data: event, error, refresh } = await useFetch(`/api/events/${eventId}`)
 
 const notFound = ref(false)
@@ -17,10 +20,8 @@ if (error.value) {
 const isEditMode = ref(false)
 const editForm = ref<any>({})
 
-// Placeholder until auth is implemented
 const admin = true
 
-// RSVP modal state
 const showRsvpModal = ref(false)
 const rsvpIsVolunteer = ref(false)
 const rsvpStatsRef = ref<any>(null)
@@ -35,7 +36,6 @@ async function onRsvpSuccess() {
   await rsvpStatsRef.value?.refresh()
 }
 
-// Assets shown in the edit uploader
 const filesToUpload = ref<File[]>([])
 
 function enterEditMode() {
@@ -53,7 +53,6 @@ function cancelEdit() {
 }
 
 function formatForInput(isoString: string) {
-  // Convert ISO date to datetime-local input format
   return new Date(isoString).toISOString().slice(0, 16)
 }
 
@@ -77,7 +76,6 @@ async function saveChanges() {
       },
     })
 
-    // Upload any new images
     for (const file of filesToUpload.value) {
       const formData = new FormData()
       formData.append('file', file)
@@ -94,8 +92,6 @@ async function saveChanges() {
 
     filesToUpload.value = []
     isEditMode.value = false
-
-    // Refresh event data
     await refresh()
   }
   catch (error) {
@@ -113,7 +109,6 @@ const formattedDate = computed(() => {
   return `${dateStr} • ${startTime} - ${endTime}`
 })
 
-// Build carousel items from real assets, fall back to placeholders
 const carouselItems = computed(() => {
   const assets = event.value?.eventAssets || []
   if (assets.length > 0) {
@@ -134,20 +129,20 @@ const center = computed(() => {
 const zoom = 15
 
 const backNavigate = computed(() => admin ? '/events/manage' : '/events')
+
+const brandColor = computed(() => isDark.value ? 'brand5' : 'brand4')
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 pb-24">
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
     <!-- Loading State -->
     <div
       v-if="loading"
       class="flex items-center justify-center min-h-screen"
     >
       <div class="text-center">
-        <div
-          class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"
-        />
-        <p class="text-gray-600">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4" />
+        <p class="text-gray-600 dark:text-gray-300">
           Loading event...
         </p>
       </div>
@@ -156,21 +151,22 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
     <!-- Not Found State -->
     <div
       v-else-if="notFound"
-      class="flex items-center justify-center min-h-screen"
+      class="flex items-center justify-center min-h-screen dark:bg-gray-900"
     >
       <div class="text-center">
         <UIcon
           name="i-lucide-calendar-x"
-          class="w-16 h-16 text-gray-400 mx-auto mb-4"
+          class="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4"
         />
-        <h2 class="text-2xl font-bold text-gray-900 mb-2">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
           Event Not Found
         </h2>
-        <p class="text-gray-600 mb-4">
+        <p class="text-gray-600 dark:text-gray-300 mb-4">
           The event you're looking for doesn't exist.
         </p>
         <UButton
           icon="i-lucide-arrow-left"
+          :color="brandColor"
           @click="navigateTo('/eventManagement')"
         >
           Back to Events
@@ -181,14 +177,12 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
     <!-- Event Details -->
     <div v-else-if="event">
       <!-- Sticky Header -->
-      <div class="bg-white shadow-sm sticky top-0 z-10 mt-16">
-        <div
-          class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between"
-        >
+      <div class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-10 mt-16 border-b border-transparent dark:border-gray-700">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <UButton
             icon="i-lucide-arrow-left"
             variant="ghost"
-            class="text-brand4"
+            :class="isDark ? 'text-brand5' : 'text-brand4'"
             @click="navigateTo(backNavigate)"
           />
 
@@ -199,7 +193,7 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
             <UButton
               v-if="!isEditMode"
               icon="i-lucide-pencil"
-              color="brand4"
+              :color="brandColor"
               variant="soft"
               @click="enterEditMode"
             >
@@ -209,19 +203,15 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
             <template v-else>
               <UButton
                 variant="ghost"
-                color="brand4"
+                color="neutral"
                 @click="cancelEdit"
               >
                 Cancel
               </UButton>
               <UButton
                 icon="i-lucide-check"
-                color="brand4"
-                @click="
-                  async () => {
-                    await saveChanges();
-                  }
-                "
+                :color="brandColor"
+                @click="async () => { await saveChanges() }"
               >
                 Save Changes
               </UButton>
@@ -235,7 +225,7 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
         <div class="mb-6">
           <h1
             v-if="!isEditMode"
-            class="text-3xl font-hornbill font-bold mb-2 text-brand4 text-center"
+            class="text-3xl font-hornbill font-bold mb-2 text-center text-brand4 dark:text-brand5"
           >
             {{ event.title }}
           </h1>
@@ -250,11 +240,11 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
         <!-- Short Description -->
         <div
           v-if="event.shortDesc || isEditMode"
-          class="bg-brand6 rounded-2xl p-3 mb-6"
+          class="bg-brand6 dark:bg-gray-800 rounded-2xl p-3 mb-6 border border-transparent dark:border-gray-700"
         >
           <p
             v-if="!isEditMode"
-            class="text-md text-gray-700 italic"
+            class="text-md text-gray-700 dark:text-gray-300 italic"
           >
             {{ event.shortDesc }}
           </p>
@@ -289,7 +279,7 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
           v-else
           class="mb-8"
         >
-          <label class="block text-sm font-medium text-gray-700 mb-2">Event Images</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Event Images</label>
           <EventImageUpload
             :existing-assets="event.eventAssets"
             :event-id="eventId"
@@ -298,21 +288,21 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
         </div>
 
         <!-- Date & Location -->
-        <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm dark:shadow-black/20 p-6 mb-6 border border-transparent dark:border-gray-700">
           <div class="flex items-start gap-4 mb-4">
-            <div class="bg-brand6 p-3 rounded-xl">
+            <div class="bg-brand6 dark:bg-gray-700 p-3 rounded-xl">
               <UIcon
                 name="i-lucide-calendar"
-                class="w-6 h-6 text-brand4"
+                class="w-6 h-6 text-brand4 dark:text-brand5"
               />
             </div>
             <div class="flex-1">
-              <p class="text-sm text-gray-500 mb-1">
+              <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">
                 Date & Time
               </p>
               <p
                 v-if="!isEditMode"
-                class="text-gray-900 font-medium"
+                class="text-gray-900 dark:text-white font-medium"
               >
                 {{ formattedDate }}
               </p>
@@ -321,16 +311,14 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
                 class="grid grid-rows-2 gap-2"
               >
                 <div>
-                  <label class="text-xs text-gray-500">Start
-                  </label>
+                  <label class="text-xs text-gray-500 dark:text-gray-400">Start</label>
                   <UInput
                     v-model="editForm.startTime"
                     type="datetime-local"
                   />
                 </div>
                 <div>
-                  <label class="text-xs text-gray-500">End
-                  </label>
+                  <label class="text-xs text-gray-500 dark:text-gray-400">End</label>
                   <UInput
                     v-model="editForm.endTime"
                     type="datetime-local"
@@ -341,19 +329,19 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
           </div>
 
           <div class="flex items-start gap-4">
-            <div class="bg-brand6 p-3 rounded-xl">
+            <div class="bg-brand6 dark:bg-gray-700 p-3 rounded-xl">
               <UIcon
                 name="i-lucide-map-pin"
-                class="w-6 h-6 text-brand4"
+                class="w-6 h-6 text-brand4 dark:text-brand5"
               />
             </div>
             <div class="flex-1">
-              <p class="text-sm text-gray-500 mb-1">
+              <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">
                 Location
               </p>
               <p
                 v-if="!isEditMode"
-                class="text-gray-900 font-medium"
+                class="text-gray-900 dark:text-white font-medium"
               >
                 {{ event.location.address }}
               </p>
@@ -379,13 +367,13 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
         </div>
 
         <!-- Description -->
-        <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
-          <h2 class="text-2xl font-semibold mb-4">
+        <div class="dark:bg-gray-800 rounded-2xl shadow-sm dark:shadow-black/20 p-6 mb-6 border border-transparent dark:border-gray-700 shadow-md">
+          <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
             About This Event
           </h2>
           <p
             v-if="!isEditMode"
-            class="text-gray-700 leading-relaxed whitespace-pre-line"
+            class="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line"
           >
             {{ event.description }}
           </p>
@@ -401,63 +389,56 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
           v-if="event.mobileClinicId"
           class="mt-4 mb-4"
         >
-          <p class="text-gray-600 font-poppins">
+          <p class="text-gray-600 dark:text-gray-300 font-poppins">
             This event is part of our Mobile Clinic program. Please
             visit the clinic for health services and support.
           </p>
         </div>
 
-        <!-- Event Options -->
+        <!-- Event Settings (admin edit mode) -->
         <div
           v-if="admin && isEditMode"
-          class="bg-white rounded-2xl shadow-sm p-6 mb-6"
+          class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 mb-6 border border-transparent dark:border-gray-700"
         >
-          <h2 class="text-2xl font-semibold mb-4">
+          <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
             Event Settings
           </h2>
 
           <div class="space-y-4">
-            <div
-              class="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
-            >
+            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
               <div class="flex items-center gap-3">
                 <UIcon
                   name="i-lucide-users"
-                  class="w-5 h-5 text-brand4"
+                  class="w-5 h-5 text-brand4 dark:text-brand5"
                 />
                 <div>
-                  <p class="font-medium text-gray-900">
+                  <p class="font-medium text-gray-900 dark:text-white">
                     Volunteer Sign-ups
                   </p>
-                  <p class="text-sm text-gray-500">
-                    Allow people to volunteer for this
-                    event?
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    Allow people to volunteer for this event?
                   </p>
                 </div>
               </div>
-              <label
-                class="flex items-center gap-2 cursor-pointer"
-              >
+              <label class="flex items-center gap-2 cursor-pointer">
                 <UCheckbox
                   v-model="editForm.allowVolunteers"
-                  color="brand4"
+                  :color="brandColor"
                 />
               </label>
             </div>
 
-            <div
-              class="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
-            >
+            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
               <div class="flex items-center gap-3">
                 <UIcon
                   name="i-lucide-ticket"
-                  class="w-5 h-5 text-brand4"
+                  class="w-5 h-5 text-brand4 dark:text-brand5"
                 />
                 <div>
-                  <p class="font-medium text-gray-900">
+                  <p class="font-medium text-gray-900 dark:text-white">
                     Attendee Registration
                   </p>
-                  <p class="text-sm text-gray-500">
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
                     Allow people to register as attendees?
                   </p>
                 </div>
@@ -468,7 +449,7 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
               >
                 <UCheckbox
                   v-model="editForm.allowAttendees"
-                  color="brand4"
+                  :color="brandColor"
                 />
               </label>
               <label
@@ -477,25 +458,23 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
               >
                 <UCheckbox
                   :model-value="event.allowAttendees"
-                  color="brand4"
+                  :color="brandColor"
                   disabled
                 />
               </label>
             </div>
 
-            <div
-              class="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
-            >
+            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
               <div class="flex items-center gap-3">
                 <UIcon
                   name="i-lucide-ticket"
-                  class="w-5 h-5 text-brand4"
+                  class="w-5 h-5 text-brand4 dark:text-brand5"
                 />
                 <div>
-                  <p class="font-medium text-gray-900">
+                  <p class="font-medium text-gray-900 dark:text-white">
                     Mobile Clinic
                   </p>
-                  <p class="text-sm text-gray-500">
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
                     Will this event have a mobile clinic?
                   </p>
                 </div>
@@ -506,7 +485,7 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
               >
                 <UCheckbox
                   v-model="editForm.mobileClinic"
-                  color="brand4"
+                  :color="brandColor"
                 />
               </label>
               <label
@@ -515,7 +494,7 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
               >
                 <UCheckbox
                   :model-value="Boolean(event.mobileClinicId)"
-                  color="brand4"
+                  :color="brandColor"
                   disabled
                 />
               </label>
@@ -523,7 +502,7 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
           </div>
         </div>
 
-        <!-- RSVP Stats (admin only, view mode) -->
+        <!-- RSVP Stats -->
         <EventRSVPStats
           v-if="admin && !isEditMode"
           ref="rsvpStatsRef"
@@ -531,14 +510,14 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
           :admin="admin"
         />
 
-        <!-- Action Buttons (view mode) -->
+        <!-- Action Buttons -->
         <div
           v-if="!isEditMode"
           class="flex gap-4"
         >
           <UButton
             v-if="event.allowVolunteers"
-            color="brand4"
+            :color="brandColor"
             size="xl"
             block
             icon="i-lucide-heart-handshake"
@@ -548,7 +527,7 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
           </UButton>
           <UButton
             v-if="event.allowAttendees"
-            color="brand4"
+            :color="brandColor"
             variant="outline"
             size="xl"
             block
@@ -563,10 +542,10 @@ const backNavigate = computed(() => admin ? '/events/manage' : '/events')
         <Teleport to="body">
           <div
             v-if="showRsvpModal"
-            class="fixed inset-0 z-50 flex items-center justify-center p-4"
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
             @click.self="showRsvpModal = false"
           >
-            <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl dark:shadow-black/30 max-w-md w-full border border-transparent dark:border-gray-700">
               <EventRSVPModal
                 :event-id="eventId"
                 :is-volunteer="rsvpIsVolunteer"

@@ -130,7 +130,7 @@ function goToEvent(id: string) {
         />
       </UCard>
 
-      <h3 class="text-lg font-semibold text-brand4 mb-4">
+      <h3 class="text-lg font-semibold text-brand4 mb-4 dark:text-teal-400">
         {{ eventsOnSelectedDate.length > 0 ? 'Events on this day' : 'Upcoming Events' }}
       </h3>
 
