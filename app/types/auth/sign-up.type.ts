@@ -5,7 +5,6 @@ import type { InputMenuItem, AuthFormField } from '@nuxt/ui'
 export const signUpSchema = z.object({
   name: z.string().optional(),
   email: z.email('Invalid email'),
-  password: z.string().min(8, 'Must be at least 8 characters'),
   phone: z.e164('Invalid phone number').optional().nullable(),
   languages: z.array(z.enum(Language)).nullable(),
   gender: z.enum(Gender).nullable(),
@@ -56,12 +55,6 @@ export const signUpFields: AuthFormField[] = ([{
   type: 'email',
   label: 'Email',
   placeholder: 'Enter your email',
-  required: true,
-}, {
-  name: 'password',
-  label: 'Password',
-  type: 'password',
-  placeholder: 'Enter your password',
   required: true,
 }, {
   name: 'phone',
