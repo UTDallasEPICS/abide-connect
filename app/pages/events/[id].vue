@@ -130,7 +130,7 @@ const zoom = 15
 
 const backNavigate = computed(() => admin ? '/events/manage' : '/events')
 
-const brandColor = computed(() => isDark.value ? 'brand5' : 'brand4')
+const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
 </script>
 
 <template>
@@ -182,7 +182,7 @@ const brandColor = computed(() => isDark.value ? 'brand5' : 'brand4')
           <UButton
             icon="i-lucide-arrow-left"
             variant="ghost"
-            :class="isDark ? 'text-brand5' : 'text-brand4'"
+            :class="isDark ? 'text-brand8' : 'text-brand4'"
             @click="navigateTo(backNavigate)"
           />
 
@@ -225,7 +225,7 @@ const brandColor = computed(() => isDark.value ? 'brand5' : 'brand4')
         <div class="mb-6">
           <h1
             v-if="!isEditMode"
-            class="text-3xl font-hornbill font-bold mb-2 text-center text-brand4 dark:text-brand5"
+            class="text-3xl font-hornbill font-bold mb-2 text-center text-brand4 dark:text-brand8"
           >
             {{ event.title }}
           </h1>
@@ -293,7 +293,7 @@ const brandColor = computed(() => isDark.value ? 'brand5' : 'brand4')
             <div class="bg-brand6 dark:bg-gray-700 p-3 rounded-xl">
               <UIcon
                 name="i-lucide-calendar"
-                class="w-6 h-6 text-brand4 dark:text-brand5"
+                class="w-6 h-6 text-brand4 dark:text-brand8"
               />
             </div>
             <div class="flex-1">
@@ -332,7 +332,7 @@ const brandColor = computed(() => isDark.value ? 'brand5' : 'brand4')
             <div class="bg-brand6 dark:bg-gray-700 p-3 rounded-xl">
               <UIcon
                 name="i-lucide-map-pin"
-                class="w-6 h-6 text-brand4 dark:text-brand5"
+                class="w-6 h-6 text-brand4 dark:text-brand8"
               />
             </div>
             <div class="flex-1">
@@ -409,7 +409,7 @@ const brandColor = computed(() => isDark.value ? 'brand5' : 'brand4')
               <div class="flex items-center gap-3">
                 <UIcon
                   name="i-lucide-users"
-                  class="w-5 h-5 text-brand4 dark:text-brand5"
+                  class="w-5 h-5 text-brand4 dark:text-brand8"
                 />
                 <div>
                   <p class="font-medium text-gray-900 dark:text-white">
@@ -432,7 +432,7 @@ const brandColor = computed(() => isDark.value ? 'brand5' : 'brand4')
               <div class="flex items-center gap-3">
                 <UIcon
                   name="i-lucide-ticket"
-                  class="w-5 h-5 text-brand4 dark:text-brand5"
+                  class="w-5 h-5 text-brand4 dark:text-brand8"
                 />
                 <div>
                   <p class="font-medium text-gray-900 dark:text-white">
@@ -468,7 +468,7 @@ const brandColor = computed(() => isDark.value ? 'brand5' : 'brand4')
               <div class="flex items-center gap-3">
                 <UIcon
                   name="i-lucide-ticket"
-                  class="w-5 h-5 text-brand4 dark:text-brand5"
+                  class="w-5 h-5 text-brand4 dark:text-brand8"
                 />
                 <div>
                   <p class="font-medium text-gray-900 dark:text-white">

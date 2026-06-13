@@ -50,10 +50,10 @@ defineExpose({ refresh })
           <div class="flex items-center gap-3">
             <UIcon
               name="i-lucide-heart-handshake"
-              class="w-5 h-5 text-brand4 dark:text-brand5"
+              class="w-5 h-5 text-brand4 dark:text-brand8"
             />
             <div class="text-left">
-              <p class="text-2xl font-bold text-brand4 dark:text-brand5">
+              <p class="text-2xl font-bold text-brand4 dark:text-brand8">
                 {{ rsvpData?.volunteerCount ?? 0 }}
               </p>
               <p class="text-xs text-gray-500 dark:text-gray-400">
@@ -105,10 +105,10 @@ defineExpose({ refresh })
           <div class="flex items-center gap-3">
             <UIcon
               name="i-lucide-ticket"
-              class="w-5 h-5 text-brand4 dark:text-brand5"
+              class="w-5 h-5 text-brand4 dark:text-brand8"
             />
             <div class="text-left">
-              <p class="text-2xl font-bold text-brand4 dark:text-brand5">
+              <p class="text-2xl font-bold text-brand4 dark:text-brand8">
                 {{ rsvpData?.attendeeCount ?? 0 }}
               </p>
               <p class="text-xs text-gray-500 dark:text-gray-400">
