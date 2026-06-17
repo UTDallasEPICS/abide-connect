@@ -29,6 +29,7 @@ export default defineNuxtConfig({
         'brand5',
         'brand6',
         'brand7',
+        'brand8',
       ],
     },
   },
