@@ -6,7 +6,12 @@ export const signUpSchema = z.object({
   name: z.string().optional(),
   email: z.email('Invalid email'),
   password: z.string().min(8, 'Must be at least 8 characters'),
-  phone: z.e164('Invalid phone number').optional().nullable(),
+  phone: z.preprocess(val => {
+    if (typeof val !== 'string' || !val) return val
+    const digits = val.replace(/\D/g, '')
+    return digits.length === 10 ? `+1${digits}` : `+${digits}`
+  },
+    z.e164('Invalid phone number')).optional().nullable(),
   languages: z.array(z.enum(Language)).nullable(),
   gender: z.enum(Gender).nullable(),
   ethinicity: z.enum(Ethinicity).nullable(),
