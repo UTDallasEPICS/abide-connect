@@ -17,7 +17,6 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
       body: {
         name: payload.data.name,
         email: payload.data.email,
-        password: payload.data.password,
         phone: payload.data.phone,
         languages: payload.data.languages,
         gender: payload.data.gender,
@@ -59,13 +58,6 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
           to="/auth/login"
           class="text-primary font-medium"
         >Log In</ULink>.
-      </template>
-      <template #password-hint>
-        <ULink
-          to="#"
-          class="text-primary font-medium"
-          tabindex="-1"
-        >Forgot password?</ULink>
       </template>
       <template #validation>
         <UAlert

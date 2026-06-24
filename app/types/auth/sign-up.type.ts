@@ -63,12 +63,6 @@ export const signUpFields: AuthFormField[] = ([{
   placeholder: 'Enter your email',
   required: true,
 }, {
-  name: 'password',
-  label: 'Password',
-  type: 'password',
-  placeholder: 'Enter your password',
-  required: true,
-}, {
   name: 'phone',
   label: 'Phone',
   type: 'text',
