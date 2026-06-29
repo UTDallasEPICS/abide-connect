@@ -41,7 +41,6 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
   <div class="flex flex-col items-center justify-center p-8 my-8 ">
     <UAuthForm
       class="w-full max-w-md"
-      :schema="signUpSchema"
       :fields="signUpFields"
       :providers="authProviders"
       title="Let's get you started to be a Volunteer!"
@@ -51,6 +50,7 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
       }"
       :submit="{ label: 'Sign up', block: true, color: 'neutral' }"
       @submit="onSubmit"
+      @error="console.log('Form error:', $event)"
     >
       <template #description>
         Already a Volunteer? <ULink

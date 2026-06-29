@@ -19,11 +19,11 @@ datasource db {
 // Better Auth Models
 
 model Session {
-  id        String    @id
+  id        String   @id
   expiresAt DateTime
   token     String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   ipAddress String?
   userAgent String?
   userId    String
@@ -38,7 +38,7 @@ model Account {
   accountId             String
   providerId            String
   userId                String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   accessToken           String?
   refreshToken          String?
   idToken               String?

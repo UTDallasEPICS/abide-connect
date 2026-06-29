@@ -4,17 +4,25 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   try {
     const data = await $fetch('/api/auth/get-session', {
-      cache: 'no-store', // ← forces fresh request every time
-      headers: {
-        'Cache-Control': 'no-cache',
-      },
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' },
     })
 
     if (!data?.session) {
       return navigateTo('/auth/login')
     }
+
+    const requiredRole = to.meta.requiredRole as string | undefined
+
+    if (requiredRole) {
+      const userRoles: string[] = data.user?.roles?.map((r: { role: string }) => r.role) ?? []
+      if (!userRoles.includes(requiredRole)) {
+        return navigateTo("/unauthorized");
+      }
+    }
   }
-  catch {
-    return navigateTo('/auth/login')
+  catch(e) {
+    console.log('Error in auth middleware:', e);
+    return navigateTo('/auth/login');
   }
 })

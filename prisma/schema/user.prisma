@@ -1,3 +1,64 @@
+model User {
+  id             String              @id @default(uuid())
+  name           String?
+  email          String             @unique
+  phone          String?
+  gender         Gender?
+  ethinicity     Ethinicity?
+  emailVerified  Boolean             @default(false)
+  imageURL       String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @default(now()) @updatedAt
+  roles          User_Role[]
+  languages      User_Language[]
+  availabilities User_Availability[]
+  events         RSVP[]
+  notifications  User_Notification[]
+  sessions       Session[]
+  accounts       Account[]
+  volunteer      Volunteer?
+
+  @@map("users")
+}
+
+model User_Role {
+  role   UserRole
+  user   User     @relation(fields: [userId], references: [id])
+  userId String
+
+  @@id([userId, role])
+  @@map("user_roles")
+}
+
+model User_Language {
+  language Language
+  user     User     @relation(fields: [userId], references: [id])
+  userId   String
+
+  @@id([userId, language])
+  @@map("user_languages")
+}
+
+model User_Availability {
+  user         User         @relation(fields: [userId], references: [id])
+  userId       String
+  availability Availability
+
+  @@id([userId, availability])
+  @@map("user_availabilities")
+}
+
+model User_Notification {
+  user           User         @relation(fields: [userId], references: [id])
+  userId         String
+  notification   Notification @relation(fields: [notificationId], references: [id])
+  notificationId String
+  isRead         Boolean      @default(false)
+
+  @@id([userId, notificationId])
+  @@map("user_notifications")
+}
+
 enum UserRole {
   USER
   ADMIN
@@ -55,57 +116,4 @@ enum Language {
   INDONESIAN
   MALAY
   FILIPINO
-}
-
-model User {
-  id            String      @id @default(uuid())
-  name          String?
-  email         String      @unique
-  phone         String?
-  gender        Gender?
-  ethinicity    Ethinicity?
-  role          UserRole    @default(USER)
-  emailVerified Boolean     @default(false)
-  imageURL      String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @default(now()) @updatedAt
-
-  languages      User_Language[]
-  availabilities User_Availability[]
-  events         RSVP[]
-  notifications  User_Notification[]
-  sessions       Session[]
-  accounts       Account[]
-  volunteer      Volunteer?
-
-  @@map("users")
-}
-
-model User_Language {
-  language Language
-  user     User     @relation(fields: [userId], references: [id])
-  userId   String
-
-  @@id([userId, language])
-  @@map("user_languages")
-}
-
-model User_Availability {
-  user         User         @relation(fields: [userId], references: [id])
-  userId       String
-  availability Availability
-
-  @@id([userId, availability])
-  @@map("user_availabilities")
-}
-
-model User_Notification {
-  user           User         @relation(fields: [userId], references: [id])
-  userId         String
-  notification   Notification @relation(fields: [notificationId], references: [id])
-  notificationId String
-  isRead         Boolean      @default(false)
-
-  @@id([userId, notificationId])
-  @@map("user_notifications")
 }

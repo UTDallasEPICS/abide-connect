@@ -14,10 +14,10 @@ model Event {
   mobileClinic   MobileClinic? @relation(fields: [mobileClinicId], references: [id])
   mobileClinicId String?
 
-  eventAssets     Event_Asset[]
-  participants    RSVP[]
-  volunteerHours  Volunteer_Hour_Log[]
-  guestRSVPs      GuestRSVP[]
+  eventAssets    Event_Asset[]
+  participants   RSVP[]
+  volunteerHours Volunteer_Hour_Log[]
+  guestRSVPs     GuestRSVP[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -35,11 +35,11 @@ model Event_Asset {
 }
 
 model RSVP {
-  user        User       @relation(fields: [userId], references: [id])
+  user        User    @relation(fields: [userId], references: [id])
   userId      String
-  event       Event      @relation(fields: [eventId], references: [id])
+  event       Event   @relation(fields: [eventId], references: [id])
   eventId     String
-  isVolunteer Boolean    @default(false)
+  isVolunteer Boolean @default(false)
   volunteerId String?
 
   @@id([userId, eventId])
