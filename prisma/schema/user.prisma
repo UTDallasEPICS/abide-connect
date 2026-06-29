@@ -1,14 +1,102 @@
+enum UserRole {
+  USER
+  ADMIN
+  VOLUNTEER
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum Ethinicity {
+  WHITE
+  BLACK_OR_AFRICAN_AMERICAN
+  ALASKA_NATIVE
+  ASIAN
+  NATIVE_HAWAIIAN_OR_OTHER_PACIFIC_ISLANDER
+  MIDDLE_EASTERN_OR_NORTH_AFRICAN
+  HISPANIC
+}
+
+enum Availability {
+  WEEKDAY_MORNING
+  WEEKDAY_AFTERNOON
+  WEEKDAY_EVENING
+  WEEKEND_MORNING
+  WEEKEND_AFTERNOON
+}
+
+enum Language {
+  ENGLISH
+  SPANISH
+  FRENCH
+  GERMAN
+  CHINESE
+  JAPANESE
+  HINDI
+  ARABIC
+  RUSSIAN
+  PORTUGUESE
+  ITALIAN
+  KOREAN
+  DUTCH
+  SWEDISH
+  NORWEGIAN
+  DANISH
+  FINNISH
+  POLISH
+  TURKISH
+  GREEK
+  HEBREW
+  VIETNAMESE
+  THAI
+  INDONESIAN
+  MALAY
+  FILIPINO
+}
+
 model User {
-  id           String  @id @default(uuid())
-  name         String?
-  contactEmail String  @unique
-  phone        String?
+  id            String      @id @default(uuid())
+  name          String?
+  email         String      @unique
+  phone         String?
+  gender        Gender?
+  ethinicity    Ethinicity?
+  role          UserRole    @default(USER)
+  emailVerified Boolean     @default(false)
+  imageURL      String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @default(now()) @updatedAt
 
-  volunteer Volunteer?
+  languages      User_Language[]
+  availabilities User_Availability[]
+  events         RSVP[]
+  notifications  User_Notification[]
+  sessions       Session[]
+  accounts       Account[]
+  volunteer      Volunteer?
 
-  RSVPs              RSVP[]
-  User_Notification User_Notification[]
   @@map("users")
+}
+
+model User_Language {
+  language Language
+  user     User     @relation(fields: [userId], references: [id])
+  userId   String
+
+  @@id([userId, language])
+  @@map("user_languages")
+}
+
+model User_Availability {
+  user         User         @relation(fields: [userId], references: [id])
+  userId       String
+  availability Availability
+
+  @@id([userId, availability])
+  @@map("user_availabilities")
 }
 
 model User_Notification {
@@ -16,8 +104,7 @@ model User_Notification {
   userId         String
   notification   Notification @relation(fields: [notificationId], references: [id])
   notificationId String
-
-  isRead        Boolean       @default(false)
+  isRead         Boolean      @default(false)
 
   @@id([userId, notificationId])
   @@map("user_notifications")

@@ -50,7 +50,6 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
         icon: 'i-lucide-mail',
       }"
       :submit="{ label: 'Sign up', block: true, color: 'neutral' }"
-
       @submit="onSubmit"
     >
       <template #description>

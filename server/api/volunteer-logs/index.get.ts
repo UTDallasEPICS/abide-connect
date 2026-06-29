@@ -20,7 +20,7 @@ export default eventHandler(async () => {
       id: String(log.id),
       name:
         log.volunteer.user?.name
-        ?? log.volunteer.user?.contactEmail
+        ?? log.volunteer.user?.email
         ?? 'Unknown',
       event: log.event.title,
       date: log.date.toLocaleDateString('en-US', {

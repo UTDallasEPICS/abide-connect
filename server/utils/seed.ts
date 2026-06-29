@@ -33,8 +33,13 @@ type RawEvent = {
 
 type RawUser = {
   name: string
-  contactEmail: string
+  email: string
   phone: string
+  gender?: string
+  ethinicity?: string
+  imageURL?: string
+  languages?: string[]
+  availabilities?: string[]
   RSVPs: {
     isVolunteer?: boolean
     id: string
@@ -43,15 +48,6 @@ type RawUser = {
 
 type RawVolunteer = {
   id: string
-  user: {
-    contactEmail: string
-  }
-  email: string
-  languages: string[]
-  gender: string
-  ethinicity: string
-  profileURL: string
-  availabilities: string[]
   certifications: string[]
   hourLogs: {
     event: {
@@ -89,185 +85,142 @@ async function main() {
   const rawEvents: RawEvent[] = JSON.parse(
     fs.readFileSync('prisma/seed/events.json').toString(),
   )
-  // Convert each event into an upsertable format
-  const events = rawEvents.map((event) => {
-    return {
-      ...event,
-      startTime: new Date(event.startTime),
-      endTime: new Date(event.endTime),
-      eventAssets: {
-        create: event.eventAssets.map((imageUrl) => {
-          return {
-            imageUrl: imageUrl,
-          }
-        }),
-      },
-      location: {
-        connectOrCreate: {
-          where: {
-            address: event.location.address,
-          },
-          create: {
-            longitude: event.location.longitude,
-            latitude: event.location.latitude,
-            address: event.location.address,
-          },
-        },
-      },
-    }
-  })
-  // Upsert each event
-  for (const event of events) {
+  for (const event of rawEvents) {
     const eventResult = await prisma.event.upsert({
       where: { id: event.id },
       update: {},
-      create: event,
+      create: {
+        id: event.id,
+        title: event.title,
+        shortDesc: event.shortDesc,
+        description: event.description,
+        startTime: new Date(event.startTime),
+        endTime: new Date(event.endTime),
+        allowVolunteers: event.allowVolunteers,
+        allowAttendees: event.allowAttendees,
+        location: {
+          connectOrCreate: {
+            where: { address: event.location.address },
+            create: {
+              longitude: event.location.longitude,
+              latitude: event.location.latitude,
+              address: event.location.address,
+            },
+          },
+        },
+        eventAssets: {
+          create: event.eventAssets.map((imageUrl) => ({ imageUrl })),
+        },
+      },
     })
     console.log(eventResult)
   }
 
-  // Seed two users + attended events + languages
+  // Seed users
   console.log('Seeding users...')
   const rawUsers: RawUser[] = JSON.parse(
     fs.readFileSync('prisma/seed/users.json').toString(),
   )
-  // Convert each user into an upsertable format
-  const users = rawUsers.map((user) => {
-    return {
-      ...user,
-      RSVPs: {
-        create: user.RSVPs.map((event) => {
-          return {
-            isVolunteer: event.isVolunteer || false,
-            event: {
-              connect: {
-                id: event.id,
-              },
-            },
-          }
-        }),
-      },
-    }
-  })
-  // Upsert each user
-  for (const user of users) {
+  for (const user of rawUsers) {
     const userResult = await prisma.user.upsert({
-      where: { contactEmail: user.contactEmail },
+      where: { email: user.email },
       update: {},
-      create: user,
+      create: {
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        imageURL: user.imageURL,
+        gender: user.gender as Gender | undefined,
+        ethinicity: user.ethinicity as Ethinicity | undefined,
+        languages: user.languages
+          ? {
+              create: user.languages.map((lang) => ({
+                language: lang as Language,
+              })),
+            }
+          : undefined,
+        availabilities: user.availabilities
+          ? {
+              create: user.availabilities.map((avail) => ({
+                availability: avail as Availability,
+              })),
+            }
+          : undefined,
+        events: {
+          create: user.RSVPs.map((rsvp) => ({
+            isVolunteer: rsvp.isVolunteer ?? false,
+            event: { connect: { id: rsvp.id } },
+          })),
+        },
+      },
     })
     console.log(userResult)
   }
 
-  // Seed one volunteer (ENSURE that each volunteer is linked to an existing user by email)
+  // Seed volunteers
   console.log('Seeding volunteers...')
   const rawVolunteers: RawVolunteer[] = JSON.parse(
     fs.readFileSync('prisma/seed/volunteers.json').toString(),
   )
-  // Convert each volunteer into an upsertable format
-  const volunteers = rawVolunteers.map((volunteer) => {
-    return {
-      ...volunteer,
-      gender: volunteer.gender as Gender,
-      ethinicity: volunteer.ethinicity as Ethinicity,
-      languages: {
-        create: volunteer.languages.map((lang) => {
-          return {
-            language: lang as Language,
-          }
-        }),
-      },
-      availabilities: {
-        create: volunteer.availabilities.map((avail) => {
-          return {
-            availability: avail as Availability,
-          }
-        }),
-      },
-      hourLogs: {
-        create: volunteer.hourLogs.map((log) => {
-          return {
-            ...log,
+  for (const volunteer of rawVolunteers) {
+    const volunteerResult = await prisma.volunteer.upsert({
+      where: { id: volunteer.id },
+      update: {},
+      create: {
+        id: volunteer.id,
+        certifications: {
+          create: volunteer.certifications.map((cert) => ({
+            certification: cert,
+          })),
+        },
+        hourLogs: {
+          create: volunteer.hourLogs.map((log) => ({
             date: new Date(log.date),
             hours: log.hours,
             approvalStatus: log.approvalStatus as ApprovalStatus,
             comment: log.comment,
-            event: {
-              connect: {
-                id: log.event.id,
-              },
-            },
-          }
-        }),
-      },
-      certifications: {
-        create: volunteer.certifications.map((cert) => {
-          return {
-            certification: cert,
-          }
-        }),
-      },
-      user: {
-        connect: {
-          contactEmail: volunteer.user.contactEmail,
+            event: { connect: { id: log.event.id } },
+          })),
         },
       },
-    }
-  })
-  // Upsert each volunteer
-  for (const volunteer of volunteers) {
-    const volunteerResult = await prisma.volunteer.upsert({
-      where: { id: volunteer.id },
-      update: {},
-      create: volunteer,
     })
     console.log(volunteerResult)
   }
 
-  // seed mobile clinic schedule
+  // Seed mobile clinic schedule
   console.log('Seeding mobile clinic schedule...')
   const rawSchedules: RawSchedule[] = JSON.parse(
     fs.readFileSync('prisma/seed/schedule.json').toString(),
   )
-  const schedules = rawSchedules.map((schedule) => {
-    return {
-      ...schedule,
-      startTime: new Date(schedule.startTime),
-      endTime: new Date(schedule.endTime),
-      location: {
-        connectOrCreate: {
-          where: {
-            address: schedule.location.address,
-          },
-          create: {
-            longitude: schedule.location.longitude,
-            latitude: schedule.location.latitude,
-            address: schedule.location.address,
-          },
-        },
-      },
-      mobileClinic: {
-        connectOrCreate: {
-          where: {
-            id: schedule.mobileClinic.id,
-          },
-          create: {
-            id: schedule.mobileClinic.id,
-          },
-        },
-      },
-    }
-  })
-  for (const schedule of schedules) {
+  for (const schedule of rawSchedules) {
     const scheduleResult = await prisma.mobile_Clinic_Schedule.upsert({
-      where: { startTime: schedule.startTime },
+      where: { startTime: new Date(schedule.startTime) },
       update: {},
-      create: schedule,
+      create: {
+        startTime: new Date(schedule.startTime),
+        endTime: new Date(schedule.endTime),
+        location: {
+          connectOrCreate: {
+            where: { address: schedule.location.address },
+            create: {
+              longitude: schedule.location.longitude,
+              latitude: schedule.location.latitude,
+              address: schedule.location.address,
+            },
+          },
+        },
+        mobileClinic: {
+          connectOrCreate: {
+            where: { id: schedule.mobileClinic.id },
+            create: { id: schedule.mobileClinic.id },
+          },
+        },
+      },
     })
     console.log(scheduleResult)
   }
 
-  // Seed six notifications - UNFINISHED
+  // Seed notifications
   console.log('Seeding notifications...')
   const rawNotifications: RawNotification[] = JSON.parse(
     fs.readFileSync('prisma/seed/notifications.json').toString(),
@@ -283,7 +236,6 @@ async function main() {
         content: notification.content,
       },
     })
-    // Link to all users
     for (const user of allUsers) {
       await prisma.user_Notification.upsert({
         where: {

@@ -35,7 +35,7 @@ export const auth = betterAuth({
     provider: 'sqlite',
   }),
   user: {
-    modelName: 'Volunteer',
+    modelName: 'User',
   },
   plugins: [
     emailOTP({

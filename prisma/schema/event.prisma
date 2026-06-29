@@ -40,7 +40,6 @@ model RSVP {
   event       Event      @relation(fields: [eventId], references: [id])
   eventId     String
   isVolunteer Boolean    @default(false)
-  Volunteer   Volunteer? @relation(fields: [volunteerId], references: [id])
   volunteerId String?
 
   @@id([userId, eventId])
