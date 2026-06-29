@@ -85,7 +85,7 @@ function cancelAction() {
   actionType.value = null
 }
 
-function confirmAction(id: string) {
+async function confirmAction(id: string) {
   if (!actionType.value) return
 
   const log = logs.value.find((l: VolunteerLog) => l.id === id)
@@ -99,6 +99,20 @@ function confirmAction(id: string) {
   }
   else {
     log.comment = (commentDraft.value[id] ?? '').trim() || undefined
+  }
+
+  try {
+    await $fetch(`/api/volunteer-logs/${id}`, {
+      method: 'PATCH',
+      body: {
+        status: actionType.value === 'approve' ? 'APPROVED' : 'REJECTED',
+        comment: (commentDraft.value[id] ?? '').trim() || null
+      }
+    })
+  } catch (err) {
+    console.error('Failed to update log:', err)
+    error.value = 'Failed to update volunteer log'
+    return
   }
 
   setStatus(id, actionType.value === 'approve' ? 'APPROVED' : 'REJECTED')
