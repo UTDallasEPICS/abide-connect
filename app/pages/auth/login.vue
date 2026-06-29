@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { authClient } from '#server/utils/auth-client'
 import {
   requestOtpFields,
   requestOtpSchema,
@@ -13,6 +14,17 @@ const isLoading = ref(false)
 const errorMessage = ref<string | null>(null)
 const step = ref<'request' | 'verify'>('request')
 const pendingEmail = ref<string>('')
+
+async function signInWithGoogle() {
+  isLoading.value = true
+  errorMessage.value = null
+  const { error } = await authClient.signIn.social({ provider: 'google', callbackURL: '/' })
+  if (error) {
+    errorMessage.value = error.message ?? 'Failed to sign in with Google'
+    isLoading.value = false
+  }
+  // On success the redirect plugin navigates away — don't reset isLoading
+}
 
 async function onRequestOtp(event: FormSubmitEvent<RequestOtpSchema>) {
   isLoading.value = true
@@ -91,6 +103,21 @@ function goBack() {
           icon="i-lucide-info"
           :title="errorMessage"
         />
+      </template>
+      <template #providers>
+        <UButton
+          block
+          color="neutral"
+          variant="outline"
+          icon="i-simple-icons-google"
+          :loading="isLoading"
+          @click="signInWithGoogle"
+        >
+          Continue with Google
+        </UButton>
+      </template>
+      <template #separator>
+        <USeparator label="or" />
       </template>
       <template #footer>
         By signing in, you agree to our

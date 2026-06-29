@@ -21,6 +21,13 @@ const transporter = nodemailer.createTransport({
 
 
 export const auth = betterAuth({
+  socialProviders: {
+    google: {
+      clientId: process.env.OAUTH_CLIENT_ID as string,
+      clientSecret: process.env.OAUTH_CLIENT_SECRET as string,
+      disableSignUp: true,
+    },
+  },
   hooks: {
     after: createAuthMiddleware(async (ctx) => {
       if (ctx.path === '/get-session') {
