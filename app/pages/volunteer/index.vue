@@ -6,9 +6,8 @@ const tz = getLocalTimeZone()
 
 // The session data bugs unuless we pass the cookie header to the fetch request
 const headers = useRequestHeaders(['cookie']);
-const volunteer = await $fetch('/api/volunteer/me', { headers });
-const user = await $fetch('/api/user/me', { headers });
-
+const volunteer = await useFetch('/api/volunteer/me', { headers }).data.value;
+const user = await useFetch('/api/user/me', { headers }).data.value;
 
 
 const value = ref<DateValue>(today(tz))
