@@ -29,9 +29,7 @@ const fetchlogs = async () => {
   loading.value = true
   error.value = null
   try {
-    const data = await $fetch<{ logs: VolunteerLog[] }>(
-      '/api/volunteer-logs',
-    )
+    const data = await $fetch<{ logs: VolunteerLog[] }>('/api/volunteer-logs', { headers: useRequestHeaders(['cookie']) });
     console.log('API response:', data)
     logs.value = data?.logs ?? []
   }
