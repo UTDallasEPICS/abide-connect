@@ -36,6 +36,7 @@ export default defineEventHandler(async (event) => {
 
       await tx.volunteer.create({
         data: {
+          id: createdUser.id,
           userId: createdUser.id,
         },
       })

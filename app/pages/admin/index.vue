@@ -1,7 +1,4 @@
 <script setup lang="ts">
-definePageMeta({
-  middleware: 'auth',
-})
 
 import type { AdminFeature } from '~/types/admin/admin-dash.type'
 

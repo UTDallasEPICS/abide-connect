@@ -25,6 +25,7 @@ model User_Role {
   role   UserRole
   user   User     @relation(fields: [userId], references: [id])
   userId String
+  active Boolean
 
   @@id([userId, role])
   @@map("user_roles")

@@ -2,10 +2,6 @@
 import type { DateValue } from '@internationalized/date'
 import { getLocalTimeZone, today } from '@internationalized/date'
 
-definePageMeta({
-  middleware: 'auth',
-})
-
 const tz = getLocalTimeZone()
 
 const value = ref<DateValue>(today(tz))
@@ -13,6 +9,7 @@ const volunteer = await $fetch('/api/volunteer/me')
 const isDateDisabled = (d: DateValue) =>
   d.toDate(tz) < new Date(new Date().setHours(0, 0, 0, 0))
 
+console.log(volunteer);
 // Upcoming events they signed up for
 const upcomingEvents = ref([
   { id: 1, title: 'Community Cleanup', date: 'Apr 15, 2024', hours: 3 },

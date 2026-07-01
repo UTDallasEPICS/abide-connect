@@ -1,28 +1,18 @@
 export default defineNuxtRouteMiddleware(async (to) => {
-  const publicRoutes = ['/auth/login', '/auth/sign-up']
-  if (publicRoutes.includes(to.path)) return
+  if (import.meta.server) {
+    const { auth } = await import('#server/utils/auth')
+    const event = useRequestEvent()!
 
-  try {
-    const data = await $fetch('/api/auth/get-session', {
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' },
+    const session = await auth.api.getSession({
+      headers: event.node.req.headers as any
     })
 
-    if (!data?.session) {
-      return navigateTo('/auth/login')
+    if (!session) {
+      return navigateTo('/auth/login', { redirectCode: 302 })
     }
 
-    const requiredRole = to.meta.requiredRole as string | undefined
-
-    if (requiredRole) {
-      const userRoles: string[] = data.user?.roles?.map((r: { role: string }) => r.role) ?? []
-      if (!userRoles.includes(requiredRole)) {
-        return navigateTo("/unauthorized");
-      }
-    }
-  }
-  catch(e) {
-    console.log('Error in auth middleware:', e);
-    return navigateTo('/auth/login');
+  } else {
+    const data = await $fetch('/api/auth/get-session')
+    if (!data?.session) return navigateTo('/auth/login')
   }
 })
