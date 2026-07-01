@@ -1,42 +1,39 @@
-import { auth } from '#server/utils/auth'
-import type { H3Event } from 'h3'
-import { appendHeader, setHeader } from 'h3'
-
-const forwardAuthHeaders = (event: H3Event, headers?: Headers) => {
-    if (!headers) return
-    headers.forEach((value, key) => {
-        if (key.toLowerCase() === 'set-cookie') {
-            appendHeader(event, 'set-cookie', value)
-        }
-        else {
-            setHeader(event, key, value)
-        }
-    })
-}
+import { transporter } from '#server/utils/auth'
+import prisma from '#server/utils/prisma'
+import { randomInt, randomBytes } from 'crypto'
 
 export default defineEventHandler(async (event) => {
-    try {
-        const { email } = await readBody(event)
-        const { response, headers } = await auth.api.sendVerificationOTP({
-            body: {
-                email,
-                type: 'sign-in',
-            },
-            headers: event.headers,
-            returnHeaders: true,
-        })
+  try {
+    const { email } = await readBody(event)
 
-        forwardAuthHeaders(event, headers)
+    const otp = randomInt(100000, 1000000).toString()
+    const id = randomBytes(16).toString('hex')
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
 
-        return { success: true }
-    }
-    catch (error: unknown) {
-        console.log(error)
-        throw createError({
-            statusCode: (error as { statusCode: number }).statusCode ?? 500,
-            statusMessage:
-                (error as { body: { message: string } }).body?.message
-                ?? 'An unexpected error occurred',
-        })
-    }
+    await prisma.verification.create({
+      data: {
+        id,
+        identifier: `sign-in-otp-${email}`,
+        value: `${otp}:0`,
+        expiresAt,
+      },
+    })
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_FROM,
+      to: email,
+      subject: 'OTP for Abide Connect',
+      html: `Your OTP is: ${otp}`,
+    })
+
+    return { success: true }
+  }
+  catch (error: unknown) {
+    console.error('[request-otp error]', error)
+    throw createError({
+      statusCode: (error as { statusCode?: number }).statusCode ?? 500,
+      statusMessage:
+        (error as { message?: string }).message ?? 'An unexpected error occurred',
+    })
+  }
 })
