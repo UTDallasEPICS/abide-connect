@@ -100,6 +100,14 @@ function goBack() {
         >
           Terms of Service
         </ULink>.
+        <div class="mt-4 text-center">
+          <ULink
+            to="/auth/staff-login"
+            class="text-muted font-medium text-sm"
+          >
+            Staff Login
+          </ULink>
+        </div>
       </template>
     </UAuthForm>
 
