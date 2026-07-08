@@ -1,5 +1,5 @@
 export default defineNuxtRouteMiddleware(async (to) => {
-  const publicRoutes = ['/auth/login', '/auth/sign-up']
+  const publicRoutes = ['/auth/login', '/auth/sign-up', '/auth/sign-up-verify']
   if (publicRoutes.includes(to.path)) return
 
   try {
