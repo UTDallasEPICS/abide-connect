@@ -1,5 +1,6 @@
 [
     {
+        "id": "user-alice",
         "name": "Alice Wang",
         "email": "alice@example.com",
         "phone": "123-456-7890",
@@ -15,16 +16,10 @@
         ]
     },
     {
+        "id": "user-bob",
         "name": "Bob Smith",
         "email": "bob@example.com",
         "phone": "987-654-3210",
-        "languages": ["ENGLISH", "FRENCH"],
-        "gender": "MALE",
-        "ethinicity": "ASIAN",
-        "availabilities": [
-            "WEEKDAY_MORNING",
-            "WEEKEND_AFTERNOON"
-        ],
         "RSVPs": [
             {
                 "id": "pastEvent1",

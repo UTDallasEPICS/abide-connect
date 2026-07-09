@@ -35,12 +35,13 @@ model Event_Asset {
 }
 
 model RSVP {
-  user        User    @relation(fields: [userId], references: [id])
+  user        User       @relation(fields: [userId], references: [id])
   userId      String
-  event       Event   @relation(fields: [eventId], references: [id])
+  event       Event      @relation(fields: [eventId], references: [id])
   eventId     String
-  isVolunteer Boolean @default(false)
+  isVolunteer Boolean    @default(false)
   volunteerId String?
+  volunteer   Volunteer? @relation(fields: [volunteerId], references: [id])
 
   @@id([userId, eventId])
   @@map("rsvps")

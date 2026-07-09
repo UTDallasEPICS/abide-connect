@@ -32,22 +32,26 @@ type RawEvent = {
 }
 
 type RawUser = {
+  id: string
   name: string
   email: string
   phone: string
-  gender?: string
-  ethinicity?: string
   imageURL?: string
-  languages?: string[]
-  availabilities?: string[]
   RSVPs: {
     isVolunteer?: boolean
-    id: string
+    id: string // eventId
   }[]
 }
 
 type RawVolunteer = {
   id: string
+  // Optional link to an existing user, by that user's id in users.json.
+  // Omit if this volunteer profile has no associated user account.
+  userId?: string
+  gender?: string
+  ethinicity?: string
+  languages?: string[]
+  availabilities?: string[]
   certifications: string[]
   hourLogs: {
     event: {
@@ -116,37 +120,22 @@ async function main() {
     console.log(eventResult)
   }
 
-  // Seed users
+  // Seed users (gender/ethinicity/languages/availabilities now live on Volunteer, not User)
   console.log('Seeding users...')
   const rawUsers: RawUser[] = JSON.parse(
     fs.readFileSync('prisma/seed/users.json').toString(),
   )
   for (const user of rawUsers) {
     const userResult = await prisma.user.upsert({
-      where: { email: user.email },
+      where: { id: user.id },
       update: {},
       create: {
+        id: user.id,
         name: user.name,
         email: user.email,
         phone: user.phone,
         imageURL: user.imageURL,
-        gender: user.gender as Gender | undefined,
-        ethinicity: user.ethinicity as Ethinicity | undefined,
-        languages: user.languages
-          ? {
-              create: user.languages.map((lang) => ({
-                language: lang as Language,
-              })),
-            }
-          : undefined,
-        availabilities: user.availabilities
-          ? {
-              create: user.availabilities.map((avail) => ({
-                availability: avail as Availability,
-              })),
-            }
-          : undefined,
-        events: {
+        RSVPs: {
           create: user.RSVPs.map((rsvp) => ({
             isVolunteer: rsvp.isVolunteer ?? false,
             event: { connect: { id: rsvp.id } },
@@ -163,11 +152,42 @@ async function main() {
     fs.readFileSync('prisma/seed/volunteers.json').toString(),
   )
   for (const volunteer of rawVolunteers) {
+    if (volunteer.userId) {
+      const linkedUserExists = await prisma.user.findUnique({
+        where: { id: volunteer.userId },
+        select: { id: true },
+      })
+      if (!linkedUserExists) {
+        console.warn(
+          `Volunteer ${volunteer.id}: no user found for id "${volunteer.userId}", skipping user link.`,
+        )
+      }
+    }
+
     const volunteerResult = await prisma.volunteer.upsert({
       where: { id: volunteer.id },
       update: {},
       create: {
         id: volunteer.id,
+        gender: volunteer.gender as Gender | undefined,
+        ethinicity: volunteer.ethinicity as Ethinicity | undefined,
+        user: volunteer.userId
+          ? { connect: { id: volunteer.userId } }
+          : undefined,
+        languages: volunteer.languages
+          ? {
+              create: volunteer.languages.map((lang) => ({
+                language: lang as Language,
+              })),
+            }
+          : undefined,
+        availabilities: volunteer.availabilities
+          ? {
+              create: volunteer.availabilities.map((avail) => ({
+                availability: avail as Availability,
+              })),
+            }
+          : undefined,
         certifications: {
           create: volunteer.certifications.map((cert) => ({
             certification: cert,
@@ -185,6 +205,19 @@ async function main() {
       },
     })
     console.log(volunteerResult)
+
+    // Backfill RSVP.volunteerId wherever this user already has isVolunteer=true.
+    // RSVP.isVolunteer is set at user-seed time; volunteerId can only be wired up
+    // now that the Volunteer row exists.
+    if (volunteer.userId) {
+      const linked = await prisma.rSVP.updateMany({
+        where: { userId: volunteer.userId, isVolunteer: true },
+        data: { volunteerId: volunteerResult.id },
+      })
+      console.log(
+        `Linked ${linked.count} RSVP(s) to volunteer ${volunteerResult.id}`,
+      )
+    }
   }
 
   // Seed mobile clinic schedule

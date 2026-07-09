@@ -8,14 +8,7 @@ export default defineEventHandler(async (event) => {
       name,
       email,
       phone,
-      languages = [],
-      gender,
-      ethinicity,
-      availability = [],
     } = await readBody(event)
-
-    const selectedLanguages = languages as Language[]
-    const selectedAvailability = availability as Availability[]
 
     await prisma.$transaction(async (tx) => {
       const createdUser = await tx.user.create({
@@ -23,21 +16,6 @@ export default defineEventHandler(async (event) => {
           name: name as string | undefined,
           email: email as string,
           phone: phone as string | undefined,
-          gender: gender.id,
-          ethinicity: ethinicity.id,
-          languages: {
-            create: selectedLanguages.map(language => ({ language })),
-          },
-          availabilities: {
-            create: selectedAvailability.map(time => ({ availability: time })),
-          },
-        },
-      })
-
-      await tx.volunteer.create({
-        data: {
-          id: createdUser.id,
-          userId: createdUser.id,
         },
       })
     })

@@ -1,27 +1,26 @@
-enum ApprovalStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
 model Volunteer {
-  id     String @id @default(uuid())
-  user   User   @relation(fields: [userId], references: [id])
-  userId String @unique
+  id     String  @id @default(uuid())
+  user   User?   @relation(fields: [userId], references: [id])
+  userId String? @unique
 
+  gender         Gender?
+  ethinicity     Ethinicity?
+  languages      Volunteer_Language[]
+  availabilities Volunteer_Availability[]
   certifications Volunteer_Certification[]
   hourLogs       Volunteer_Hour_Log[]
+  events         RSVP[]
 
   @@map("volunteers")
 }
 
-model Volunteer_Certification {
-  volunteer     Volunteer @relation(fields: [volunteerId], references: [id])
-  volunteerId   String
-  certification String
+model Volunteer_Language {
+  language    Language
+  Volunteer   Volunteer @relation(fields: [volunteerId], references: [id])
+  volunteerId String
 
-  @@id([volunteerId, certification])
-  @@map("volunteer_certifications")
+  @@id([volunteerId, language])
+  @@map("volunteer_languages")
 }
 
 model Volunteer_Hour_Log {
@@ -34,8 +33,86 @@ model Volunteer_Hour_Log {
   hours          Float
   approvalStatus ApprovalStatus @default(PENDING)
   comment        String?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("volunteer_hour_logs")
+}
+
+model Volunteer_Availability {
+  volunteer    Volunteer    @relation(fields: [volunteerId], references: [id])
+  volunteerId  String
+  availability Availability
+
+  @@id([volunteerId, availability])
+  @@map("volunteer_availabilities")
+}
+
+model Volunteer_Certification {
+  volunteer     Volunteer @relation(fields: [volunteerId], references: [id])
+  volunteerId   String
+  certification String
+
+  @@id([volunteerId, certification])
+  @@map("volunteer_certifications")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum Availability {
+  WEEKDAY_MORNING
+  WEEKDAY_AFTERNOON
+  WEEKDAY_EVENING
+  WEEKEND_MORNING
+  WEEKEND_AFTERNOON
+}
+
+enum Ethinicity {
+  WHITE
+  BLACK_OR_AFRICAN_AMERICAN
+  ALASKA_NATIVE
+  ASIAN
+  NATIVE_HAWAIIAN_OR_OTHER_PACIFIC_ISLANDER
+  MIDDLE_EASTERN_OR_NORTH_AFRICAN
+  HISPANIC
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum Language {
+  ENGLISH
+  SPANISH
+  FRENCH
+  GERMAN
+  CHINESE
+  JAPANESE
+  HINDI
+  ARABIC
+  RUSSIAN
+  PORTUGUESE
+  ITALIAN
+  KOREAN
+  DUTCH
+  SWEDISH
+  NORWEGIAN
+  DANISH
+  FINNISH
+  POLISH
+  TURKISH
+  GREEK
+  HEBREW
+  VIETNAMESE
+  THAI
+  INDONESIAN
+  MALAY
+  FILIPINO
 }

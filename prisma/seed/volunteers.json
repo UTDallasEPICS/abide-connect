@@ -1,2 +1,26 @@
 [
+    {
+        "id": "volunteer1",
+        "userId": "user-bob",
+        "gender": "MALE",
+        "ethinicity": "ASIAN",
+        "languages": ["ENGLISH", "FRENCH"],
+        "availabilities": ["WEEKDAY_MORNING", "WEEKEND_AFTERNOON"],
+        "certifications": ["CPR", "First Aid"],
+        "hourLogs": [
+            {
+                "event": { "id": "pastEvent1" },
+                "date": "2024-01-15T09:00:00.000Z",
+                "hours": 4,
+                "approvalStatus": "APPROVED",
+                "comment": "Helped set up the clinic and check-in table."
+            },
+            {
+                "event": { "id": "event1" },
+                "date": "2024-06-01T09:00:00.000Z",
+                "hours": 3,
+                "approvalStatus": "PENDING"
+            }
+        ]
+    }
 ]

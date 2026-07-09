@@ -10,7 +10,6 @@ const isLoading = ref(false)
 
 async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
   isLoading.value = true
-  console.log(payload.data)
   try {
     await $fetch('/api/auth/sign-up', {
       method: 'POST',
@@ -18,14 +17,10 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
         name: payload.data.name,
         email: payload.data.email,
         phone: payload.data.phone,
-        languages: payload.data.languages,
-        gender: payload.data.gender,
-        ethinicity: payload.data.ethinicity,
-        availability: payload.data.availability,
       },
     })
     await nextTick()
-    await navigateTo('/volunteer/')
+    await navigateTo('/')
   }
   catch (error: unknown) {
     console.log(error)
@@ -50,10 +45,10 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
       }"
       :submit="{ label: 'Sign up', block: true, color: 'neutral' }"
       @submit="onSubmit"
-      @error="console.log('Form error:', $event)"
+      @error="console.log('Sign up form error:', $event)"
     >
       <template #description>
-        Already a Volunteer? <ULink
+        Already have an account? <ULink
           to="/auth/login"
           class="text-primary font-medium"
         >Log In</ULink>.
