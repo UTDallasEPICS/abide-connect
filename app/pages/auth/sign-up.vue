@@ -10,17 +10,19 @@ const isLoading = ref(false)
 
 async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
   isLoading.value = true
+  errorMessage.value = null
+  console.log(payload.data)
   try {
-    await $fetch('/api/auth/sign-up', {
+    await $fetch('/api/auth/request-otp', {
       method: 'POST',
-      body: {
-        name: payload.data.name,
-        email: payload.data.email,
-        phone: payload.data.phone,
-      },
+      body: { email: payload.data.email },
     })
-    await nextTick()
-    await navigateTo('/')
+    sessionStorage.setItem('pendingSignUp', JSON.stringify({
+      name: payload.data.name,
+      email: payload.data.email,
+      phone: payload.data.phone,
+    }))
+    await navigateTo('/auth/sign-up-verify')
   }
   catch (error: unknown) {
     console.log(error)

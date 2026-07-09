@@ -14,6 +14,28 @@ const errorMessage = ref<string | null>(null)
 const step = ref<'request' | 'verify'>('request')
 const pendingEmail = ref<string>('')
 
+const resendCooldown = ref(0)
+const isResending = ref(false)
+const resendError = ref<string | null>(null)
+let cooldownTimer: ReturnType<typeof setInterval> | null = null
+
+function startCooldown() {
+  resendCooldown.value = 30
+  if (cooldownTimer) clearInterval(cooldownTimer)
+  cooldownTimer = setInterval(() => {
+    if (resendCooldown.value > 0) {
+      resendCooldown.value--
+    } else {
+      clearInterval(cooldownTimer!)
+      cooldownTimer = null
+    }
+  }, 1000)
+}
+
+onUnmounted(() => {
+  if (cooldownTimer) clearInterval(cooldownTimer)
+})
+
 async function onRequestOtp(event: FormSubmitEvent<RequestOtpSchema>) {
   isLoading.value = true
   errorMessage.value = null
@@ -25,6 +47,7 @@ async function onRequestOtp(event: FormSubmitEvent<RequestOtpSchema>) {
     })
     pendingEmail.value = event.data.email
     step.value = 'verify'
+    startCooldown()
   }
   catch (error: unknown) {
     errorMessage.value = (error as { message: string }).message
@@ -57,9 +80,28 @@ async function onVerifyOtp(event: FormSubmitEvent<VerifyOtpSchema>) {
   }
 }
 
+async function resendOtp() {
+  if (!pendingEmail.value || resendCooldown.value > 0) return
+  isResending.value = true
+  resendError.value = null
+  try {
+    await $fetch('/api/auth/request-otp', {
+      method: 'POST',
+      body: { email: pendingEmail.value },
+    })
+    startCooldown()
+  } catch (err: unknown) {
+    resendError.value = (err as { message: string }).message
+  } finally {
+    isResending.value = false
+  }
+}
+
 function goBack() {
   step.value = 'request'
   errorMessage.value = null
+  if (cooldownTimer) clearInterval(cooldownTimer)
+  resendCooldown.value = 0
 }
 </script>
 
@@ -129,6 +171,30 @@ function goBack() {
           icon="i-lucide-info"
           :title="errorMessage"
         />
+      </template>
+      <template #footer>
+        <div class="flex flex-col items-center gap-2 w-full">
+          <div class="text-sm">
+            <span v-if="resendCooldown > 0" class="text-muted">Resend code in {{ resendCooldown }}s</span>
+            <UButton
+              v-else
+              variant="link"
+              size="sm"
+              :loading="isResending"
+              class="p-0"
+              @click="resendOtp"
+            >
+              Resend code
+            </UButton>
+          </div>
+          <UAlert
+            v-if="resendError"
+            color="error"
+            icon="i-lucide-info"
+            :title="resendError"
+            class="w-full"
+          />
+        </div>
       </template>
     </UAuthForm>
   </div>

@@ -9,7 +9,7 @@ console.log('[nodemailer] EMAIL_HOST:', process.env.EMAIL_HOST)
 console.log('[nodemailer] EMAIL_USER:', process.env.EMAIL_USER)
 console.log('[nodemailer] EMAIL_PASS length:', process.env.EMAIL_PASS?.length)
 
-const transporter = nodemailer.createTransport({
+export const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
   port: 587,
   secure: false, // use STARTTLS (upgrade connection to TLS after connecting)
@@ -40,14 +40,20 @@ export const auth = betterAuth({
   plugins: [
     emailOTP({
       otpLength: 6,
-      expiresIn: 10 * 60 * 1000, // 10 minutes in milliseconds
+      expiresIn: 10 * 60, // 10 minutes in seconds
+      disableSignUp: true,
       async sendVerificationOTP({ email, otp, type }) {
-        await transporter.sendMail({
-          from: process.env.EMAIL_FROM,
-          to: email,
-          subject: 'OTP for Abide Connect',
-          html: `Your OTP is: ${otp}`,
-        })
+        try {
+          await transporter.sendMail({
+            from: process.env.EMAIL_FROM,
+            to: email,
+            subject: 'OTP for Abide Connect',
+            html: `Your OTP is: ${otp}`,
+          })
+        } catch (err) {
+          console.error('[sendVerificationOTP] Failed to send email to', email, err)
+          throw err
+        }
       },
     }),
   ],
