@@ -4,6 +4,11 @@ export default defineAppConfig({
       slots: {
         description: 'text-xs font-normal text-gray-500',
       }
+    },
+    checkbox: {
+      slots: {
+        description: 'text-xs font-normal text-gray-500',
+      }
     }
   }
 })

@@ -4,6 +4,7 @@ import { volunteerApplicationStepSchemas, volunteerApplicationSteps, type Volunt
 
 const stepDescriptions = [
   'Thank you for your interest in volunteering with Abide Women\'s Health Services! Please fill out the form below to apply and register for our upcoming volunteer training.',
+  'Please provide your emergency contact information. This is important for your safety and well-being while volunteering with us.',
   'Eligibility and Acknowledgements.',
 ]
 
@@ -78,17 +79,16 @@ function goToPreviousStep() {
         />
       </template>
 
-      <template #missionValuesAcknowledgement-label>
-        I have read
-        <a href="https://www.abidewomen.org/about" target="_blank" rel="noopener noreferrer" class="underline text-primary">Abide's mission, vision, and values</a>
-        and understand that Abide is led and run by BIPOC and will always be centered around BIPOC.
-      </template>
+
+      
+
       <template #codeOfConductNdaAcknowledgement-description>
         I acknowledge that I have read, understand, and agree to abide by and comply with the terms of the
         <a href="https://drive.google.com/file/d/13p7OBlJl7BNxoKseP9-83i6S7m55-YBO/view?usp=sharing" target="_blank" rel="noopener noreferrer" class="underline text-primary">Code of Conduct</a>
         and the
         <a href="https://drive.google.com/file/d/1dKLmm6qOAR751_duccfkMfIBvcChcFWl/view?usp=sharing" target="_blank" rel="noopener noreferrer" class="underline text-primary">Confidentiality/Non-Disclosure Agreement (NDA)</a>.
       </template>
+
       <template #volunteerHandbookAcknowledgement-description>
         I acknowledge that I have read, understand, and agree to abide by and comply with the terms of the
         <a href="https://drive.google.com/file/d/1W3Vom6kw8vuOuiOBjWtakHZC6Q0yRtCx/view?usp=sharing" target="_blank" rel="noopener noreferrer" class="underline text-primary">Volunteer Handbook</a>.

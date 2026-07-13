@@ -65,9 +65,9 @@ const baseVolunteerApplicationSchema = z.object({
     .nullable()
     .optional(),
 
-  emergencyContactName: z.string({ message: "Please enter the name of your emergency contact."}),
+  emergencyContactName1: z.string({ message: "Please enter the name of your emergency contact."}),
 
-  emergencyContactPhone: z.string({ message: "Please enter the phone number of your emergency contact."}),
+  emergencyContactPhone1: z.string({ message: "Please enter the phone number of your emergency contact."}),
 
   ageEligibilityAcknowledgement:
     z.enum(['yes', 'no'])
@@ -167,9 +167,13 @@ export const volunteerApplicationStepSchemas = [
     otherVolunteerAreaDescription: true,
     certifications: true,
     otherCertificationDescription: true,
-    emergencyContactName: true,
-    emergencyContactPhone: true,
   }).superRefine(applyOtherDescriptionChecks),
+
+  baseVolunteerApplicationSchema.pick({
+    emergencyContactName1: true,
+    emergencyContactPhone1: true,
+  }),
+
 
   baseVolunteerApplicationSchema.pick({
     ageEligibilityAcknowledgement: true,
@@ -247,7 +251,6 @@ const certificationItems: InputMenuItem[] = [
 // Parallel to volunteerApplicationStepSchemas above — index i here must
 // always correspond to index i there.
 export const volunteerApplicationSteps: AuthFormField[][] = [
-
   [
     {
       name: 'languages',
@@ -322,18 +325,32 @@ export const volunteerApplicationSteps: AuthFormField[][] = [
 
   [
     {
-      name: 'emergencyContactName',
-      label: 'Emergency Contact Name',
+      name: 'emergencyContactName1',
+      label: 'Primary Emergency Contact Name',
       type: 'text',
-      placeholder: 'Full name of your emergency contact',
+      placeholder: 'Full Name',
       required: true,
     },
     {
-      name: 'emergencyContactPhone',
-      label: 'Emergency Contact Phone Number',
+      name: 'emergencyContactPhone1',
+      label: 'Primary Emergency Contact Phone Number',
       type: 'tel',
-      placeholder: 'Phone number of your emergency contact',
+      placeholder: 'Phone Number',
       required: true,
+    },
+    {
+      name: 'emergencyContactName2',
+      label: 'Secondary Emergency Contact Name',
+      type: 'text',
+      placeholder: 'Full Name',
+      required: false,
+    },
+    {
+      name: 'emergencyContactPhone2',
+      label: 'Secondary Emergency Contact Phone Number',
+      type: 'tel',
+      placeholder: 'Phone Number',
+      required: false,
     },
   ],
 
@@ -342,8 +359,7 @@ export const volunteerApplicationSteps: AuthFormField[][] = [
       name: 'healthSafetyAcknowledgement',
       label: "Health and Safety Acknowledgement",
       description: 'As a volunteer with Abide Women\u2019s Health Services, I understand that I am expected to uphold all health and safety protocols to protect the well-being of clients, staff, and fellow volunteers. I agree to stay home if I am ill, practice proper hygiene, use personal protective equipment when required, and report any incidents, unsafe conditions, or health concerns promptly. I understand my responsibility to follow emergency procedures, respect client confidentiality, and maintain professional, nonjudgmental conduct at all times. I acknowledge that failure to comply with these guidelines may result in termination of my volunteer service, and I agree to stay informed of any policy updates provided by Abide.',
-      type: 'select',
-      placeholder: 'Select Yes or No',
+      type: 'checkbox',
       items: yesNoItems,
       valueKey: 'id',
       required: true,
@@ -351,55 +367,37 @@ export const volunteerApplicationSteps: AuthFormField[][] = [
     {
       name: 'ageEligibilityAcknowledgement',
       label: 'I am over 18 years of age. If I am not over 18, I can provide a parent/guardian consent.',
-      type: 'select',
-      placeholder: 'Select Yes or No',
-      items: yesNoItems,
-      valueKey: 'id',
+      type: 'checkbox',
       required: true,
     },
     {
       name: 'missionValuesAcknowledgement',
       label: 'I have read Abide\'s mission, vision, and values and understand that Abide is led and run by BIPOC and will always be centered around BIPOC. Our mission can be found at www.abidewomen.org/about',
-      type: 'select',
-      placeholder: 'Select Yes or No',
-      items: yesNoItems,
-      valueKey: 'id',
+      type: 'checkbox',
       required: true,
     },
     {
       name: 'backgroundCheckConsent',
       label: 'I consent to a Criminal Background Check conducted by the Texas Department of Safety.',
-      type: 'select',
-      placeholder: 'Select Yes or No',
-      items: yesNoItems,
-      valueKey: 'id',
+      type: 'checkbox',
       required: true,
     },
     {
       name: 'ongoingEducationCommitment',
       label: 'I am committed to participating in ongoing supervision and continuing education training, working collaboratively with staff, and following all agency-approved guidelines.',
-      type: 'select',
-      placeholder: 'Select Yes or No',
-      items: yesNoItems,
-      valueKey: 'id',
+      type: 'checkbox',
       required: true,
     },
     {
       name: 'acceptanceDiscretionAcknowledgement',
       label: 'I understand and agree that Abide Women\u2019s Health Services may, at its discretion, choose not to accept an individual as a volunteer if it is believed that their participation may not be in the best interest of our clients or the program. In such instances, Abide Women\u2019s Health Services is not obligated to provide a specific reason.',
-      type: 'select',
-      placeholder: 'Select Yes or No',
-      items: yesNoItems,
-      valueKey: 'id',
+      type: 'checkbox',
       required: true,
     },
     {
       name: 'codeOfConductNdaAcknowledgement',
       label: 'Code of Conduct and Confidentiality/NDA Acknowledgement',
-      type: 'select',
-      placeholder: 'Select Yes or No',
-      items: yesNoItems,
-      valueKey: 'id',
+      placeholder: 'Enter your name',
       required: true,
     },
     {
