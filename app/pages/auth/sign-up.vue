@@ -40,6 +40,7 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
       class="w-full max-w-md"
       :fields="signUpFields"
       :providers="authProviders"
+      :schema="signUpSchema"
       title="Let's get you started to be a Volunteer!"
       icon="i-lucide-user"
       :separator="{
