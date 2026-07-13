@@ -51,6 +51,7 @@ export const auth = betterAuth({
     emailOTP({
       otpLength: 6,
       expiresIn: 10 * 60 * 1000, // 10 minutes in milliseconds
+      disableSignUp: true,
       async sendVerificationOTP({ email, otp, type }) {
         await transporter.sendMail({
           from: process.env.EMAIL_FROM,
