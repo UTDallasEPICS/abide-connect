@@ -1,4 +1,5 @@
 import { transporter } from '#server/utils/auth'
+import { buildOtpEmail } from '#server/utils/otp-email'
 import prisma from '#server/utils/prisma'
 import { randomInt, randomBytes } from 'crypto'
 
@@ -19,11 +20,13 @@ export default defineEventHandler(async (event) => {
       },
     })
 
+    const { subject, text, html } = buildOtpEmail(otp)
     await transporter.sendMail({
       from: process.env.EMAIL_FROM,
       to: email,
-      subject: 'OTP for Abide Connect',
-      html: `Your OTP is: ${otp}`,
+      subject,
+      text,
+      html,
     })
 
     return { success: true }

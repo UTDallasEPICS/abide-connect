@@ -3,6 +3,7 @@ import { prismaAdapter } from 'better-auth/adapters/prisma'
 import prisma from './prisma'
 import { emailOTP } from 'better-auth/plugins/email-otp'
 import { createAuthMiddleware } from 'better-auth/api'
+import { buildOtpEmail } from './otp-email'
 import nodemailer from 'nodemailer'
 
 console.log('[nodemailer] EMAIL_HOST:', process.env.EMAIL_HOST)
@@ -44,11 +45,13 @@ export const auth = betterAuth({
       disableSignUp: true,
       async sendVerificationOTP({ email, otp, type }) {
         try {
+          const { subject, text, html } = buildOtpEmail(otp)
           await transporter.sendMail({
             from: process.env.EMAIL_FROM,
             to: email,
-            subject: 'OTP for Abide Connect',
-            html: `Your OTP is: ${otp}`,
+            subject,
+            text,
+            html,
           })
         } catch (err) {
           console.error('[sendVerificationOTP] Failed to send email to', email, err)
