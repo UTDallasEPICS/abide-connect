@@ -1,4 +1,8 @@
 <script setup lang="ts">
+definePageMeta({
+  layout: 'secondary',
+})
+
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { volunteerApplicationStepSchemas, volunteerApplicationSteps, type VolunterApplicationSchema } from '~/types/volunteer/volunteer-application.type';
 
@@ -9,11 +13,11 @@ const stepDescriptions = [
 ]
 
 const currentStepIndex = ref(0)
+const isFirstStep = computed(() => currentStepIndex.value === 0)
 const isLastStep = computed(() => currentStepIndex.value === volunteerApplicationSteps.length - 1)
 
 // Data collected per step, same index as the two arrays above.
 const stepData = ref<Record<number, Record<string, unknown>>>({})
-
 const errorMessage = ref<string | null>(null)
 const isLoading = ref(false)
 
@@ -34,8 +38,12 @@ async function onSubmit(payload: FormSubmitEvent<Record<string, unknown>>) {
   errorMessage.value = null
 
   try {
-    // TODO: send fullApplication to your API endpoint
-    console.log(fullApplication)
+    await $fetch('/api/volunteer/application', {
+      method: 'POST',
+      body: fullApplication,
+    })
+    await navigateTo('/volunteer-application/completed');
+    
   } catch {
     errorMessage.value = 'Something went wrong submitting your application. Please try again.'
   } finally {
@@ -49,38 +57,25 @@ function goToPreviousStep() {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center p-8 my-8">
+  <div class="flex flex-col items-center justify-center p-8 my-8 mb-64">
     <UAuthForm
-      class="w-full max-w-md mb-16"
+      class="w-full max-w-md"
       :fields="volunteerApplicationSteps[currentStepIndex]"
       :schema="volunteerApplicationStepSchemas[currentStepIndex]"
       :loading="isLoading && isLastStep"
       icon="material-symbols:volunteer-activism-outline"
       title="Volunteer Application"
-      :submit="{ label: isLastStep ? 'Submit' : 'Continue', block: true, color: 'neutral' }"
       @submit="onSubmit"
       @error="console.log(`Step ${currentStepIndex + 1} form error:`, $event)"
     >
       <template #description>
-        <p class="font-normal">
+        <p class="font-normal text-sm text-muted">
           {{ stepDescriptions[currentStepIndex] }}
         </p>
-        <p class="my-2 text-sm text-muted">
+        <p class="mt-2 text-sm text-muted">
           Step {{ currentStepIndex + 1 }} of {{ volunteerApplicationSteps.length }}
         </p>
-        <UButton
-          v-if="currentStepIndex > 0"
-          label="Go back"
-          icon="i-lucide-arrow-left"
-          variant="link"
-          color="neutral"
-          class="p-0 mb-2"
-          @click="goToPreviousStep"
-        />
       </template>
-
-
-      
 
       <template #codeOfConductNdaAcknowledgement-description>
         I acknowledge that I have read, understand, and agree to abide by and comply with the terms of the
@@ -88,12 +83,43 @@ function goToPreviousStep() {
         and the
         <a href="https://drive.google.com/file/d/1dKLmm6qOAR751_duccfkMfIBvcChcFWl/view?usp=sharing" target="_blank" rel="noopener noreferrer" class="underline text-primary">Confidentiality/Non-Disclosure Agreement (NDA)</a>.
       </template>
-
       <template #volunteerHandbookAcknowledgement-description>
         I acknowledge that I have read, understand, and agree to abide by and comply with the terms of the
         <a href="https://drive.google.com/file/d/1W3Vom6kw8vuOuiOBjWtakHZC6Q0yRtCx/view?usp=sharing" target="_blank" rel="noopener noreferrer" class="underline text-primary">Volunteer Handbook</a>.
       </template>
 
+
+      <template #submit>
+        <div class="grid grid-cols-2 gap-3 w-full">
+          <UButton
+            type="button"
+            label="Back"
+            icon="i-lucide-arrow-left"
+            variant="soft"
+            color="neutral"
+            size="lg"
+            block
+            :ui="{ base: 'justify-center' }"
+            :disabled="isFirstStep || isLoading"
+            @click="goToPreviousStep"
+          />
+          <UButton
+            type="submit"
+            color="neutral"
+            size="lg"
+            block
+            :ui="{ base: 'justify-center gap-2' }"
+            :loading="isLoading && isLastStep"
+          >
+            {{ isLastStep ? 'Submit' : 'Next' }}
+            <UIcon
+              v-if="!isLastStep"
+              name="i-lucide-arrow-right"
+            />
+          </UButton>
+          <br>
+        </div>
+      </template>
 
       <template #validation>
         <UAlert
@@ -104,5 +130,6 @@ function goToPreviousStep() {
         />
       </template>
     </UAuthForm>
+    <br>
   </div>
 </template>

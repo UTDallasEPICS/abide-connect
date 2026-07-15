@@ -34,29 +34,23 @@ const volunteerApplicationSchema = z.object({
 
   emergencyContactPhone1: z.string({ message: "Please enter the phone number of your emergency contact."}),
 
-  ageEligibilityAcknowledgement: z.boolean()
-    .refine(v => v === true, { message: 'You must confirm your eligibility' })
-    .default(false),
+  ageEligibilityAcknowledgement: z.boolean({ message: 'You must confirm your eligibility' })
+    .refine(v => v === true, { message: 'You must confirm your eligibility' }),
 
-  healthSafetyAcknowledgement: z.boolean()
-    .refine(v => v === true, { message: 'You must acknowledge the Health and Safety policy' })
-    .default(false),
+  healthSafetyAcknowledgement: z.boolean({ message: 'You must acknowledge the Health and Safety policy' })
+    .refine(v => v === true, { message: 'You must acknowledge the Health and Safety policy' }),
 
-  backgroundCheckConsent: z.boolean()
-    .refine(v => v === true, { message: 'You must consent to the background check' })
-    .default(false),
+  backgroundCheckConsent: z.boolean({ message: 'You must consent to the background check' })
+    .refine(v => v === true, { message: 'You must consent to the background check' }),
 
-  ongoingEducationCommitment: z.boolean()
-    .refine(v => v === true, { message: 'You must acknowledge this commitment' })
-    .default(false),
+  ongoingEducationCommitment: z.boolean({ message: 'You must acknowledge this commitment' })
+    .refine(v => v === true, { message: 'You must acknowledge this commitment' }),
 
-  acceptanceDiscretionAcknowledgement: z.boolean()
-    .refine(v => v === true, { message: 'You must acknowledge this statement' })
-    .default(false),
+  acceptanceDiscretionAcknowledgement: z.boolean({ message: 'You must acknowledge the Health and Safety policy' })
+    .refine(v => v === true, { message: 'You must acknowledge this statement' }),
 
-  missionValuesAcknowledgement: z.boolean()
-    .refine(v => v === true, { message: 'You must acknowledge Abide\'s mission, vision, and values' })
-    .default(false),
+  missionValuesAcknowledgement: z.boolean({ message: 'You must acknowledge the Health and Safety policy' })
+    .refine(v => v === true, { message: 'You must acknowledge Abide\'s mission, vision, and values' }),
 
   codeOfConductNdaAcknowledgement: z.string({ message: 'You must acknowledge the Code of Conduct and NDA' }),
 
@@ -65,11 +59,7 @@ const volunteerApplicationSchema = z.object({
 })
 
 
-export type VolunterApplicationSchema = z.output<typeof volunterApplicationSchema>
-
-// =====================
-// STEP VALIDATION SCHEMAS
-// =====================
+export type VolunterApplicationSchema = z.output<typeof volunteerApplicationSchema>
 
 export const volunteerApplicationStepSchemas = [
 
@@ -103,9 +93,6 @@ export const volunteerApplicationStepSchemas = [
 
 ] as const
 
-// =====================
-// LABELS / ITEMS
-// =====================
 
 function formatEnumLabel(value: string): string {
   const minorWords = new Set(['and', 'or', 'of', 'the', 'a', 'an', 'to', 'in', 'on'])
@@ -159,12 +146,6 @@ const certificationItems: InputMenuItem[] = [
   { id: 'OTHER', label: 'Other' },
 ]
 
-// =====================
-// FORM STEPS
-// =====================
-
-// Parallel to volunteerApplicationStepSchemas above — index i here must
-// always correspond to index i there.
 export const volunteerApplicationSteps: AuthFormField[][] = [
   [
     {
@@ -210,7 +191,7 @@ export const volunteerApplicationSteps: AuthFormField[][] = [
       label: 'What area(s) would you like to assist with as a volunteer?',
       type: 'select',
       placeholder: 'Select all that apply',
-      required: true,
+      required: false,
       items: volunteerAreaItems,
       valueKey: 'id',
       multiple: true,
@@ -228,10 +209,12 @@ export const volunteerApplicationSteps: AuthFormField[][] = [
       placeholder: 'Select all that apply',
       items: certificationItems,
       valueKey: 'id',
+      required: false,
       multiple: true,
     },
     {
       name: 'otherCertificationDescription',
+      required: false,
       label: 'If "Other", do you have any specific ideas or services you would like to propose for collaboration?',
       type: 'textarea',
       placeholder: 'Describe your proposed collaboration',

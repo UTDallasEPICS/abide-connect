@@ -32,7 +32,8 @@ interface HourLog {
   comment?: string
 }
 
-const { logs } = await $fetch<{ logs: HourLog[] }>('/api/volunteer/logs')
+
+const { logs } = await $fetch<{ logs: HourLog[] }>('/api/volunteer/logs', { headers })
 const logsRef = ref<HourLog[]>(logs)
 
 const approvedLogs = computed(() => logsRef.value.filter(l => l.approvalStatus === 'APPROVED'))
@@ -50,7 +51,7 @@ const showPending = ref(false)
     <main class="flex-1 px-4 pt-24 pb-24">
       <div class="max-w-4xl mx-auto space-y-6">
         <h2 class="text-center text-2xl font-bold text-brand4 dark:text-teal-400">
-          Welcome back, {{ user?.name }}
+          Welcome back, {{ user?.name}}
         </h2>
         <!-- Calendar Card -->
         <UCard>
