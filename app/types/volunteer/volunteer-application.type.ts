@@ -1,44 +1,8 @@
 import * as z from 'zod'
-import { Gender, Availability, Ethinicity, Language } from '#server/utils/generated/prisma/enums'
+import { Gender, Availability, Ethinicity, Language, VolunteerArea, Certification } from '#server/utils/generated/prisma/enums'
 import type { InputMenuItem, AuthFormField } from '@nuxt/ui'
 
-// TODO: move these into your Prisma schema as real enums (VolunteerArea, Certification)
-// and import them from '#server/utils/generated/prisma/enums' like the others once generated.
-const VolunteerArea = [
-  'CLINIC_SUPPORT',
-  'MOBILE_CLINIC_OUTREACH',
-  'EVENT_SUPPORT',
-  'COMMUNITY_OUTREACH',
-  'ADMINISTRATIVE_TASKS',
-  'OTHER',
-] as const
-
-const Certification = [
-  'MEDICAL_CODING',
-  'DOULA_CERTIFICATION',
-  'CDL',
-  'CHILDBIRTH_EDUCATOR',
-  'CERTIFIED_TEACHER_EDUCATOR',
-  'IBCLC',
-  'GRAPHIC_DESIGN',
-  'OTHER',
-] as const
-
-const yesNoItems: InputMenuItem[] = [
-  { id: 'yes', label: 'Yes' },
-  { id: 'no', label: 'No' },
-]
-
-// =====================
-// FULL APPLICATION SCHEMA
-// =====================
-
-// Unrefined base — kept separate from the exported schema because
-// .superRefine() returns a ZodEffects, which doesn't support .pick().
-// Step 1's schema needs the same OTHER-description check below, so both
-// the full schema and step 1 apply it on top of this shared base.
-const baseVolunteerApplicationSchema = z.object({
-
+const volunteerApplicationSchema = z.object({
   languages: z.array(z.enum(Language), { message: "Please select at least one langauge." }),
 
   gender: z.enum(Gender, { message: "Please select your gender." }),
@@ -50,7 +14,8 @@ const baseVolunteerApplicationSchema = z.object({
 
   volunteerAreas: z.enum(VolunteerArea, { message: "Please select at least one area." })
     .array()
-    .min(1),
+    .min(1)
+    .default([]),
 
   otherVolunteerAreaDescription: z.string()
     .nullable()
@@ -59,7 +24,7 @@ const baseVolunteerApplicationSchema = z.object({
   certifications: z.enum(Certification)
     .array()
     .nullable()
-    .default([] ),
+    .default([]),
 
   otherCertificationDescription: z.string()
     .nullable()
@@ -69,86 +34,36 @@ const baseVolunteerApplicationSchema = z.object({
 
   emergencyContactPhone1: z.string({ message: "Please enter the phone number of your emergency contact."}),
 
-  ageEligibilityAcknowledgement:
-    z.enum(['yes', 'no'])
-      .refine(v => v === 'yes', {
-        message: 'You must confirm your eligibility',
-      }),
+  ageEligibilityAcknowledgement: z.boolean()
+    .refine(v => v === true, { message: 'You must confirm your eligibility' })
+    .default(false),
 
-  healthSafetyAcknowledgement:
-    z.enum(['yes', 'no'])
-      .refine(v => v === 'yes', {
-        message: 'You must acknowledge the Health and Safety policy',
-      }),
+  healthSafetyAcknowledgement: z.boolean()
+    .refine(v => v === true, { message: 'You must acknowledge the Health and Safety policy' })
+    .default(false),
 
-  backgroundCheckConsent:
-    z.enum(['yes', 'no'])
-      .refine(v => v === 'yes', {
-        message: 'You must consent to the background check',
-      }),
+  backgroundCheckConsent: z.boolean()
+    .refine(v => v === true, { message: 'You must consent to the background check' })
+    .default(false),
 
-  ongoingEducationCommitment:
-    z.enum(['yes', 'no'])
-      .refine(v => v === 'yes', {
-        message: 'You must acknowledge this commitment',
-      }),
+  ongoingEducationCommitment: z.boolean()
+    .refine(v => v === true, { message: 'You must acknowledge this commitment' })
+    .default(false),
 
-  acceptanceDiscretionAcknowledgement:
-    z.enum(['yes', 'no'])
-      .refine(v => v === 'yes', {
-        message: 'You must acknowledge this statement',
-      }),
+  acceptanceDiscretionAcknowledgement: z.boolean()
+    .refine(v => v === true, { message: 'You must acknowledge this statement' })
+    .default(false),
 
-  missionValuesAcknowledgement:
-    z.enum(['yes', 'no'])
-      .refine(v => v === 'yes', {
-        message: 'You must acknowledge Abide\'s mission, vision, and values',
-      }),
+  missionValuesAcknowledgement: z.boolean()
+    .refine(v => v === true, { message: 'You must acknowledge Abide\'s mission, vision, and values' })
+    .default(false),
 
-  codeOfConductNdaAcknowledgement:
-    z.enum(['yes', 'no'])
-      .refine(v => v === 'yes', {
-        message: 'You must acknowledge the Code of Conduct and NDA',
-      }),
+  codeOfConductNdaAcknowledgement: z.string({ message: 'You must acknowledge the Code of Conduct and NDA' }),
 
-  volunteerHandbookAcknowledgement:
-    z.enum(['yes', 'no'])
-      .refine(v => v === 'yes', {
-        message: 'You must acknowledge the Volunteer Handbook',
-      }),
+  volunteerHandbookAcknowledgement: z.string({ message: 'You must acknowledge the Volunteer Handbook' }),
 
 })
 
-// Cross-field check: if "OTHER" is picked in volunteerAreas/certifications,
-// the matching description field must be filled in. Both fields live in
-// step 1, so this is reused by the full schema and by step 1's schema.
-function applyOtherDescriptionChecks(
-  data: Pick<
-    z.infer<typeof baseVolunteerApplicationSchema>,
-    | 'volunteerAreas'
-    | 'otherVolunteerAreaDescription'
-    | 'certifications'
-    | 'otherCertificationDescription'
-  >,
-  ctx: z.RefinementCtx,
-) {
-  if (data.volunteerAreas?.includes('OTHER') && !data.otherVolunteerAreaDescription?.trim()) {
-    ctx.addIssue({
-      code: 'custom',
-      path: ['otherVolunteerAreaDescription'],
-      message: 'Please describe the work you\'d like to volunteer for',
-    })
-  }
-  if (data.certifications?.includes('OTHER') && !data.otherCertificationDescription?.trim()) {
-    ctx.addIssue({
-      code: 'custom',
-      path: ['otherCertificationDescription'],
-      message: 'Please describe your proposed collaboration',
-    })
-  }
-}
-
-export const volunterApplicationSchema = baseVolunteerApplicationSchema.superRefine(applyOtherDescriptionChecks)
 
 export type VolunterApplicationSchema = z.output<typeof volunterApplicationSchema>
 
@@ -158,7 +73,7 @@ export type VolunterApplicationSchema = z.output<typeof volunterApplicationSchem
 
 export const volunteerApplicationStepSchemas = [
 
-  baseVolunteerApplicationSchema.pick({
+  volunteerApplicationSchema.pick({
     languages: true,
     gender: true,
     ethinicity: true,
@@ -167,15 +82,15 @@ export const volunteerApplicationStepSchemas = [
     otherVolunteerAreaDescription: true,
     certifications: true,
     otherCertificationDescription: true,
-  }).superRefine(applyOtherDescriptionChecks),
+  }),
 
-  baseVolunteerApplicationSchema.pick({
+  volunteerApplicationSchema.pick({
     emergencyContactName1: true,
     emergencyContactPhone1: true,
   }),
 
 
-  baseVolunteerApplicationSchema.pick({
+  volunteerApplicationSchema.pick({
     ageEligibilityAcknowledgement: true,
     healthSafetyAcknowledgement: true,
     backgroundCheckConsent: true,
@@ -356,23 +271,35 @@ export const volunteerApplicationSteps: AuthFormField[][] = [
 
   [
     {
-      name: 'healthSafetyAcknowledgement',
-      label: "Health and Safety Acknowledgement",
-      description: 'As a volunteer with Abide Women\u2019s Health Services, I understand that I am expected to uphold all health and safety protocols to protect the well-being of clients, staff, and fellow volunteers. I agree to stay home if I am ill, practice proper hygiene, use personal protective equipment when required, and report any incidents, unsafe conditions, or health concerns promptly. I understand my responsibility to follow emergency procedures, respect client confidentiality, and maintain professional, nonjudgmental conduct at all times. I acknowledge that failure to comply with these guidelines may result in termination of my volunteer service, and I agree to stay informed of any policy updates provided by Abide.',
-      type: 'checkbox',
-      items: yesNoItems,
-      valueKey: 'id',
+      name: 'codeOfConductNdaAcknowledgement',
+      label: 'Code of Conduct and Confidentiality/NDA Acknowledgement',
+      placeholder: 'Enter your name',
       required: true,
     },
     {
-      name: 'ageEligibilityAcknowledgement',
-      label: 'I am over 18 years of age. If I am not over 18, I can provide a parent/guardian consent.',
+      name: 'volunteerHandbookAcknowledgement',
+      label: 'Volunteer Handbook Acknowledgement',
+      description: 'I acknowledge that I have read, understand, and agree to abide by and comply with the terms of the Volunteer Handbook.',
+      placeholder: 'Enter your name',
+      required: true,
+    },
+    {
+      name: 'healthSafetyAcknowledgement',
+      label: "Health and Safety Acknowledgement",
+      description: 'As a volunteer with Abide Women\u2019s Health Services, I understand that I am expected to uphold all health and safety protocols to protect the well-being of clients, staff, and fellow volunteers. I agree to stay home if I am ill, practice proper hygiene, use personal protective equipment when required, and report any incidents, unsafe conditions, or health concerns promptly. I understand my responsibility to follow emergency procedures, respect client confidentiality, and maintain professional, nonjudgmental conduct at all times. I acknowledge that failure to comply with these guidelines may result in termination of my volunteer service, and I agree to stay informed of any policy updates provided by Abide.',
       type: 'checkbox',
       required: true,
     },
     {
       name: 'missionValuesAcknowledgement',
-      label: 'I have read Abide\'s mission, vision, and values and understand that Abide is led and run by BIPOC and will always be centered around BIPOC. Our mission can be found at www.abidewomen.org/about',
+      label: 'I have read Abide\'s mission, vision, and values and understand that Abide is led and run by BIPOC and will always be centered around BIPOC.',
+      description: "Our mission can be found at www.abidewomen.org/about",
+      type: 'checkbox',
+      required: true,
+    },
+    {
+      name: 'ageEligibilityAcknowledgement',
+      label: 'I am over 18 years of age. If I am not over 18, I can provide a parent/guardian consent.',
       type: 'checkbox',
       required: true,
     },
@@ -392,19 +319,6 @@ export const volunteerApplicationSteps: AuthFormField[][] = [
       name: 'acceptanceDiscretionAcknowledgement',
       label: 'I understand and agree that Abide Women\u2019s Health Services may, at its discretion, choose not to accept an individual as a volunteer if it is believed that their participation may not be in the best interest of our clients or the program. In such instances, Abide Women\u2019s Health Services is not obligated to provide a specific reason.',
       type: 'checkbox',
-      required: true,
-    },
-    {
-      name: 'codeOfConductNdaAcknowledgement',
-      label: 'Code of Conduct and Confidentiality/NDA Acknowledgement',
-      placeholder: 'Enter your name',
-      required: true,
-    },
-    {
-      name: 'volunteerHandbookAcknowledgement',
-      label: 'Volunteer Handbook Acknowledgement',
-      description: 'I acknowledge that I have read, understand, and agree to abide by and comply with the terms of the Volunteer Handbook.',
-      placeholder: 'Enter your name',
       required: true,
     },
   ],

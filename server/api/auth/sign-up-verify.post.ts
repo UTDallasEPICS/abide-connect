@@ -48,6 +48,12 @@ export default defineEventHandler(async (event) => {
           name: name as string | undefined,
           email: email as string,
           phone: phone as string | undefined,
+          roles: {
+            create: {
+              role: 'USER',
+              active: true,
+            },
+          },
         },
       })
 

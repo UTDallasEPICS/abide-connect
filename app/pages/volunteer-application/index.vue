@@ -94,6 +94,7 @@ function goToPreviousStep() {
         <a href="https://drive.google.com/file/d/1W3Vom6kw8vuOuiOBjWtakHZC6Q0yRtCx/view?usp=sharing" target="_blank" rel="noopener noreferrer" class="underline text-primary">Volunteer Handbook</a>.
       </template>
 
+
       <template #validation>
         <UAlert
           v-if="errorMessage"

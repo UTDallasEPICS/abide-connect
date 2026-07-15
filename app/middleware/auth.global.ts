@@ -11,8 +11,8 @@ interface RouteRoleConfig {
  * own folder, or you'll create an infinite redirect loop.
  */
 const routeRoles: Record<string, RouteRoleConfig> = {
-  '/admin':     { role: 'admin' },
-  '/volunteer': { role: 'volunteer', unauthorizedPage: '/training' },
+  '/admin':                     { role: 'admin' },
+  '/volunteer':                 { role: 'volunteer', unauthorizedPage: '/volunteer-application/form-required' },
 }
 
 const SHOW_DEBUG = true
