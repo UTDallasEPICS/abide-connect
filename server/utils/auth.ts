@@ -22,6 +22,12 @@ export const transporter = nodemailer.createTransport({
 
 
 export const auth = betterAuth({
+  socialProviders: {
+    google: {
+      clientId: process.env.OAUTH_CLIENT_ID as string,
+      clientSecret: process.env.OAUTH_CLIENT_SECRET as string,
+    },
+  },
   hooks: {
     after: createAuthMiddleware(async (ctx) => {
       if (ctx.path === '/get-session') {
@@ -37,6 +43,10 @@ export const auth = betterAuth({
   }),
   user: {
     modelName: 'Volunteer',
+    fields: {
+      // better-auth's user schema uses `image`; our Volunteer column is `imageURL`
+      image: 'imageURL',
+    },
   },
   plugins: [
     emailOTP({
