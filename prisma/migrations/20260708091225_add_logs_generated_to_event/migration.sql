@@ -1,0 +1,26 @@
+-- RedefineTables
+PRAGMA defer_foreign_keys=ON;
+PRAGMA foreign_keys=OFF;
+CREATE TABLE "new_events" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "title" TEXT NOT NULL,
+    "shortDesc" TEXT,
+    "description" TEXT,
+    "startTime" DATETIME NOT NULL,
+    "endTime" DATETIME NOT NULL,
+    "locationId" TEXT NOT NULL,
+    "calendarURL" TEXT,
+    "allowVolunteers" BOOLEAN NOT NULL,
+    "allowAttendees" BOOLEAN NOT NULL,
+    "logsGenerated" BOOLEAN NOT NULL DEFAULT false,
+    "mobileClinicId" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "events_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "Location" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "events_mobileClinicId_fkey" FOREIGN KEY ("mobileClinicId") REFERENCES "mobileClinic" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+INSERT INTO "new_events" ("allowAttendees", "allowVolunteers", "calendarURL", "createdAt", "description", "endTime", "id", "locationId", "mobileClinicId", "shortDesc", "startTime", "title", "updatedAt") SELECT "allowAttendees", "allowVolunteers", "calendarURL", "createdAt", "description", "endTime", "id", "locationId", "mobileClinicId", "shortDesc", "startTime", "title", "updatedAt" FROM "events";
+DROP TABLE "events";
+ALTER TABLE "new_events" RENAME TO "events";
+PRAGMA foreign_keys=ON;
+PRAGMA defer_foreign_keys=OFF;
