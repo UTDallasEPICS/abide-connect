@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { useColorMode } from '#imports'
+
+const colorMode = useColorMode()
+const isDark = computed(() => colorMode.value === 'dark')
+
 const emit = defineEmits(['save', 'close'])
 
 const newEvent = ref({
@@ -30,9 +35,7 @@ async function saveEvent() {
     || !newEvent.value.startTime
     || !newEvent.value.endTime
   ) {
-    alert(
-      'Please fill in all required fields (Title, Start Time, End Time)',
-    )
+    alert('Please fill in all required fields (Title, Start Time, End Time)')
     return
   }
 
@@ -71,10 +74,7 @@ async function saveEvent() {
           console.log(`✅ Uploaded: ${file.name}`)
         }
         catch (uploadError) {
-          console.error(
-            `❌ Failed to upload ${file.name}:`,
-            uploadError,
-          )
+          console.error(`❌ Failed to upload ${file.name}:`, uploadError)
         }
       }
     }
@@ -120,12 +120,12 @@ function cancel() {
 
 <template>
   <div class="space-y-4 p-6 max-h-[80vh] overflow-y-auto">
-    <h3 class="text-xl font-semibold mb-4">
+    <h3 class="text-xl font-semibold mb-4 dark:text-gray-100">
       Add New Event
     </h3>
 
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
         Event Title <span class="text-red-500">*</span>
       </label>
       <UFormField>
@@ -137,7 +137,7 @@ function cancel() {
     </div>
 
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Short Description</label>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Short Description</label>
       <UFormField>
         <UInput
           v-model="newEvent.shortDesc"
@@ -147,7 +147,7 @@ function cancel() {
     </div>
 
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Full Description</label>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Full Description</label>
       <UFormField>
         <UTextarea
           v-model="newEvent.description"
@@ -158,7 +158,7 @@ function cancel() {
     </div>
 
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Location</label>
       <UFormField>
         <UInput
           v-model="newEvent.location"
@@ -169,7 +169,7 @@ function cancel() {
 
     <div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
           Start Date & Time <span class="text-red-500">*</span>
         </label>
         <UFormField>
@@ -180,7 +180,7 @@ function cancel() {
         </UFormField>
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
           End Date & Time <span class="text-red-500">*</span>
         </label>
         <UFormField>
@@ -194,32 +194,32 @@ function cancel() {
       <div class="space-y-2">
         <label class="flex items-center gap-2 cursor-pointer">
           <UCheckbox v-model="newEvent.allowVolunteers" />
-          <span class="text-sm font-medium text-gray-700">Allow Volunteers</span>
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-200">Allow Volunteers</span>
         </label>
         <label class="flex items-center gap-2 cursor-pointer">
           <UCheckbox v-model="newEvent.allowAttendees" />
-          <span class="text-sm font-medium text-gray-700">Allow Attendees to Register</span>
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-200">Allow Attendees to Register</span>
         </label>
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Event Images</label>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Event Images</label>
         <EventImageUpload
           @files-changed="onFilesChanged"
         />
       </div>
 
-      <div class="flex justify-end gap-2 pt-4 border-t">
+      <div class="flex justify-end gap-2 pt-4 border-t dark:border-gray-700">
         <UButton
           variant="ghost"
-          color="brand4"
+          color="neutral"
           :disabled="isSaving"
           @click="cancel"
         >
           Cancel
         </UButton>
         <UButton
-          color="brand4"
+          :color="isDark ? 'brand5' : 'primary'"
           :loading="isSaving"
           @click="saveEvent"
         >

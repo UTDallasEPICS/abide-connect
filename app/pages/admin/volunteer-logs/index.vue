@@ -29,9 +29,7 @@ const fetchlogs = async () => {
   loading.value = true
   error.value = null
   try {
-    const data = await $fetch<{ logs: VolunteerLog[] }>(
-      '/api/volunteer-logs',
-    )
+    const data = await $fetch<{ logs: VolunteerLog[] }>('/api/volunteer-logs', { headers: useRequestHeaders(['cookie']) });
     console.log('API response:', data)
     logs.value = data?.logs ?? []
   }
@@ -85,7 +83,7 @@ function cancelAction() {
   actionType.value = null
 }
 
-function confirmAction(id: string) {
+async function confirmAction(id: string) {
   if (!actionType.value) return
 
   const log = logs.value.find((l: VolunteerLog) => l.id === id)
@@ -101,6 +99,20 @@ function confirmAction(id: string) {
     log.comment = (commentDraft.value[id] ?? '').trim() || undefined
   }
 
+  try {
+    await $fetch(`/api/volunteer-logs/${id}`, {
+      method: 'PATCH',
+      body: {
+        status: actionType.value === 'approve' ? 'APPROVED' : 'REJECTED',
+        comment: (commentDraft.value[id] ?? '').trim() || null
+      }
+    })
+  } catch (err) {
+    console.error('Failed to update log:', err)
+    error.value = 'Failed to update volunteer log'
+    return
+  }
+
   setStatus(id, actionType.value === 'approve' ? 'APPROVED' : 'REJECTED')
   actioningId.value = null
   actionType.value = null
@@ -109,12 +121,12 @@ function confirmAction(id: string) {
 
 <template>
   <div
-    class="flex flex-col w-screen min-h-screen bg-slate-50 items-stretch pb-20"
+    class="flex flex-col w-screen min-h-screen bg-slate-50 dark:bg-gray-900 items-stretch pb-20"
   >
     <!-- page content -->
     <div class="px-6 pt-20">
-      <h1 class="text-3xl font-bold">
-        Volunteer Log <span class="text-teal-600">Approvals</span>
+      <h1 class="text-3xl font-bold text-[#313131] dark:text-white">
+        Volunteer Log <span class="text-teal-600 dark:text-teal-400">Approvals</span>
       </h1>
 
       <!-- tabs -->
@@ -126,7 +138,7 @@ function confirmAction(id: string) {
           :class="
             activeTab === tab.id
               ? 'bg-teal-600 text-white border-teal-600'
-              : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-100'
+              : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
           "
           @click="activeTab = tab.id"
         >
@@ -156,7 +168,7 @@ function confirmAction(id: string) {
       <!-- Empty -->
       <div
         v-else-if="accordionItems.length === 0"
-        class="mt-8 text-gray-400 text-sm text-center"
+        class="mt-8 text-gray-400 dark:text-gray-500 text-sm text-center"
       >
         No {{ activeTab.toLowerCase() }} logs found.
       </div>
@@ -167,7 +179,7 @@ function confirmAction(id: string) {
       >
         <UAccordion
           type="multiple"
-          class="bg-slate-50 w-full"
+          class="bg-slate-50 dark:bg-gray-900 w-full"
           :items="accordionItems"
           :ui="{
             item: 'border-none mt-4',
@@ -178,15 +190,17 @@ function confirmAction(id: string) {
         >
           <!-- Header (matches inbox pattern) -->
           <template #default="{ item, open }">
-            <div class="bg-white rounded-xl p-5">
+            <div 
+              class="bg-white dark:bg-gray-800 rounded-xl p-5 border border-transparent dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+            >
               <div
                 class="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-4 w-full"
               >
                 <div class="min-w-0">
-                  <h2 class="text-lg font-semibold truncate">
+                  <h2 class="text-lg font-semibold truncate text-[#313131] dark:text-white">
                     {{ item.label }}
                   </h2>
-                  <p class="text-sm text-gray-500 flex gap-3">
+                  <p class="text-sm text-gray-500 dark:text-gray-400 flex gap-3">
                     <span class="truncate">{{
                       item.event
                     }}</span>
@@ -197,13 +211,13 @@ function confirmAction(id: string) {
                 </div>
 
                 <p
-                  class="text-xl font-bold text-teal-600 whitespace-nowrap"
+                  class="text-xl font-bold text-teal-600 dark:text-teal-400 whitespace-nowrap"
                 >
                   {{ item.hours }} hrs
                 </p>
 
                 <span
-                  class="text-gray-400 transition-transform duration-200"
+                  class="text-gray-400 dark:text-gray-500 transition-transform duration-200"
                   :class="open ? 'rotate-180' : ''"
                 >
                   ▾
@@ -214,10 +228,10 @@ function confirmAction(id: string) {
           <!-- Expanded content -->
           <template #content="{ item }">
             <div
-              class="bg-white rounded-xl shadow-sm px-5 pb-5 mt-1"
+              class="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-black/20 px-5 pb-5 mt-1 border border-transparent dark:border-gray-700"
             >
               <div
-                class="rounded-lg bg-white p-4 text-sm text-gray-700 space-y-2"
+                class="rounded-lg bg-white dark:bg-gray-800 p-4 text-sm text-gray-700 dark:text-gray-300 space-y-2"
               >
                 <p>
                   <span class="font-medium">Event:</span>
@@ -251,7 +265,7 @@ function confirmAction(id: string) {
                   class="flex gap-2"
                 >
                   <button
-                    class="px-4 py-2 rounded-full bg-teal-600 text-white hover:bg-teal-700"
+                    class="px-4 py-2 rounded-full bg-teal-600 text-white hover:bg-teal-700 dark:hover:bg-teal-500 transition-colors"
                     @click.stop="
                       startAction(item.id, 'approve')
                     "
@@ -260,7 +274,7 @@ function confirmAction(id: string) {
                   </button>
 
                   <button
-                    class="px-4 py-2 rounded-full bg-rose-600 text-white hover:bg-rose-700"
+                    class="px-4 py-2 rounded-full bg-rose-600 text-white hover:bg-rose-700 dark:hover:bg-rose-500 transition-colors"
                     @click.stop="
                       startAction(item.id, 'reject')
                     "
@@ -274,7 +288,7 @@ function confirmAction(id: string) {
                   class="mt-3 space-y-2"
                 >
                   <label
-                    class="text-sm font-medium text-gray-700"
+                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{
                       actionType === "reject"
@@ -290,7 +304,7 @@ function confirmAction(id: string) {
                   <textarea
                     v-model="commentDraft[item.id]"
                     rows="3"
-                    class="w-full rounded-lg border border-gray-300 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300"
+                    class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300"
                     :class="
                       actionType === 'reject'
                         ? 'focus:ring-rose-300'
@@ -301,7 +315,7 @@ function confirmAction(id: string) {
 
                   <div class="flex gap-2">
                     <button
-                      class="px-4 py-2 rounded-lg border"
+                      class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                       @click.stop="cancelAction"
                     >
                       Cancel
@@ -311,8 +325,8 @@ function confirmAction(id: string) {
                       class="px-4 py-2 rounded-lg bg-rose-600 text-white disabled:opacity-50"
                       :class="
                         actionType === 'reject'
-                          ? 'bg-rose-600'
-                          : 'bg-teal-600'
+                          ? 'bg-rose-600 hover:bg-rose-700 dark:hover:bg-rose-500'
+                          : 'bg-teal-600 hover:bg-teal-700 dark:hover:bg-teal-500'
                       "
                       :disabled="
                         actionType === 'reject'

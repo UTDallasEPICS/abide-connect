@@ -2,68 +2,14 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
-/*Hornbill Font Faces*/
-@font-face {
-  font-family: 'Hornbill';
-  src: url('@/assets/fonts/HornbillTrial-Regular.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap; 
-}
-
-@font-face {
-  font-family: 'Hornbill';
-  src: url('@/assets/fonts/HornbillTrial-Bold.ttf') format('truetype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Hornbill';
-  src: url('@/assets/fonts/HornbillTrial-Black.ttf') format('truetype');
-  font-weight: 900;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Hornbill';
-  src: url('@/assets/fonts/HornbillTrial-Italic.ttf') format('truetype');
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap; 
-}
-
-@font-face {
-  font-family: 'Hornbill';
-  src: url('@/assets/fonts/HornbillTrial-BoldItalic.ttf') format('truetype');
-  font-weight: 700;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Hornbill';
-  src: url('@/assets/fonts/HornbillTrial-BlackItalic.ttf') format('truetype');
-  font-weight: 900;
-  font-style: italic;
-  font-display: swap; 
-}
-
-
 @theme {
-    --font-hornbill: 'Hornbill', sans-serif;
+    --font-poppins: 'Poppins', sans-serif;
 }
-
-/* Utility classes so you can use the imported fonts easily in templates */
-.font-poppins { font-family: var(--font-poppins) !important; }
-.font-hornbill { font-family: var(--font-hornbill) !important; }
 
 @layer base {
-  /* Default text uses Hornbill; */
+  /* Default text uses Poppins; */
   html, body {
-    font-family: var(--font-hornbill);
+    font-family: var(--font-poppins);
     font-weight: 700;
   }
 }
@@ -92,4 +38,7 @@
 
   /*Rasberry*/
   --color-brand7: #a4123f;
+
+  /* Light Teal */
+  --color-brand8: #00d5be;
 }

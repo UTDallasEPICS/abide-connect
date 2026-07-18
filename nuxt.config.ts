@@ -5,6 +5,7 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
     'nuxt-maplibre',
     '@vite-pwa/nuxt',
+    'nuxt-cron',
   ],
   devtools: {
     enabled: true,
@@ -12,6 +13,11 @@ export default defineNuxtConfig({
   css: [
     '~/assets/css/main.css',
   ],
+  cron: {
+    runOnInit: true,
+    timeZone: 'America/Chicago',
+    jobsDir: 'cron'
+  },
   ui: {
     theme: {
       colors: [
@@ -29,6 +35,7 @@ export default defineNuxtConfig({
         'brand5',
         'brand6',
         'brand7',
+        'brand8',
       ],
     },
   },
