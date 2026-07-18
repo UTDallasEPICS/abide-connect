@@ -42,6 +42,7 @@ const deniedLogs = computed(() => logsRef.value.filter(l => l.approvalStatus ===
 const showApproved = ref(false)
 const showDenied = ref(false)
 const showPending = ref(false)
+const showLogModal = ref(false)
 </script>
 
 <template>
@@ -100,6 +101,7 @@ const showPending = ref(false)
             size="sm"
             color="brand4"
             label="Log Your Hours"
+            @click="() => { showLogModal = true }"
           />
         </div>
 
@@ -258,5 +260,19 @@ const showPending = ref(false)
         </div>
       </div>
     </main>
+    <Teleport to="body">
+      <div
+        v-if="showLogModal"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/70 p-4"
+        @click.self="showLogModal = false"
+      >
+        <div class="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-auto">
+          <VolunteerHourLogModal
+            @save="showLogModal = false"
+            @close="showLogModal = false"
+          />
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
