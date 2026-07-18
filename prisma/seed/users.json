@@ -1,7 +1,8 @@
 [
     {
+        "id": "user-alice",
         "name": "Alice Wang",
-        "contactEmail": "alice@example.com",
+        "email": "alice@example.com",
         "phone": "123-456-7890",
         "RSVPs": [
             {
@@ -15,8 +16,9 @@
         ]
     },
     {
+        "id": "user-bob",
         "name": "Bob Smith",
-        "contactEmail": "bob@example.com",
+        "email": "bob@example.com",
         "phone": "987-654-3210",
         "RSVPs": [
             {

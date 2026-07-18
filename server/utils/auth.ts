@@ -42,11 +42,7 @@ export const auth = betterAuth({
     provider: 'sqlite',
   }),
   user: {
-    modelName: 'Volunteer',
-    fields: {
-      // better-auth's user schema uses `image`; our Volunteer column is `imageURL`
-      image: 'imageURL',
-    },
+    modelName: 'User',
   },
   plugins: [
     emailOTP({

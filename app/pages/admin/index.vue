@@ -1,4 +1,5 @@
 <script setup lang="ts">
+
 import type { AdminFeature } from '~/types/admin/admin-dash.type'
 
 const features: AdminFeature[] = [

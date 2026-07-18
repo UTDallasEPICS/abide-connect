@@ -15,10 +15,10 @@ model Event {
   mobileClinic   MobileClinic? @relation(fields: [mobileClinicId], references: [id])
   mobileClinicId String?
 
-  eventAssets     Event_Asset[]
-  participants    RSVP[]
-  volunteerHours  Volunteer_Hour_Log[]
-  guestRSVPs      GuestRSVP[]
+  eventAssets    Event_Asset[]
+  participants   RSVP[]
+  volunteerHours Volunteer_Hour_Log[]
+  guestRSVPs     GuestRSVP[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -41,8 +41,8 @@ model RSVP {
   event       Event      @relation(fields: [eventId], references: [id])
   eventId     String
   isVolunteer Boolean    @default(false)
-  Volunteer   Volunteer? @relation(fields: [volunteerId], references: [id])
   volunteerId String?
+  volunteer   Volunteer? @relation(fields: [volunteerId], references: [id])
 
   @@id([userId, eventId])
   @@map("rsvps")
