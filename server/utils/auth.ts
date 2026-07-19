@@ -26,6 +26,13 @@ export const auth = betterAuth({
     google: {
       clientId: process.env.OAUTH_CLIENT_ID as string,
       clientSecret: process.env.OAUTH_CLIENT_SECRET as string,
+      // Request calendar write access so events can be pushed to the shared
+      // Abide Google Calendar. `accessType: 'offline'` + `prompt: 'consent'`
+      // ensure Google returns a refresh token, which better-auth stores on the
+      // Account and uses to mint fresh access tokens via getAccessToken().
+      scope: ['https://www.googleapis.com/auth/calendar.events'],
+      accessType: 'offline',
+      prompt: 'consent',
     },
   },
   hooks: {

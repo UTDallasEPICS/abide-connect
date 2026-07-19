@@ -53,7 +53,11 @@ function cancelEdit() {
 }
 
 function formatForInput(isoString: string) {
-  return new Date(isoString).toISOString().slice(0, 16)
+  // datetime-local expects LOCAL wall-clock time, so build it from local
+  // components rather than toISOString() (which is UTC and would show a shifted time).
+  const d = new Date(isoString)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 function onFilesChanged(files: File[]) {

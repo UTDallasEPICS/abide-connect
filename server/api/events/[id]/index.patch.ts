@@ -1,4 +1,5 @@
 import prisma from '#server/utils/prisma'
+import { createCalendarEvent, updateCalendarEvent } from '#server/utils/googleCalendar'
 
 // Geocode location using Nominatim
 async function geocodeLocation(location: string) {
@@ -128,6 +129,36 @@ export default defineEventHandler(async (event) => {
     })
 
     console.log('✅ Event updated:', updatedEvent)
+
+    // Best-effort: keep the shared Google Calendar in sync with the edit. If the
+    // event was never pushed (e.g. created before sync existed, or by a
+    // non-Google user), create it now; otherwise patch the existing entry.
+    const userId = event.context.session?.user?.id
+    if (userId) {
+      const calendarInput = {
+        title: updatedEvent.title,
+        description: updatedEvent.description,
+        location: updatedEvent.location?.address ?? null,
+        startTime: updatedEvent.startTime,
+        endTime: updatedEvent.endTime,
+      }
+
+      const calendarRef = foundEvent.calendarEventId
+        ? await updateCalendarEvent(userId, foundEvent.calendarEventId, calendarInput)
+        : await createCalendarEvent(userId, calendarInput)
+
+      if (calendarRef && calendarRef.id !== foundEvent.calendarEventId) {
+        return await prisma.event.update({
+          where: { id },
+          data: {
+            calendarEventId: calendarRef.id,
+            calendarURL: calendarRef.htmlLink,
+          },
+          include: { eventAssets: true, location: true },
+        })
+      }
+    }
+
     return updatedEvent
   }
   catch (error) {
