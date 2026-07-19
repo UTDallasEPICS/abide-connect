@@ -71,7 +71,7 @@ CREATE UNIQUE INDEX "session_token_key" ON "session"("token");
 CREATE TABLE "new_users" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT,
-    "email" TEXT NOT NULL,
+    "email" TEXT NOT NULL DEFAULT 'DELETE_ME@example.com',
     "phone" TEXT,
     "emailVerified" BOOLEAN NOT NULL DEFAULT false,
     "imageURL" TEXT,
