@@ -6,9 +6,9 @@ import type {
   Ethinicity,
   ApprovalStatus,
   Certification,
+  UserRole,
 } from './generated/prisma/client.ts'
-import { UserRole } from './generated/prisma/client'
-import { PrismaClient } from './generated/prisma/client'
+import { PrismaClient } from './generated/prisma/client.ts'
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
 
 const adapter = new PrismaBetterSqlite3({
@@ -39,6 +39,10 @@ type RawUser = {
   email: string
   phone: string
   imageURL?: string
+  // Optional explicit roles for this user. Defaults to ['USER'] when omitted.
+  // Volunteers get 'VOLUNTEER' added automatically when their volunteer
+  // profile is seeded, so it doesn't need to be listed here.
+  roles?: string[]
   RSVPs: {
     isVolunteer?: boolean
     id: string // eventId
@@ -54,7 +58,7 @@ type RawVolunteer = {
   ethinicity?: string
   languages?: string[]
   availabilities?: string[]
-  certifications: Certification[]
+  certifications: string[]
   hourLogs: {
     event: {
       id: string
@@ -83,6 +87,16 @@ type RawNotification = {
   id: string
   title: string
   content: string
+}
+
+// Ensures a User_Role row exists (active) for the given user/role, without
+// clobbering an existing row on re-run.
+async function upsertUserRole(userId: string, role: UserRole) {
+  await prisma.user_Role.upsert({
+    where: { userId_role: { userId, role } },
+    update: { active: true },
+    create: { userId, role, active: true },
+  })
 }
 
 async function main() {
@@ -146,6 +160,16 @@ async function main() {
       },
     })
     console.log(userResult)
+
+    // Every user gets a USER role by default. Additional roles (e.g. ADMIN)
+    // can be declared per-user in users.json via the optional `roles` field.
+    const roles = new Set<UserRole>(['USER' as UserRole])
+    for (const role of user.roles ?? []) {
+      roles.add(role as UserRole)
+    }
+    for (const role of roles) {
+      await upsertUserRole(userResult.id, role)
+    }
   }
 
   // Seed volunteers
@@ -192,7 +216,7 @@ async function main() {
           : undefined,
         certifications: {
           create: volunteer.certifications.map((cert) => ({
-            certification: cert,
+            certification: cert as Certification,
           })),
         },
         hourLogs: {
@@ -208,43 +232,14 @@ async function main() {
     })
     console.log(volunteerResult)
 
-    //user_roles seeding
-    console.log('Seeding base user roles...')
-    for (const user of rawUsers) {
-      await prisma.user_Role.upsert({
-        where: {
-          userId_role: { userId: user.id, role: 'USER' },
-        },
-        update: {},
-        create: {
-          userId: user.id,
-          role: 'USER',
-          active: true,
-        },
-      })
-    }
-
-    console.log('Seeding user roles...')
-    for (const volunteer of rawVolunteers) {
-      if (!volunteer.userId) continue
-
-      await prisma.user_Role.upsert({
-        where: {
-          userId_role: { userId: volunteer.userId, role: UserRole.VOLUNTEER },
-        },
-        update: {},
-        create: {
-          userId: volunteer.userId,
-          role: UserRole.VOLUNTEER,
-          active: true,
-        },
-      })
-    }
-
-    // Backfill RSVP.volunteerId wherever this user already has isVolunteer=true.
-    // RSVP.isVolunteer is set at user-seed time; volunteerId can only be wired up
-    // now that the Volunteer row exists.
+    // Every seeded volunteer profile implies a VOLUNTEER role on the linked
+    // user account (in addition to their default USER role).
     if (volunteer.userId) {
+      await upsertUserRole(volunteer.userId, 'VOLUNTEER' as UserRole)
+
+      // Backfill RSVP.volunteerId wherever this user already has isVolunteer=true.
+      // RSVP.isVolunteer is set at user-seed time; volunteerId can only be wired up
+      // now that the Volunteer row exists.
       const linked = await prisma.rSVP.updateMany({
         where: { userId: volunteer.userId, isVolunteer: true },
         data: { volunteerId: volunteerResult.id },
