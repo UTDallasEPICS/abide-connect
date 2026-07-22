@@ -129,7 +129,7 @@ function cancel() {
       </UButton>
       <UButton
         :loading="isSubmitting"
-        style="background-color: #A4123F; color: white;"
+        color="brand4"
         @click="submitLog"
       >
         {{ isSubmitting ? 'Submitting...' : 'Submit Hours' }}
