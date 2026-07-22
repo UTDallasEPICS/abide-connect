@@ -2,14 +2,15 @@
 import type { DateValue } from '@internationalized/date'
 import { getLocalTimeZone, today } from '@internationalized/date'
 
-definePageMeta({
-  middleware: 'auth',
-})
-
 const tz = getLocalTimeZone()
 
+// The session data bugs unuless we pass the cookie header to the fetch request
+const headers = useRequestHeaders(['cookie']);
+const volunteer = await useFetch('/api/volunteer/me', { headers }).data.value;
+const user = await useFetch('/api/user/me', { headers }).data.value;
+
+
 const value = ref<DateValue>(today(tz))
-const volunteer = await $fetch('/api/volunteer/me')
 const isDateDisabled = (d: DateValue) =>
   d.toDate(tz) < new Date(new Date().setHours(0, 0, 0, 0))
 
@@ -31,7 +32,8 @@ interface HourLog {
   comment?: string
 }
 
-const { logs } = await $fetch<{ logs: HourLog[] }>('/api/volunteer/logs')
+
+const { logs } = await $fetch<{ logs: HourLog[] }>('/api/volunteer/logs', { headers })
 const logsRef = ref<HourLog[]>(logs)
 
 const approvedLogs = computed(() => logsRef.value.filter(l => l.approvalStatus === 'APPROVED'))
@@ -50,7 +52,7 @@ const showLogModal = ref(false)
     <main class="flex-1 px-4 pt-24 pb-24">
       <div class="max-w-4xl mx-auto space-y-6">
         <h2 class="text-center text-2xl font-bold text-brand4 dark:text-teal-400">
-          Welcome back, {{ volunteer?.name }}
+          Welcome back, {{ user?.name}}
         </h2>
         <!-- Calendar Card -->
         <UCard>

@@ -21,10 +21,6 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
       name: payload.data.name,
       email: payload.data.email,
       phone: payload.data.phone,
-      languages: payload.data.languages,
-      gender: payload.data.gender,
-      ethinicity: payload.data.ethinicity,
-      availability: payload.data.availability,
     }))
     await navigateTo('/auth/sign-up-verify')
   }
@@ -42,20 +38,20 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
   <div class="flex flex-col items-center justify-center p-8 my-8 ">
     <UAuthForm
       class="w-full max-w-md"
-      :schema="signUpSchema"
       :fields="signUpFields"
       :providers="authProviders"
+      :schema="signUpSchema"
       title="Let's get you started to be a Volunteer!"
       icon="i-lucide-user"
       :separator="{
         icon: 'i-lucide-mail',
       }"
       :submit="{ label: 'Sign up', block: true, color: 'neutral' }"
-
       @submit="onSubmit"
+      @error="console.log('Sign up form error:', $event)"
     >
       <template #description>
-        Already a Volunteer? <ULink
+        Already have an account? <ULink
           to="/auth/login"
           class="text-primary font-medium"
         >Log In</ULink>.
