@@ -29,6 +29,7 @@ type Event = {
   id: string
   title: string
   startTime: string
+  isTraining?: boolean
   location: {
     id: string
     address: string
@@ -43,6 +44,19 @@ type Event = {
 
 const { data: eventsData } = await useFetch<Event[]>('/api/events', {
   default: () => [],
+})
+
+// Training events are a special class only shown to pending volunteers.
+const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+const { data: myVolunteer } = await useFetch<{ approvalStatus?: string } | null>(
+  '/api/volunteer/me',
+  { headers, default: () => null },
+)
+// Unapproved volunteers (pending or previously rejected) can attend training.
+// A rejection is not a ban — they can retry.
+const showTraining = computed(() => {
+  const status = myVolunteer.value?.approvalStatus
+  return status === 'PENDING' || status === 'REJECTED'
 })
 
 const slides = ref([
@@ -87,27 +101,36 @@ const imageAPI = (url: string | undefined) => {
   return url ? `/api/events/${url}` : undefined
 }
 
-const events = computed(() =>
+const toTile = (e: Event) => ({
+  id: e.id,
+  title: e.title,
+  date: new Date(e.startTime).toLocaleDateString('en-US', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric',
+  }),
+  location: e.location,
+  image: imageAPI(e.eventAssets?.[0]?.imageUrl) ?? '/images/image1.jpeg',
+})
+
+const upcoming = computed(() =>
   (eventsData.value || [])
     .filter(e => new Date(e.startTime).getTime() >= Date.now())
     .sort(
       (a, b) =>
         new Date(a.startTime).getTime()
           - new Date(b.startTime).getTime(),
-    )
-    .slice(0, 6)
-    .map(e => ({
-      id: e.id,
-      title: e.title,
-      date: new Date(e.startTime).toLocaleDateString('en-US', {
-        month: 'short',
-        day: '2-digit',
-        year: 'numeric',
-      }),
-      location: e.location,
-      image:
-                imageAPI(e.eventAssets?.[0]?.imageUrl) ?? '/images/image1.jpeg',
-    })),
+    ),
+)
+
+// Regular events exclude the training class.
+const events = computed(() =>
+  upcoming.value.filter(e => !e.isTraining).slice(0, 6).map(toTile),
+)
+
+// Training events, only surfaced to pending volunteers.
+const trainingEvents = computed(() =>
+  upcoming.value.filter(e => e.isTraining).map(toTile),
 )
 
 const handleEventClick = (event: Event) => {
@@ -238,6 +261,56 @@ const handleEventClick = (event: Event) => {
           </div>
         </div>
       </div>
+      <!-- Volunteer Training (pending volunteers only) -->
+      <div
+        v-if="showTraining && trainingEvents.length > 0"
+        class="px-2 pb-4 pl-4 pt-4 w-full relative"
+      >
+        <h3 class="text-2xl font-semibold text-brand7 mb-1">
+          VOLUNTEER TRAINING
+        </h3>
+        <p class="text-xs text-gray-500 mb-4">
+          Attend a training session to become an approved volunteer.
+        </p>
+        <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+          <div
+            v-for="event in trainingEvents"
+            :key="event.id"
+            class="shrink-0 w-40 rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer border border-brand7/30"
+            @click="navigateTo(`/events/${event.id}`)"
+          >
+            <div class="h-35 relative overflow-hidden">
+              <img
+                :src="event.image"
+                class="w-full h-full object-cover"
+              >
+              <span class="absolute top-2 left-2 text-[10px] font-semibold bg-brand7 text-white px-2 py-0.5 rounded-full">
+                Training
+              </span>
+            </div>
+            <div class="p-2">
+              <h4 class="text-sm font-semibold text-brand7 mb-1.5">
+                {{ event.title }}
+              </h4>
+              <div class="flex items-center text-gray-600 text-[12px]">
+                <UIcon
+                  name="i-lucide-calendar"
+                  class="w-4 h-4 mr-2 text-brand7"
+                />
+                <span>{{ event.date }}</span>
+              </div>
+              <div class="flex items-start text-gray-600 text-[10px] mt-1">
+                <UIcon
+                  name="i-lucide-map-pin"
+                  class="w-3 h-3 mr-2 ml-0.5 mt-0.5 text-brand7 shrink-0"
+                />
+                <span class="leading-tight">{{ event.location.address }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Volunteer Sign Up -->
       <div
         class="bg-rose-800 text-center py-4 px-4 relative overflow-hidden items-center justify-center min-h-[100px]"

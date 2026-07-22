@@ -10,6 +10,7 @@ model Event {
   calendarURL     String?
   allowVolunteers Boolean
   allowAttendees  Boolean
+  isTraining      Boolean @default(false)
   logsGenerated   Boolean @default(false)
 
   mobileClinic   MobileClinic? @relation(fields: [mobileClinicId], references: [id])

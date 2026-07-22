@@ -22,6 +22,20 @@ const editForm = ref<any>({})
 
 const admin = true
 
+// Real role / volunteer-status detection for training approvals and the
+// volunteer sign-up gate (independent of the placeholder `admin` above).
+const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+const { data: roles } = await useFetch<string[]>('/api/user/roles', {
+  headers,
+  default: () => [],
+})
+const { data: myVolunteer } = await useFetch<{ approvalStatus?: string } | null>(
+  '/api/volunteer/me',
+  { headers, default: () => null },
+)
+const isAdmin = computed(() => roles.value?.includes('admin') ?? false)
+const isApprovedVolunteer = computed(() => myVolunteer.value?.approvalStatus === 'APPROVED')
+
 const showRsvpModal = ref(false)
 const rsvpIsVolunteer = ref(false)
 const rsvpStatsRef = ref<any>(null)
@@ -73,6 +87,7 @@ async function saveChanges() {
         endTime: new Date(editForm.value.endTime).toISOString(),
         allowVolunteers: editForm.value.allowVolunteers,
         allowAttendees: editForm.value.allowAttendees,
+        isTraining: editForm.value.isTraining,
       },
     })
 
@@ -467,6 +482,29 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
             <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
               <div class="flex items-center gap-3">
                 <UIcon
+                  name="i-lucide-graduation-cap"
+                  class="w-5 h-5 text-brand4 dark:text-brand8"
+                />
+                <div>
+                  <p class="font-medium text-gray-900 dark:text-white">
+                    Volunteer Training Event
+                  </p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    Only shown to pending volunteers; staff approve attendees here.
+                  </p>
+                </div>
+              </div>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <UCheckbox
+                  v-model="editForm.isTraining"
+                  :color="brandColor"
+                />
+              </label>
+            </div>
+
+            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+              <div class="flex items-center gap-3">
+                <UIcon
                   name="i-lucide-ticket"
                   class="w-5 h-5 text-brand4 dark:text-brand8"
                 />
@@ -502,6 +540,12 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
           </div>
         </div>
 
+        <!-- Training approvals (staff only, training events) -->
+        <EventTrainingApprovals
+          v-if="event.isTraining && isAdmin && !isEditMode"
+          :event-id="eventId"
+        />
+
         <!-- RSVP Stats -->
         <EventRSVPStats
           v-if="admin && !isEditMode"
@@ -516,7 +560,7 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
           class="flex gap-4"
         >
           <UButton
-            v-if="event.allowVolunteers"
+            v-if="event.allowVolunteers && isApprovedVolunteer"
             :color="brandColor"
             size="xl"
             block

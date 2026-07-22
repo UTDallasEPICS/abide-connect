@@ -89,6 +89,7 @@ export default defineEventHandler(async (event) => {
         endTime: new Date(body.endTime),
         allowVolunteers: body.allowVolunteers || false,
         allowAttendees: body.allowAttendees || false,
+        isTraining: body.isTraining || false,
       },
       include: {
         eventAssets: true,

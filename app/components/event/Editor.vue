@@ -124,6 +124,10 @@ function deleteEvent() {
         <UCheckbox v-model="editedEvent.allowAttendees" />
         <span class="text-sm font-medium text-gray-700">Allow Attendees</span>
       </label>
+      <label class="flex items-center gap-2 cursor-pointer">
+        <UCheckbox v-model="editedEvent.isTraining" />
+        <span class="text-sm font-medium text-gray-700">Volunteer Training Event</span>
+      </label>
     </div>
 
     <UFormGroup label="Event Images">

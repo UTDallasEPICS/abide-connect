@@ -9,9 +9,34 @@ const selectedDate = ref<any>(today(tz))
 // Load all events from API
 const { data: allEvents } = await useFetch('/api/events')
 
+// Training events are a special class only shown to pending volunteers.
+const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+const { data: myVolunteer } = await useFetch<{ approvalStatus?: string } | null>(
+  '/api/volunteer/me',
+  { headers, default: () => null },
+)
+// Unapproved volunteers (pending or previously rejected) can attend training.
+// A rejection is not a ban — they can retry.
+const showTraining = computed(() => {
+  const status = myVolunteer.value?.approvalStatus
+  return status === 'PENDING' || status === 'REJECTED'
+})
+
+// Regular event lists exclude the training class.
+const nonTrainingEvents = computed(() =>
+  (allEvents.value || []).filter(event => !event.isTraining),
+)
+
+const trainingEvents = computed(() => {
+  const now = new Date()
+  return (allEvents.value || [])
+    .filter(event => event.isTraining && new Date(event.endTime) >= now)
+    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+})
+
 const upcomingEvents = computed(() => {
   const now = new Date()
-  return (allEvents.value || []).filter(event => new Date(event.endTime) >= now)
+  return nonTrainingEvents.value.filter(event => new Date(event.endTime) >= now)
 })
 
 // Dates that have events — used to highlight calendar
@@ -25,7 +50,7 @@ const eventDates = computed(() => {
 // Events on the selected calendar date
 const eventsOnSelectedDate = computed(() => {
   if (!selectedDate.value) return upcomingEvents.value
-  return (allEvents.value || []).filter((event) => {
+  return nonTrainingEvents.value.filter((event) => {
     const d = new Date(event.startTime)
     const cal = new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate())
     return cal.compare(selectedDate.value) === 0
@@ -129,6 +154,30 @@ function goToEvent(id: string) {
           class="rounded-2xl"
         />
       </UCard>
+
+      <!-- Volunteer Training (pending volunteers only) -->
+      <div
+        v-if="showTraining && trainingEvents.length > 0"
+        class="mb-8"
+      >
+        <h3 class="text-lg font-semibold text-brand7 mb-1">
+          Volunteer Training
+        </h3>
+        <p class="text-xs text-gray-500 mb-4">
+          Attend a training session to become an approved volunteer.
+        </p>
+        <div class="space-y-4">
+          <EventTile
+            v-for="event in trainingEvents"
+            :key="event.id"
+            :title="event.title"
+            :subtitle="getEventSubtitle(event)"
+            :image-url="getEventImage(event)"
+            @click="goToEvent(event.id)"
+            @add="goToEvent(event.id)"
+          />
+        </div>
+      </div>
 
       <h3 class="text-lg font-semibold text-brand4 mb-4 dark:text-teal-400">
         {{ eventsOnSelectedDate.length > 0 ? 'Events on this day' : 'Upcoming Events' }}

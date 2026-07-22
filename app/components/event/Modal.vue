@@ -15,6 +15,7 @@ const newEvent = ref({
   endTime: '',
   allowVolunteers: false,
   allowAttendees: false,
+  isTraining: false,
   mobileClinicId: null,
   eventAssets: [],
 })
@@ -54,6 +55,7 @@ async function saveEvent() {
         endTime: new Date(newEvent.value.endTime).toISOString(),
         allowVolunteers: newEvent.value.allowVolunteers,
         allowAttendees: newEvent.value.allowAttendees,
+        isTraining: newEvent.value.isTraining,
         mobileClinicId: newEvent.value.mobileClinicId,
       },
     })
@@ -97,6 +99,7 @@ async function saveEvent() {
       endTime: '',
       allowVolunteers: false,
       allowAttendees: false,
+      isTraining: false,
       mobileClinicId: null,
       eventAssets: [],
     }
@@ -199,6 +202,10 @@ function cancel() {
         <label class="flex items-center gap-2 cursor-pointer">
           <UCheckbox v-model="newEvent.allowAttendees" />
           <span class="text-sm font-medium text-gray-700 dark:text-gray-200">Allow Attendees to Register</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <UCheckbox v-model="newEvent.isTraining" />
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-200">Volunteer Training Event</span>
         </label>
       </div>
 
