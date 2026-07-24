@@ -6,7 +6,7 @@
         "ethinicity": "ASIAN",
         "languages": ["ENGLISH", "FRENCH"],
         "availabilities": ["WEEKDAY_MORNING", "WEEKEND_AFTERNOON"],
-        "certifications": ["CPR", "First Aid"],
+        "certifications": ["DOULA_CERTIFICATION", "CHILDBIRTH_EDUCATOR"],
         "hourLogs": [
             {
                 "event": { "id": "pastEvent1" },
