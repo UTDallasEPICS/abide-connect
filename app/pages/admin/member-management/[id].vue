@@ -6,6 +6,8 @@ import SectionButton from '~/components/buttons/SectionButton.vue';
 import RoleModal from '~/components/modals/RoleModal.vue';
 import ConfirmModal from '~/components/modals/ConfirmModal.vue';
 
+import type { UserData } from "~/types/user/user-data";
+
 definePageMeta({
   layout: 'secondary',
   backText: 'Management'
@@ -21,65 +23,34 @@ const sections: { key: Section; label: string }[] = [
 
 const activeSection = ref<Section>('GENERAL');
 
-interface UserData {
-  id: string;
-  name: string;
-  email: string;
-  phoneNumber: string;
-  imageUrl?: string;
-  createdAt: Date;
-  roles: string[];
-  volunteer?: {
-    gender?: string;
-    ethnicity?: string;
-    languages: string[];
-    availabilities?: string;
-    volunteerAreas?: string;
-    certifications?: string;
-    otherVolunteerArea?: string;
-    otherCertification?: string;
-  };
-  emergencyContactName1?: string;
-  emergencyContactPhone1?: string;
-  emergencyContactName2?: string;
-  emergencyContactPhone2?: string;
+const route = useRoute();
+const userId = route.params.id as string;
+
+// Manually forward the cookie header so the server route sees the session on SSR requests
+const headers = useRequestHeaders(['cookie']);
+
+const { data: userData, error, refresh } = await useFetch<UserData>( `/api/user/${userId}`, { headers });
+
+if (error.value) {
+  throw createError({
+    statusCode: error.value.statusCode ?? 500,
+    statusMessage: error.value.statusMessage ?? 'Failed to load user',
+  });
 }
 
-const userData: UserData = reactive({
-  id: 'usr_12345',
-  name: 'John Doe',
-  email: 'john.doe@gmail.com',
-  phoneNumber: '213-555-1234',
-  imageUrl: undefined,
-  createdAt: new Date('2024-03-12'),
-  roles: ['User', 'Volunteer'],
-  volunteer: {
-    gender: 'Male',
-    ethnicity: 'Asian',
-    languages: ['English', 'Spanish'],
-    availabilities: 'Weekends',
-    volunteerAreas: 'Food Bank, Tutoring',
-    certifications: 'CPR, First Aid',
-    otherVolunteerArea: '-',
-    otherCertification: '-',
-  },
-  emergencyContactName1: 'Jane Doe',
-  emergencyContactPhone1: '213-555-5678',
-  emergencyContactName2: '-',
-  emergencyContactPhone2: '-',
-});
-
-const formattedCreatedAt = computed(() =>
-  userData.createdAt.toLocaleDateString('en-US', {
+const formattedCreatedAt = computed(() => {
+  if (!userData.value) return '';
+  return new Date(userData.value.createdAt).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-  })
-);
+  });
+});
 
 const allRoles = ['User', 'Volunteer', 'Admin', 'Staff'];
+
 const rolesAvailableToAdd = computed(() =>
-  allRoles.filter((role) => !userData.roles.includes(role))
+  allRoles.filter((role) => !userData.value?.roles.includes(role))
 );
 
 const isAddRoleModalOpen = ref(false);
@@ -87,20 +58,29 @@ const isRemoveRoleModalOpen = ref(false);
 const isDeleteModalOpen = ref(false);
 
 function handleAddRole(role: string) {
-  if (!userData.roles.includes(role)) userData.roles.push(role);
+  if (userData.value && !userData.value.roles.includes(role)) {
+    userData.value.roles.push(role);
+  }
 }
 
 function handleRemoveRole(role: string) {
-  userData.roles = userData.roles.filter((r) => r !== role);
+  if (userData.value) {
+    userData.value.roles = userData.value.roles.filter((r) => r !== role);
+  }
 }
 
 function handleDelete() {
   // TODO: call delete API
 }
+
+
 </script>
 
 <template>
-  <div class="w-full max-w-(--ui-container) mx-auto mt-19 min-h-[calc(100vh-4.75rem)] flex flex-col">
+  <div
+    v-if="userData"
+    class="w-full max-w-(--ui-container) mx-auto mt-19 min-h-[calc(100vh-4.75rem)] flex flex-col"
+  >
     <div class="mx-10">
       <!-- User Name and Pfp -->
       <div class="flex gap-4">
@@ -163,11 +143,11 @@ function handleDelete() {
           <DetailField label="User ID" :value="userData.id" />
         </DetailSection>
 
-        <DetailSection title="Emergency Contact">
-          <DetailField label="Emergency Contact Name 1" :value="userData.emergencyContactName1" />
-          <DetailField label="Emergency Contact Phone 1" :value="userData.emergencyContactPhone1" />
-          <DetailField label="Emergency Contact Name 2" :value="userData.emergencyContactName2" />
-          <DetailField label="Emergency Contact Phone 2" :value="userData.emergencyContactPhone2" />
+        <DetailSection v-if="userData.emergencyContact" title="Emergency Contact">
+          <DetailField label="Emergency Contact Name 1" :value="userData.emergencyContact.emergencyContactName1" />
+          <DetailField label="Emergency Contact Phone 1" :value="userData.emergencyContact.emergencyContactPhone1" />
+          <DetailField label="Emergency Contact Name 2" :value="userData.emergencyContact.emergencyContactName2" />
+          <DetailField label="Emergency Contact Phone 2" :value="userData.emergencyContact.emergencyContactPhone2" />
         </DetailSection>
 
         <DetailSection v-if="userData.volunteer" title="Volunteer Data">
