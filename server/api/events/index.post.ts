@@ -1,4 +1,5 @@
 import prisma from '#server/utils/prisma'
+import { createCalendarEvent } from '#server/utils/googleCalendar'
 import { requireRole } from '#server/utils/requireRole'
 import { eventTypeFromFlags, eventTypeToFlags, isEventType } from '#shared/utils/eventType'
 
@@ -115,6 +116,32 @@ export default defineEventHandler(async (event) => {
     })
 
     console.log('✅ Event created:', newEvent)
+
+    // Best-effort: push the new event to the shared Google Calendar using the
+    // creating volunteer's OAuth session. Failures never block event creation.
+    const userId = event.context.session?.user?.id
+    if (userId) {
+      const calendarRef = await createCalendarEvent(userId, {
+        title: newEvent.title,
+        description: newEvent.description,
+        location: body.location || null,
+        startTime: newEvent.startTime,
+        endTime: newEvent.endTime,
+      })
+
+      if (calendarRef) {
+        const synced = await prisma.event.update({
+          where: { id: newEvent.id },
+          data: {
+            calendarEventId: calendarRef.id,
+            calendarURL: calendarRef.htmlLink,
+          },
+          include: { eventAssets: true },
+        })
+        setResponseStatus(event, 201)
+        return synced
+      }
+    }
 
     setResponseStatus(event, 201)
     return newEvent
