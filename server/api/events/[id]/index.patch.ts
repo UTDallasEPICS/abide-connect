@@ -1,4 +1,5 @@
 import prisma from '#server/utils/prisma'
+import { requireRole } from '#server/utils/requireRole'
 import { eventTypeToFlags, isEventType } from '#shared/utils/eventType'
 
 // Geocode location using Nominatim
@@ -40,6 +41,9 @@ async function geocodeLocation(location: string) {
 }
 
 export default defineEventHandler(async (event) => {
+  // Editing events is staff-only.
+  await requireRole(event, 'admin')
+
   const id = getRouterParam(event, 'id')
   const body = await readBody(event)
   console.log(body)

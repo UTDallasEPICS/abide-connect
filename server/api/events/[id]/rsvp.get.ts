@@ -1,6 +1,10 @@
 import prisma from '#server/utils/prisma'
+import { requireRole } from '#server/utils/requireRole'
 
 export default defineEventHandler(async (event) => {
+  // Sign-up lists carry names and emails, so they're staff-only.
+  await requireRole(event, 'admin')
+
   const id = getRouterParam(event, 'id')
 
   if (!id) {

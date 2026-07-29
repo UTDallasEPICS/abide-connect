@@ -28,10 +28,6 @@ if (error.value) {
 const isEditMode = ref(false)
 const editForm = ref<any>({})
 
-const admin = true
-
-// Real role / volunteer-status detection for training approvals and the
-// volunteer sign-up gate (independent of the placeholder `admin` above).
 const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
 const { data: roles } = await useFetch<string[]>('/api/user/roles', {
   headers,
@@ -49,6 +45,9 @@ const viewer = computed<EventViewer>(() => ({
 }))
 
 const eventType = computed(() => eventTypeFromFlags(event.value ?? {}))
+const hasEnded = computed(() =>
+  !!event.value?.endTime && new Date(event.value.endTime) < new Date(),
+)
 // Volunteering needs a volunteer profile, but no staff approval — one tap and
 // you're on the list.
 const canVolunteer = computed(() => canSignUpAsVolunteer(eventType.value, viewer.value))
@@ -209,7 +208,7 @@ const center = computed(() => {
 })
 const zoom = 15
 
-const backNavigate = computed(() => admin ? '/events/manage' : '/events')
+const backNavigate = computed(() => isAdmin.value ? '/events/manage' : '/events')
 
 const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
 </script>
@@ -268,7 +267,7 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
           />
 
           <div
-            v-if="admin"
+            v-if="isAdmin"
             class="flex gap-2"
           >
             <UButton
@@ -478,7 +477,7 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
 
         <!-- Event Settings (admin edit mode) -->
         <div
-          v-if="admin && isEditMode"
+          v-if="isAdmin && isEditMode"
           class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 mb-6 border border-transparent dark:border-gray-700"
         >
           <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
@@ -529,18 +528,31 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
           </div>
         </div>
 
-        <!-- Training approvals (staff only, training events) -->
+        <!-- Training approvals (staff only, once the training has finished) -->
         <EventTrainingApprovals
-          v-if="event.isTraining && isAdmin && !isEditMode"
+          v-if="event.isTraining && isAdmin && !isEditMode && hasEnded"
           :event-id="eventId"
         />
+        <div
+          v-else-if="event.isTraining && isAdmin && !isEditMode"
+          class="dark:bg-gray-800 rounded-2xl shadow-md p-6 mb-6 border border-transparent dark:border-gray-700 flex items-center gap-3"
+        >
+          <UIcon
+            name="i-lucide-clock"
+            class="w-5 h-5 text-brand4 dark:text-brand8 shrink-0"
+          />
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Volunteer approvals open once this training has finished, so you can
+            approve the people who actually attended.
+          </p>
+        </div>
 
         <!-- RSVP Stats -->
         <EventRSVPStats
-          v-if="admin && !isEditMode"
+          v-if="isAdmin && !isEditMode"
           ref="rsvpStatsRef"
           :event-id="eventId"
-          :admin="admin"
+          :admin="isAdmin"
         />
 
         <!-- Action Buttons -->
