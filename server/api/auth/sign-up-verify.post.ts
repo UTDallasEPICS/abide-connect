@@ -24,10 +24,6 @@ export default defineEventHandler(async (event) => {
       name,
       email,
       phone,
-      languages = [],
-      gender,
-      ethinicity,
-      availability = [],
     } = await readBody(event)
 
     // Validate OTP exists and hasn't expired before creating the account.
@@ -45,34 +41,22 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: 'Invalid or expired code' })
     }
 
-    const selectedLanguages = languages as Language[]
-    const selectedAvailability = availability as Availability[]
 
     await prisma.$transaction(async (tx) => {
       const createdUser = await tx.user.create({
         data: {
           name: name as string | undefined,
-          contactEmail: email as string,
+          email: email as string,
           phone: phone as string | undefined,
+          roles: {
+            create: {
+              role: 'USER',
+              active: true,
+            },
+          },
         },
       })
 
-      await tx.volunteer.create({
-        data: {
-          email: email as string,
-          name: name as string | undefined,
-          phone: phone as string | undefined,
-          gender: gender.id,
-          ethinicity: ethinicity.id,
-          userId: createdUser.id,
-          languages: {
-            create: selectedLanguages.map(language => ({ language })),
-          },
-          availabilities: {
-            create: selectedAvailability.map(time => ({ availability: time })),
-          },
-        },
-      })
     })
 
     // OTP still in Verification table — signInEmailOTP validates it and creates

@@ -24,7 +24,12 @@ const props = defineProps<{
   admin: boolean
 }>()
 
-const { data: rsvpData, refresh } = await useFetch<RSVPData>(`/api/events/${props.eventId}/rsvp`)
+// Admin-only endpoint, so the session cookie has to ride along on SSR.
+const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+const { data: rsvpData, refresh } = await useFetch<RSVPData>(
+  `/api/events/${props.eventId}/rsvp`,
+  { headers },
+)
 
 const showVolunteers = ref(false)
 const showAttendees = ref(false)

@@ -1,1 +1,14 @@
-export default defineAppConfig({})
+export default defineAppConfig({
+  ui: {
+    formField: {
+      slots: {
+        description: 'text-xs font-normal text-gray-500',
+      }
+    },
+    checkbox: {
+      slots: {
+        description: 'text-xs font-normal text-gray-500',
+      }
+    }
+  }
+})

@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue'
+import { eventTypeFromFlags } from '#shared/utils/eventType'
 
 const props = defineProps({
   event: {
@@ -14,16 +15,11 @@ const editedEvent = ref<any>({})
 const filesToUpload = ref<File[]>([])
 // Build asset list for the uploader from the real event assets
 const eventAssets = ref<{ imageUrl: string, isPreview?: boolean, fileName?: string }[]>([])
-const editedEvent = ref({
-  name: '',
-  date: '',
-  location: '',
-  image: '',
-})
 
 watch(() => props.event, (newEvent) => {
   if (newEvent) {
-    editedEvent.value = { ...newEvent }
+    // The stored audience booleans become one exclusive event type.
+    editedEvent.value = { ...newEvent, eventType: eventTypeFromFlags(newEvent) }
     // Map existing server assets to uploader format
     // imageUrl in DB is just the fileName (after the upload fix)
     eventAssets.value = (newEvent.eventAssets || []).map((a: any) => ({
@@ -115,16 +111,7 @@ function deleteEvent() {
       </UFormGroup>
     </div>
 
-    <div class="space-y-2">
-      <label class="flex items-center gap-2 cursor-pointer">
-        <UCheckbox v-model="editedEvent.allowVolunteers" />
-        <span class="text-sm font-medium text-gray-700">Allow Volunteers</span>
-      </label>
-      <label class="flex items-center gap-2 cursor-pointer">
-        <UCheckbox v-model="editedEvent.allowAttendees" />
-        <span class="text-sm font-medium text-gray-700">Allow Attendees</span>
-      </label>
-    </div>
+    <EventTypeSelector v-model="editedEvent.eventType" />
 
     <UFormGroup label="Event Images">
       <EventImageUpload

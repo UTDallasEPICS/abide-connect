@@ -1,5 +1,7 @@
 import prisma from '#server/utils/prisma'
 import { createCalendarEvent, updateCalendarEvent } from '#server/utils/googleCalendar'
+import { requireRole } from '#server/utils/requireRole'
+import { eventTypeToFlags, isEventType } from '#shared/utils/eventType'
 
 // Geocode location using Nominatim
 async function geocodeLocation(location: string) {
@@ -40,6 +42,9 @@ async function geocodeLocation(location: string) {
 }
 
 export default defineEventHandler(async (event) => {
+  // Editing events is staff-only.
+  await requireRole(event, 'admin')
+
   const id = getRouterParam(event, 'id')
   const body = await readBody(event)
   console.log(body)
@@ -107,11 +112,19 @@ export default defineEventHandler(async (event) => {
       }
     }
 
+    // `location` and `mobileClinic` are relations handled separately below,
+    // and `eventType` is the client-facing name for the audience booleans —
+    // none of them can be passed straight through to Prisma.
+    const { eventType, location: _location, mobileClinic: _mobileClinic, ...eventFields } = body
+
+    const audience = isEventType(eventType) ? eventTypeToFlags(eventType) : {}
+
     // Update the event
     const updatedEvent = await prisma.event.update({
       where: { id },
       data: {
-        ...body,
+        ...eventFields,
+        ...audience,
         location: {
           connectOrCreate: {
             where: {
