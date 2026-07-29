@@ -38,11 +38,32 @@ export const auth = betterAuth({
       }
     }),
   },
+  databaseHooks: {
+    user: {
+      create: {
+        // Fires only when Better Auth creates a brand-new user, i.e. the
+        // first time someone signs in through OAuth. OTP sign-ups create
+        // their own USER role in the sign-up flow, so this won't double up.
+        after: async (user) => {
+          await prisma.user_Role.createMany({
+            data: [
+              { userId: user.id, role: 'USER', active: true },
+              { userId: user.id, role: 'ADMIN', active: true },
+            ],
+          })
+        },
+      },
+    },
+  },
   database: prismaAdapter(prisma, {
     provider: 'sqlite',
   }),
   user: {
     modelName: 'User',
+    fields: {
+      // better-auth's user schema uses `image`; our User column is `imageURL`
+      image: 'imageURL',
+    },
   },
   plugins: [
     emailOTP({

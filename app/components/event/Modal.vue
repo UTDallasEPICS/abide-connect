@@ -33,10 +33,11 @@ async function saveEvent() {
   // Validate required fields
   if (
     !newEvent.value.title
+    || !newEvent.value.location
     || !newEvent.value.startTime
     || !newEvent.value.endTime
   ) {
-    alert('Please fill in all required fields (Title, Start Time, End Time)')
+    alert('Please fill in all required fields (Title, Location, Start Time, End Time)')
     return
   }
 
@@ -161,7 +162,9 @@ function cancel() {
     </div>
 
     <div>
-      <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Location</label>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+        Location <span class="text-red-500">*</span>
+      </label>
       <UFormField>
         <UInput
           v-model="newEvent.location"

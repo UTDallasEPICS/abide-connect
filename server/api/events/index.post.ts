@@ -49,10 +49,19 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // Location is a required relation, so an address is required to create an event.
+  // Prisma throws on a null unique lookup, so bail out before querying.
+  if (!body.location) {
+    throw createError({
+      statusCode: 400,
+      message: 'Missing required field: location',
+    })
+  }
+
   // check if location has already been fetched
   const locationData = await prisma.location.findUnique({
     where: {
-      address: body.location || null,
+      address: body.location,
     },
     select: {
       latitude: true,
@@ -80,9 +89,9 @@ export default defineEventHandler(async (event) => {
         location: {
           connectOrCreate: {
             where: {
-              address: body.location || null,
+              address: body.location,
             },
-            create: locationData!,
+            create: locationData,
           },
         },
         startTime: new Date(body.startTime),
