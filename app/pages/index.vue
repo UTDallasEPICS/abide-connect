@@ -46,18 +46,8 @@ const { data: eventsData } = await useFetch<Event[]>('/api/events', {
   default: () => [],
 })
 
-// Training events are a special class only shown to pending volunteers.
-const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
-const { data: myVolunteer } = await useFetch<{ approvalStatus?: string } | null>(
-  '/api/volunteer/me',
-  { headers, default: () => null },
-)
-// Unapproved volunteers (pending or previously rejected) can attend training.
-// A rejection is not a ban — they can retry.
-const showTraining = computed(() => {
-  const status = myVolunteer.value?.approvalStatus
-  return status === 'PENDING' || status === 'REJECTED'
-})
+// `/api/events` already hides volunteer-only and training events from anyone
+// who shouldn't see them, so whatever arrives here is safe to display.
 
 const slides = ref([
   { id: 1, src: '/images/image1.jpeg', alt: 'Slide 1' },
@@ -263,7 +253,7 @@ const handleEventClick = (event: Event) => {
       </div>
       <!-- Volunteer Training (pending volunteers only) -->
       <div
-        v-if="showTraining && trainingEvents.length > 0"
+        v-if="trainingEvents.length > 0"
         class="px-2 pb-4 pl-4 pt-4 w-full relative"
       >
         <h3 class="text-2xl font-semibold text-brand7 mb-1">

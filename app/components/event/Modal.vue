@@ -1,24 +1,25 @@
 <script setup lang="ts">
 import { useColorMode } from '#imports'
+import type { EventType } from '#shared/utils/eventType'
 
 const colorMode = useColorMode()
 const isDark = computed(() => colorMode.value === 'dark')
 
 const emit = defineEmits(['save', 'close'])
 
-const newEvent = ref({
+const emptyEvent = () => ({
   title: '',
   shortDesc: '',
   description: '',
   location: '',
   startTime: '',
   endTime: '',
-  allowVolunteers: false,
-  allowAttendees: false,
-  isTraining: false,
+  eventType: 'VOLUNTEERS_AND_ATTENDEES' as EventType,
   mobileClinicId: null,
   eventAssets: [],
 })
+
+const newEvent = ref(emptyEvent())
 
 const isSaving = ref(false)
 
@@ -54,9 +55,7 @@ async function saveEvent() {
         location: newEvent.value.location,
         startTime: new Date(newEvent.value.startTime).toISOString(),
         endTime: new Date(newEvent.value.endTime).toISOString(),
-        allowVolunteers: newEvent.value.allowVolunteers,
-        allowAttendees: newEvent.value.allowAttendees,
-        isTraining: newEvent.value.isTraining,
+        eventType: newEvent.value.eventType,
         mobileClinicId: newEvent.value.mobileClinicId,
       },
     })
@@ -91,19 +90,7 @@ async function saveEvent() {
     emit('save', completeEvent)
 
     // Step 5: Reset form
-    newEvent.value = {
-      title: '',
-      shortDesc: '',
-      description: '',
-      location: '',
-      startTime: '',
-      endTime: '',
-      allowVolunteers: false,
-      allowAttendees: false,
-      isTraining: false,
-      mobileClinicId: null,
-      eventAssets: [],
-    }
+    newEvent.value = emptyEvent()
     filesToUpload.value = []
 
     console.log('✅ Event saved successfully and form reset')
@@ -197,20 +184,11 @@ function cancel() {
         </UFormField>
       </div>
 
-      <div class="space-y-2">
-        <label class="flex items-center gap-2 cursor-pointer">
-          <UCheckbox v-model="newEvent.allowVolunteers" />
-          <span class="text-sm font-medium text-gray-700 dark:text-gray-200">Allow Volunteers</span>
-        </label>
-        <label class="flex items-center gap-2 cursor-pointer">
-          <UCheckbox v-model="newEvent.allowAttendees" />
-          <span class="text-sm font-medium text-gray-700 dark:text-gray-200">Allow Attendees to Register</span>
-        </label>
-        <label class="flex items-center gap-2 cursor-pointer">
-          <UCheckbox v-model="newEvent.isTraining" />
-          <span class="text-sm font-medium text-gray-700 dark:text-gray-200">Volunteer Training Event</span>
-        </label>
-      </div>
+      <EventTypeSelector
+        v-model="newEvent.eventType"
+        class="mt-4"
+        :color="isDark ? 'brand5' : 'primary'"
+      />
 
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Event Images</label>

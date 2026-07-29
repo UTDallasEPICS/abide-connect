@@ -1,4 +1,5 @@
 import prisma from '#server/utils/prisma'
+import { eventTypeFromFlags, eventTypeToFlags, isEventType } from '#shared/utils/eventType'
 
 // Geocode location using Nominatim
 async function geocodeLocation(location: string) {
@@ -79,6 +80,12 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // The audience is one exclusive choice. Older clients that still send the
+  // raw booleans get collapsed to the closest type.
+  const audience = eventTypeToFlags(
+    isEventType(body.eventType) ? body.eventType : eventTypeFromFlags(body),
+  )
+
   try {
     // Create the event in the database
     const newEvent = await prisma.event.create({
@@ -96,9 +103,7 @@ export default defineEventHandler(async (event) => {
         },
         startTime: new Date(body.startTime),
         endTime: new Date(body.endTime),
-        allowVolunteers: body.allowVolunteers || false,
-        allowAttendees: body.allowAttendees || false,
-        isTraining: body.isTraining || false,
+        ...audience,
       },
       include: {
         eventAssets: true,

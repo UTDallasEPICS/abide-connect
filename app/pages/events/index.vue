@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { DateValue } from '@internationalized/date'
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
+import { eventTypeFromFlags } from '#shared/utils/eventType'
 
 const tz = getLocalTimeZone()
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -9,19 +10,9 @@ const selectedDate = ref<any>(today(tz))
 // Load all events from API
 const { data: allEvents } = await useFetch('/api/events')
 
-// Training events are a special class only shown to pending volunteers.
-const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
-const { data: myVolunteer } = await useFetch<{ approvalStatus?: string } | null>(
-  '/api/volunteer/me',
-  { headers, default: () => null },
-)
-// Unapproved volunteers (pending or previously rejected) can attend training.
-// A rejection is not a ban — they can retry.
-const showTraining = computed(() => {
-  const status = myVolunteer.value?.approvalStatus
-  return status === 'PENDING' || status === 'REJECTED'
-})
-
+// `/api/events` already hides volunteer-only and training events from anyone
+// who shouldn't see them, so whatever arrives here is safe to display — it
+// just gets split into its own section below.
 // Regular event lists exclude the training class.
 const nonTrainingEvents = computed(() =>
   (allEvents.value || []).filter(event => !event.isTraining),
@@ -128,7 +119,9 @@ function getEventSubtitle(event: any) {
     year: 'numeric',
   })
   const location = event.location?.address || ''
-  return [date, location].filter(Boolean).join(' · ')
+  // Flag the volunteer-only events so it's clear why others can't see them.
+  const audience = eventTypeFromFlags(event) === 'VOLUNTEERS' ? 'Volunteers only' : ''
+  return [date, location, audience].filter(Boolean).join(' · ')
 }
 
 function goToEvent(id: string) {
@@ -157,7 +150,7 @@ function goToEvent(id: string) {
 
       <!-- Volunteer Training (pending volunteers only) -->
       <div
-        v-if="showTraining && trainingEvents.length > 0"
+        v-if="trainingEvents.length > 0"
         class="mb-8"
       >
         <h3 class="text-lg font-semibold text-brand7 mb-1">

@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useColorMode } from '#imports'
+import {
+  canRegisterAsAttendee,
+  canSignUpAsVolunteer,
+  eventTypeFromFlags,
+  eventTypeLabel,
+  type EventViewer,
+  type VolunteerStatus,
+} from '#shared/utils/eventType'
 
 const colorMode = useColorMode()
 const isDark = computed(() => colorMode.value === 'dark')
@@ -34,11 +42,32 @@ const { data: myVolunteer } = await useFetch<{ approvalStatus?: string } | null>
   { headers, default: () => null },
 )
 const isAdmin = computed(() => roles.value?.includes('admin') ?? false)
-const isApprovedVolunteer = computed(() => myVolunteer.value?.approvalStatus === 'APPROVED')
+
+const viewer = computed<EventViewer>(() => ({
+  isAdmin: isAdmin.value,
+  volunteerStatus: (myVolunteer.value?.approvalStatus as VolunteerStatus) ?? 'NONE',
+}))
+
+const eventType = computed(() => eventTypeFromFlags(event.value ?? {}))
+// Volunteering needs a volunteer profile, but no staff approval — one tap and
+// you're on the list.
+const canVolunteer = computed(() => canSignUpAsVolunteer(eventType.value, viewer.value))
+const canAttend = computed(() => canRegisterAsAttendee(eventType.value))
+
+// The current user's own sign-up, so we show their status instead of
+// offering the button again.
+const { data: myRsvp, refresh: refreshMyRsvp } = await useFetch<{ isVolunteer: boolean } | null>(
+  `/api/events/${eventId}/my-rsvp`,
+  { headers, default: () => null },
+)
+const isSignedUpToVolunteer = computed(() => myRsvp.value?.isVolunteer === true)
+const isRegisteredToAttend = computed(() => myRsvp.value?.isVolunteer === false)
 
 const showRsvpModal = ref(false)
 const rsvpIsVolunteer = ref(false)
 const rsvpStatsRef = ref<any>(null)
+const signUpPending = ref(false)
+const signUpError = ref('')
 
 function openRsvpModal(isVolunteer: boolean) {
   rsvpIsVolunteer.value = isVolunteer
@@ -47,7 +76,45 @@ function openRsvpModal(isVolunteer: boolean) {
 
 async function onRsvpSuccess() {
   showRsvpModal.value = false
-  await rsvpStatsRef.value?.refresh()
+  await Promise.all([refreshMyRsvp(), rsvpStatsRef.value?.refresh()])
+}
+
+function signUpErrorMessage(err: unknown, fallback: string) {
+  return (err as { data?: { message?: string } })?.data?.message || fallback
+}
+
+/** One-tap volunteer sign-up for the logged-in volunteer. */
+async function signUpAsVolunteer() {
+  signUpPending.value = true
+  signUpError.value = ''
+  try {
+    await $fetch(`/api/events/${eventId}/rsvp`, {
+      method: 'POST',
+      body: { isVolunteer: true },
+    })
+    await Promise.all([refreshMyRsvp(), rsvpStatsRef.value?.refresh()])
+  }
+  catch (err) {
+    signUpError.value = signUpErrorMessage(err, 'Could not sign you up. Please try again.')
+  }
+  finally {
+    signUpPending.value = false
+  }
+}
+
+async function cancelSignUp() {
+  signUpPending.value = true
+  signUpError.value = ''
+  try {
+    await $fetch(`/api/events/${eventId}/rsvp`, { method: 'DELETE', body: {} })
+    await Promise.all([refreshMyRsvp(), rsvpStatsRef.value?.refresh()])
+  }
+  catch (err) {
+    signUpError.value = signUpErrorMessage(err, 'Could not cancel your sign-up. Please try again.')
+  }
+  finally {
+    signUpPending.value = false
+  }
 }
 
 const filesToUpload = ref<File[]>([])
@@ -55,6 +122,7 @@ const filesToUpload = ref<File[]>([])
 function enterEditMode() {
   editForm.value = {
     ...event.value,
+    eventType: eventType.value,
     startTime: event.value?.startTime ? formatForInput(event.value.startTime) : '',
     endTime: event.value?.endTime ? formatForInput(event.value.endTime) : '',
   }
@@ -85,9 +153,7 @@ async function saveChanges() {
         location: editForm.value.location?.address || editForm.value.location,
         startTime: new Date(editForm.value.startTime).toISOString(),
         endTime: new Date(editForm.value.endTime).toISOString(),
-        allowVolunteers: editForm.value.allowVolunteers,
-        allowAttendees: editForm.value.allowAttendees,
-        isTraining: editForm.value.isTraining,
+        eventType: editForm.value.eventType,
       },
     })
 
@@ -420,87 +486,10 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
           </h2>
 
           <div class="space-y-4">
-            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-              <div class="flex items-center gap-3">
-                <UIcon
-                  name="i-lucide-users"
-                  class="w-5 h-5 text-brand4 dark:text-brand8"
-                />
-                <div>
-                  <p class="font-medium text-gray-900 dark:text-white">
-                    Volunteer Sign-ups
-                  </p>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">
-                    Allow people to volunteer for this event?
-                  </p>
-                </div>
-              </div>
-              <label class="flex items-center gap-2 cursor-pointer">
-                <UCheckbox
-                  v-model="editForm.allowVolunteers"
-                  :color="brandColor"
-                />
-              </label>
-            </div>
-
-            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-              <div class="flex items-center gap-3">
-                <UIcon
-                  name="i-lucide-ticket"
-                  class="w-5 h-5 text-brand4 dark:text-brand8"
-                />
-                <div>
-                  <p class="font-medium text-gray-900 dark:text-white">
-                    Attendee Registration
-                  </p>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">
-                    Allow people to register as attendees?
-                  </p>
-                </div>
-              </div>
-              <label
-                v-if="isEditMode"
-                class="flex items-center gap-2 cursor-pointer"
-              >
-                <UCheckbox
-                  v-model="editForm.allowAttendees"
-                  :color="brandColor"
-                />
-              </label>
-              <label
-                v-else
-                class="flex items-center gap-2"
-              >
-                <UCheckbox
-                  :model-value="event.allowAttendees"
-                  :color="brandColor"
-                  disabled
-                />
-              </label>
-            </div>
-
-            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-              <div class="flex items-center gap-3">
-                <UIcon
-                  name="i-lucide-graduation-cap"
-                  class="w-5 h-5 text-brand4 dark:text-brand8"
-                />
-                <div>
-                  <p class="font-medium text-gray-900 dark:text-white">
-                    Volunteer Training Event
-                  </p>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">
-                    Only shown to pending volunteers; staff approve attendees here.
-                  </p>
-                </div>
-              </div>
-              <label class="flex items-center gap-2 cursor-pointer">
-                <UCheckbox
-                  v-model="editForm.isTraining"
-                  :color="brandColor"
-                />
-              </label>
-            </div>
+            <EventTypeSelector
+              v-model="editForm.eventType"
+              :color="brandColor"
+            />
 
             <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
               <div class="flex items-center gap-3">
@@ -557,29 +546,95 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
         <!-- Action Buttons -->
         <div
           v-if="!isEditMode"
-          class="flex gap-4"
+          class="space-y-3"
         >
-          <UButton
-            v-if="event.allowVolunteers && isApprovedVolunteer"
-            :color="brandColor"
-            size="xl"
-            block
-            icon="i-lucide-heart-handshake"
-            @click="openRsvpModal(true)"
+          <p
+            v-if="eventType === 'VOLUNTEERS' || eventType === 'TRAINING'"
+            class="flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400"
           >
-            Sign Up as Volunteer
-          </UButton>
-          <UButton
-            v-if="event.allowAttendees"
-            :color="brandColor"
-            variant="outline"
-            size="xl"
-            block
-            icon="i-lucide-ticket"
-            @click="openRsvpModal(false)"
+            <UIcon
+              name="i-lucide-lock"
+              class="w-4 h-4"
+            />
+            {{ eventTypeLabel(eventType) }} — only visible to volunteers
+          </p>
+
+          <!-- Already signed up: no approval step, so just confirm it -->
+          <div
+            v-if="isSignedUpToVolunteer"
+            class="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-brand6 dark:bg-gray-800 px-4 py-3"
           >
-            Register to Attend
-          </UButton>
+            <span class="flex items-center gap-2 text-sm font-medium text-brand4 dark:text-brand8">
+              <UIcon
+                name="i-lucide-check-circle-2"
+                class="w-5 h-5"
+              />
+              You're signed up to volunteer
+            </span>
+            <UButton
+              variant="ghost"
+              color="neutral"
+              size="sm"
+              :loading="signUpPending"
+              @click="cancelSignUp"
+            >
+              Cancel sign-up
+            </UButton>
+          </div>
+
+          <div class="flex gap-4">
+            <UButton
+              v-if="canVolunteer && !isSignedUpToVolunteer"
+              :color="brandColor"
+              size="xl"
+              block
+              icon="i-lucide-heart-handshake"
+              :loading="signUpPending"
+              @click="signUpAsVolunteer"
+            >
+              Sign Up as Volunteer
+            </UButton>
+            <UButton
+              v-if="canAttend && !isRegisteredToAttend"
+              :color="brandColor"
+              variant="outline"
+              size="xl"
+              block
+              icon="i-lucide-ticket"
+              @click="openRsvpModal(false)"
+            >
+              Register to Attend
+            </UButton>
+          </div>
+
+          <div
+            v-if="isRegisteredToAttend"
+            class="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-brand6 dark:bg-gray-800 px-4 py-3"
+          >
+            <span class="flex items-center gap-2 text-sm font-medium text-brand4 dark:text-brand8">
+              <UIcon
+                name="i-lucide-check-circle-2"
+                class="w-5 h-5"
+              />
+              You're registered to attend
+            </span>
+            <UButton
+              variant="ghost"
+              color="neutral"
+              size="sm"
+              :loading="signUpPending"
+              @click="cancelSignUp"
+            >
+              Cancel registration
+            </UButton>
+          </div>
+
+          <p
+            v-if="signUpError"
+            class="text-sm text-red-500 text-center"
+          >
+            {{ signUpError }}
+          </p>
         </div>
 
         <!-- RSVP Modal -->
