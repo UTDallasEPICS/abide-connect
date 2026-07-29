@@ -16,7 +16,7 @@
 
 
 @theme static {
-  /*Abide Color Palette*/
+  --color-primary: #00786f;
 
   /*Terracotta Rose / Warm Clay*/
   --color-brand1: #A26B61;
@@ -41,4 +41,7 @@
 
   /* Light Teal */
   --color-brand8: #00d5be;
+
+  /* Dark Teal */
+  --color-brand9: #00786f;
 }

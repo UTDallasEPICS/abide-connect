@@ -4,27 +4,25 @@
  * categories, or filters. Displays multiple options and highlights the
  * currently selected section.
  */
-
 defineProps<{
   label: string
   selected: boolean
   size?: any,
 }>()
-
 const emit = defineEmits<{
   click: []
 }>()
-
 const baseClasses =
   'rounded-full font-semibold px-3 transition-none'
 
 const selectedClasses =
-  'border border-teal-700 bg-teal-700 text-white hover:bg-teal-700 active:bg-teal-700'
+  'border border-brand9 bg-brand9 text-white hover:bg-brand9 active:bg-brand9 ' +
+  'dark:border-brand8 dark:bg-brand8 dark:text-gray-900 dark:hover:bg-brand8 dark:active:bg-brand8'
 
 const unselectedClasses =
-  'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 active:bg-gray-200'
+  'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 active:bg-gray-200 ' +
+  'dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:active:bg-gray-600'
 </script>
-
 <template>
   <UButton
     :size="size || 'sm'"

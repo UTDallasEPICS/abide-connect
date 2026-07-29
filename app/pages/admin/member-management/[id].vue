@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import UserAvatar from '~/components/UserAvatar.vue';
-import DetailSection from '~/components/user/DetailSection.vue';
-import DetailField from '~/components/user/DetailField.vue';
 import SectionButton from '~/components/buttons/SectionButton.vue';
 import RoleModal from '~/components/modals/RoleModal.vue';
 import ConfirmModal from '~/components/modals/ConfirmModal.vue';
+import SaveChangesModal from '~/components/modals/SaveChangesModal.vue';
+import GeneralSection, { type GeneralDraft } from '~/components/user/GeneralSection.vue';
+import HourLogSection, { type HourLogDraft } from '~/components/user/HourLogSection.vue';
+import RsvpsSection, { type RsvpDraft } from '~/components/user/RsvpsSection.vue';
 
 import type { UserData } from "~/types/user/user-data";
 
@@ -29,7 +31,7 @@ const userId = route.params.id as string;
 // Manually forward the cookie header so the server route sees the session on SSR requests
 const headers = useRequestHeaders(['cookie']);
 
-const { data: userData, error, refresh } = await useFetch<UserData>( `/api/user/${userId}`, { headers });
+const { data: userData, error, refresh } = await useFetch<UserData>(`/api/user/${userId}`, { headers });
 
 if (error.value) {
   throw createError({
@@ -38,41 +40,156 @@ if (error.value) {
   });
 }
 
-const formattedCreatedAt = computed(() => {
-  if (!userData.value) return '';
-  return new Date(userData.value.createdAt).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+function toDateInputValue(value: Date | string) {
+  return new Date(value).toISOString().slice(0, 10);
+}
+
+// ---- Global edit mode ----
+// One toggle governs everything: General fields, every Hour Log row,
+// and every RSVP row all become editable at once. There's a single
+// Save/Cancel bar at the bottom that commits (or discards) all of it.
+const isEditMode = ref(false);
+
+const generalDraft = reactive<GeneralDraft>({
+  phoneNumber: '',
+  gender: '',
+  ethinicity: '',
+  languages: [],
+  availabilities: [],
+  volunteerAreas: [],
+  certifications: [],
+  otherVolunteerArea: '',
+  otherCertification: '',
+  emergencyContactName1: '',
+  emergencyContactPhone1: '',
+  emergencyContactName2: '',
+  emergencyContactPhone2: '',
 });
 
-const allRoles = ['User', 'Volunteer', 'Admin', 'Staff'];
+const hourLogDrafts = reactive<Record<number, HourLogDraft>>({});
+const rsvpDrafts = reactive<Record<string, RsvpDraft>>({});
+
+function populateDrafts() {
+  if (!userData.value) return;
+
+  generalDraft.phoneNumber = userData.value.phoneNumber ?? '';
+  generalDraft.gender = userData.value.volunteer?.gender ?? '';
+  generalDraft.ethinicity = userData.value.volunteer?.ethnicity ?? '';
+  generalDraft.languages = [...(userData.value.volunteer?.languages ?? [])];
+  generalDraft.availabilities = [...(userData.value.volunteer?.availabilities ?? [])];
+  generalDraft.volunteerAreas = [...(userData.value.volunteer?.volunteerAreas ?? [])];
+  generalDraft.certifications = [...(userData.value.volunteer?.certifications ?? [])];
+  generalDraft.otherVolunteerArea = userData.value.volunteer?.otherVolunteerArea ?? '';
+  generalDraft.otherCertification = userData.value.volunteer?.otherCertification ?? '';
+  generalDraft.emergencyContactName1 = userData.value.emergencyContact?.emergencyContactName1 ?? '';
+  generalDraft.emergencyContactPhone1 = userData.value.emergencyContact?.emergencyContactPhone1 ?? '';
+  generalDraft.emergencyContactName2 = userData.value.emergencyContact?.emergencyContactName2 ?? '';
+  generalDraft.emergencyContactPhone2 = userData.value.emergencyContact?.emergencyContactPhone2 ?? '';
+
+  for (const key of Object.keys(hourLogDrafts)) delete hourLogDrafts[Number(key)];
+  for (const log of userData.value.hourLogs) {
+    hourLogDrafts[log.id] = {
+      hours: log.hours,
+      date: toDateInputValue(log.date),
+      approvalStatus: log.approvalStatus,
+      comment: log.comment ?? '',
+    };
+  }
+
+  for (const key of Object.keys(rsvpDrafts)) delete rsvpDrafts[key];
+  for (const rsvp of userData.value.rsvps) {
+    rsvpDrafts[rsvp.eventId] = { isVolunteer: rsvp.isVolunteer };
+  }
+}
+
+function toggleEditMode() {
+  if (isEditMode.value) {
+    // Cancel — discard any in-progress edits.
+    isEditMode.value = false;
+  } else {
+    populateDrafts();
+    isEditMode.value = true;
+  }
+}
+
+const isConfirmSaveAllOpen = ref(false);
+
+function requestSaveAll() {
+  isConfirmSaveAllOpen.value = true;
+}
+
+async function confirmSaveAll() {
+  await Promise.all([
+    $fetch('/api/user/update', {
+      method: 'POST',
+      body: {
+        userId,
+        ...generalDraft,
+      },
+    }),
+    ...Object.entries(hourLogDrafts).map(([id, draft]) =>
+      $fetch(`/api/hour-log/${id}`, { method: 'PATCH', body: draft })
+    ),
+    ...Object.entries(rsvpDrafts).map(([eventId, draft]) =>
+      $fetch(`/api/rsvp/${userId}/${eventId}`, { method: 'PATCH', body: draft })
+    ),
+  ]);
+
+  isConfirmSaveAllOpen.value = false;
+  isEditMode.value = false;
+  await refresh();
+}
+
+async function deleteHourLog(log: NonNullable<typeof userData.value>['hourLogs'][number]) {
+  await $fetch(`/api/hour-log/${log.id}`, { method: 'DELETE' });
+  await refresh();
+}
+
+async function deleteRsvp(rsvp: NonNullable<typeof userData.value>['rsvps'][number]) {
+  await $fetch(`/api/rsvp/${userId}/${rsvp.eventId}`, { method: 'DELETE' });
+  await refresh();
+}
+
+// ---- Roles ----
+// ADMIN is deliberately excluded from both lists — it isn't
+// manageable through this quick-action menu.
+const MANAGEABLE_ROLES = ['User', 'Volunteer'];
 
 const rolesAvailableToAdd = computed(() =>
-  allRoles.filter((role) => !userData.value?.roles.includes(role))
+  MANAGEABLE_ROLES.filter((role) => !userData.value?.roles.includes(role))
+);
+
+const rolesAvailableToRemove = computed(() =>
+  (userData.value?.roles ?? []).filter((role) => MANAGEABLE_ROLES.includes(role))
 );
 
 const isAddRoleModalOpen = ref(false);
 const isRemoveRoleModalOpen = ref(false);
 const isDeleteModalOpen = ref(false);
 
-function handleAddRole(role: string) {
-  if (userData.value && !userData.value.roles.includes(role)) {
-    userData.value.roles.push(role);
-  }
+async function handleAddRole(role: string) {
+  await $fetch('/api/role/add', {
+    method: 'POST',
+    body: { userId, role: role.toUpperCase() },
+  });
+  await refresh();
 }
 
-function handleRemoveRole(role: string) {
-  if (userData.value) {
-    userData.value.roles = userData.value.roles.filter((r) => r !== role);
-  }
+async function handleRemoveRole(role: string) {
+  await $fetch('/api/role/remove', {
+    method: 'POST',
+    body: { userId, role: role.toUpperCase() },
+  });
+  await refresh();
 }
 
-function handleDelete() {
-  // TODO: call delete API
+async function handleDelete() {
+  await $fetch('/api/user/delete', {
+    method: 'POST',
+    body: { userId },
+  });
+  await navigateTo('/admin/member-management');
 }
-
 
 </script>
 
@@ -84,12 +201,12 @@ function handleDelete() {
     <div class="mx-10">
       <!-- User Name and Pfp -->
       <div class="flex gap-4">
-        <div class="w-25 h-25">
+        <div class="lg:w-25 lg:h-25 w-15 h-15">
           <UserAvatar :name="userData.name" :src="userData.imageUrl" />
         </div>
-        <div class="h-25 flex flex-col justify-center">
-          <p class="font-semibold text-2xl">{{ userData.name }}</p>
-          <p class="font-normal text-gray-400">{{ userData.email }}</p>
+        <div class="lg:h-25 h-15 flex flex-col justify-center">
+          <p class="font-semibold lg:text-2xl text-xl">{{ userData.name }}</p>
+          <p class="font-normal lg:text-base text-sm text-gray-400 ">{{ userData.email }}</p>
         </div>
       </div>
 
@@ -106,7 +223,7 @@ function handleDelete() {
       </div>
 
       <!-- Action buttons -->
-      <div class="w-full mb-5 p-2 bg-gray-100 rounded-xl flex items-center">
+      <div class="w-full mb-5 p-2 bg-gray-100 rounded-xl flex items-center flex-wrap">
         <UButton
           label="Add Role"
           icon="i-lucide-user-plus"
@@ -124,6 +241,14 @@ function handleDelete() {
           @click="isRemoveRoleModalOpen = true"
         />
         <UButton
+          label="Edit"
+          icon="i-lucide-pencil"
+          color="neutral"
+          variant="ghost"
+          class="rounded-full font-semibold px-3"
+          @click="toggleEditMode"
+        />
+        <UButton
           label="Delete"
           icon="i-lucide-trash-2"
           color="neutral"
@@ -133,47 +258,33 @@ function handleDelete() {
         />
       </div>
 
-      <!-- General section -->
-      <div v-if="activeSection === 'GENERAL'">
-        <DetailSection title="Details">
-          <DetailField label="Primary Email" :value="userData.email" />
-          <DetailField label="Phone Number" :value="userData.phoneNumber" />
-          <DetailField label="Roles" :value="userData.roles" />
-          <DetailField label="Created At" :value="formattedCreatedAt" />
-          <DetailField label="User ID" :value="userData.id" />
-        </DetailSection>
+      <GeneralSection
+        v-if="activeSection === 'GENERAL'"
+        :user-data="userData"
+        :is-edit-mode="isEditMode"
+        v-model="generalDraft"
+      />
 
-        <DetailSection v-if="userData.emergencyContact" title="Emergency Contact">
-          <DetailField label="Emergency Contact Name 1" :value="userData.emergencyContact.emergencyContactName1" />
-          <DetailField label="Emergency Contact Phone 1" :value="userData.emergencyContact.emergencyContactPhone1" />
-          <DetailField label="Emergency Contact Name 2" :value="userData.emergencyContact.emergencyContactName2" />
-          <DetailField label="Emergency Contact Phone 2" :value="userData.emergencyContact.emergencyContactPhone2" />
-        </DetailSection>
+      <HourLogSection
+        v-else-if="activeSection === 'HOUR_LOG'"
+        :hour-logs="userData.hourLogs"
+        :is-edit-mode="isEditMode"
+        v-model="hourLogDrafts"
+        @delete="deleteHourLog"
+      />
 
-        <DetailSection v-if="userData.volunteer" title="Volunteer Data">
-          <DetailField label="Gender" :value="userData.volunteer.gender" />
-          <DetailField label="Ethnicity" :value="userData.volunteer.ethnicity" />
-          <DetailField label="Languages" :value="userData.volunteer.languages" />
-          <DetailField label="Availabilities" :value="userData.volunteer.availabilities" />
-          <DetailField label="Volunteer Areas" :value="userData.volunteer.volunteerAreas" />
-          <DetailField label="Certifications" :value="userData.volunteer.certifications" />
-          <DetailField label="Other Volunteer Area" :value="userData.volunteer.otherVolunteerArea" />
-          <DetailField label="Other Certification" :value="userData.volunteer.otherCertification" />
-        </DetailSection>
-      </div>
+      <RsvpsSection
+        v-else-if="activeSection === 'RSVPS'"
+        :rsvps="userData.rsvps"
+        :is-edit-mode="isEditMode"
+        v-model="rsvpDrafts"
+        @delete="deleteRsvp"
+      />
 
-      <!-- Hour Log section -->
-      <div v-else-if="activeSection === 'HOUR_LOG'">
-        <DetailSection title="Hour Log">
-          <p class="font-normal text-gray-400">No hours logged yet.</p>
-        </DetailSection>
-      </div>
-
-      <!-- RSVPs section -->
-      <div v-else-if="activeSection === 'RSVPS'">
-        <DetailSection title="RSVPs">
-          <p class="font-normal text-gray-400">No RSVPs yet.</p>
-        </DetailSection>
+      <!-- Single save/cancel bar, visible regardless of active tab -->
+      <div v-if="isEditMode" class="sticky bottom-4 mt-6 flex items-center gap-2 bg-white dark:bg-gray-900 py-2">
+        <UButton label="Save Changes" color="primary" variant="solid" @click="requestSaveAll" />
+        <UButton label="Cancel" color="neutral" variant="ghost" @click="toggleEditMode" />
       </div>
     </div>
 
@@ -190,11 +301,14 @@ function handleDelete() {
       v-model:open="isRemoveRoleModalOpen"
       title="Remove Role"
       description="Select a role to remove from this user."
-      :roles="userData.roles"
+      :roles="rolesAvailableToRemove"
       confirm-label="Remove"
       @confirm="handleRemoveRole"
     />
-
+    <SaveChangesModal
+      v-model:open="isConfirmSaveAllOpen"
+      @confirm="confirmSaveAll"
+    />
     <ConfirmModal
       v-model:open="isDeleteModalOpen"
       title="Delete this account?"

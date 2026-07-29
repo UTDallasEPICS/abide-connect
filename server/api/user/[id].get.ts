@@ -1,10 +1,9 @@
 import { requireRole } from '~~/server/utils/requireRole';
-import type { UserData } from '~~/app/types/user/user-data'; 
+import type { UserData } from '~~/app/types/user/user-data';
 
 const UNDEFINED_FIELD_TEXT = '-';
 
-
-function humanize(value: string | null |undefined): string | undefined {
+function humanize(value: string | null | undefined): string | undefined {
   if (!value) return undefined;
   return value
     .toLowerCase()
@@ -17,7 +16,6 @@ export default defineEventHandler(async (event): Promise<UserData> => {
   await requireRole(event, 'Admin');
 
   const id = getRouterParam(event, 'id');
-
   if (!id) {
     throw createError({ statusCode: 400, statusMessage: 'User id is required' });
   }
@@ -26,12 +24,20 @@ export default defineEventHandler(async (event): Promise<UserData> => {
     where: { id },
     include: {
       roles: true,
+      RSVPs: {
+        include: { event: true },
+        orderBy: { event: { startTime: 'desc' } },
+      },
       volunteer: {
         include: {
           languages: true,
           availabilities: true,
           volunteerAreas: true,
           certifications: true,
+          hourLogs: {
+            include: { event: true },
+            orderBy: { date: 'desc' },
+          },
         },
       },
     },
@@ -43,7 +49,6 @@ export default defineEventHandler(async (event): Promise<UserData> => {
 
   const volunteer = user.volunteer;
 
-  // Only build an emergencyContact object if at least one field is populated
   const hasEmergencyContact =
     volunteer &&
     (volunteer.emergencyContactName1 ||
@@ -79,6 +84,22 @@ export default defineEventHandler(async (event): Promise<UserData> => {
           emergencyContactPhone2: volunteer!.emergencyContactPhone2 ?? UNDEFINED_FIELD_TEXT,
         }
       : undefined,
+    hourLogs: (volunteer?.hourLogs ?? []).map((log) => ({
+      id: log.id,
+      eventId: log.eventId,
+      eventTitle: log.event.title,
+      date: log.date,
+      hours: log.hours,
+      approvalStatus: humanize(log.approvalStatus)!,
+      comment: log.comment ?? undefined,
+    })),
+    rsvps: user.RSVPs.map((rsvp) => ({
+      eventId: rsvp.eventId,
+      eventTitle: rsvp.event.title,
+      startTime: rsvp.event.startTime,
+      endTime: rsvp.event.endTime,
+      isVolunteer: rsvp.isVolunteer,
+    })),
   };
 
   return userData;

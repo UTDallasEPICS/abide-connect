@@ -3,11 +3,9 @@ interface Props {
   name: string
   src?: string | null
 }
-
 const props = withDefaults(defineProps<Props>(), {
   src: undefined
 })
-
 const initials = computed(() => {
   return props.name
     .split(' ')
@@ -17,11 +15,9 @@ const initials = computed(() => {
     .slice(0, 2)
     .toUpperCase()
 })
-
 // Treat undefined, null, and empty string as "no image"
 const hasImage = computed(() => !!props.src)
 </script>
-
 <template>
   <!--
     Sizing note: this component takes up 100% of whatever box its parent gives it.
@@ -36,7 +32,7 @@ const hasImage = computed(() => !!props.src)
   >
   <div
     v-else
-    class="w-full h-full aspect-square rounded-full flex items-center justify-center font-semibold shrink-0 bg-gray-200 text-gray-600 [container-type:inline-size]"
+    class="w-full h-full aspect-square rounded-full flex items-center justify-center font-semibold shrink-0 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 [container-type:inline-size]"
   >
     <span class="text-[40cqw] leading-none">{{ initials }}</span>
   </div>
