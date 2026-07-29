@@ -1,4 +1,6 @@
 import prisma from '#server/utils/prisma'
+import { requireRole } from '#server/utils/requireRole'
+import { eventTypeFromFlags, eventTypeToFlags, isEventType } from '#shared/utils/eventType'
 
 // Geocode location using Nominatim
 async function geocodeLocation(location: string) {
@@ -39,6 +41,9 @@ async function geocodeLocation(location: string) {
 }
 
 export default defineEventHandler(async (event) => {
+  // Creating events is staff-only.
+  await requireRole(event, 'admin')
+
   const body = await readBody(event)
 
   // Validate required fields
@@ -49,10 +54,19 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // Location is a required relation, so an address is required to create an event.
+  // Prisma throws on a null unique lookup, so bail out before querying.
+  if (!body.location) {
+    throw createError({
+      statusCode: 400,
+      message: 'Missing required field: location',
+    })
+  }
+
   // check if location has already been fetched
   const locationData = await prisma.location.findUnique({
     where: {
-      address: body.location || null,
+      address: body.location,
     },
     select: {
       latitude: true,
@@ -70,6 +84,12 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // The audience is one exclusive choice. Older clients that still send the
+  // raw booleans get collapsed to the closest type.
+  const audience = eventTypeToFlags(
+    isEventType(body.eventType) ? body.eventType : eventTypeFromFlags(body),
+  )
+
   try {
     // Create the event in the database
     const newEvent = await prisma.event.create({
@@ -80,15 +100,14 @@ export default defineEventHandler(async (event) => {
         location: {
           connectOrCreate: {
             where: {
-              address: body.location || null,
+              address: body.location,
             },
-            create: locationData!,
+            create: locationData,
           },
         },
         startTime: new Date(body.startTime),
         endTime: new Date(body.endTime),
-        allowVolunteers: body.allowVolunteers || false,
-        allowAttendees: body.allowAttendees || false,
+        ...audience,
       },
       include: {
         eventAssets: true,

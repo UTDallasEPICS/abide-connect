@@ -12,6 +12,7 @@ interface RouteRoleConfig {
  */
 const routeRoles: Record<string, RouteRoleConfig> = {
   '/admin':                     { role: 'admin' },
+  '/events/manage':             { role: 'admin' },
   '/volunteer':                 { role: 'volunteer', unauthorizedPage: '/volunteer-application/form-required' },
   '/volunteer-application':     { role: 'user' },
 }
