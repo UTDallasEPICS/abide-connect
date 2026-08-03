@@ -17,18 +17,41 @@ const value = ref<DateValue>(today(tz))
 const isDateDisabled = (d: DateValue) =>
   d.toDate(tz) < new Date(new Date().setHours(0, 0, 0, 0))
 
-// Upcoming events they signed up for
-const upcomingEvents = ref([
-  { id: 1, title: 'Community Cleanup', date: 'Apr 15, 2024', hours: 3 },
-  { id: 2, title: 'Food Bank Volunteer', date: 'Apr 18, 2024', hours: 4 },
-  { id: 3, title: 'Youth Mentoring', date: 'Apr 22, 2024', hours: 2 },
-])
+// Upcoming events they signed up for, either as a volunteer or an attendee.
+interface UpcomingEvent {
+  id: string
+  title: string
+  startTime: string
+  endTime: string
+  address: string | null
+  isTraining: boolean
+  isVolunteer: boolean
+  imageUrl: string | null
+}
+
+const { data: upcomingEvents } = await useFetch<UpcomingEvent[]>(
+  '/api/user/upcoming-events',
+  { headers, default: () => [] },
+)
+
+const formatEventDate = (event: UpcomingEvent) => {
+  const start = new Date(event.startTime)
+  const date = start.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+  const time = start.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+  return `${date} · ${time}`
+}
 
 // Hour logs
 interface HourLog {
   id: string
-  eventId: string
-  event: { title: string }
+  event: string
   date: string
   hours: number
   approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED'
@@ -95,34 +118,66 @@ const { isVolunteer } = useUserRoles()
           />
         </UCard>
 
-        <!-- Volunteer-only sections; hidden until someone has applied -->
-        <template v-if="isVolunteer">
-          <!-- Upcoming Events (Signed Up) -->
+        <!-- Upcoming Events (Signed Up) — everyone with an account sees these,
+             since attendee sign-ups don't require a volunteer profile. -->
+        <div>
           <h3 class="text-lg font-semibold text-brand4 mb-4">
             Upcoming Events
           </h3>
-          <div class="space-y-4">
-            <div
+          <div
+            v-if="upcomingEvents?.length"
+            class="space-y-4"
+          >
+            <NuxtLink
               v-for="event in upcomingEvents"
               :key="event.id"
-              class="flex items-center justify-between p-3 rounded-lg border border-gray-200"
+              :to="`/events/${event.id}`"
+              class="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
-              <div>
-                <p class="font-medium text-sm">
+              <div class="min-w-0">
+                <p class="font-medium text-sm truncate">
                   {{ event.title }}
                 </p>
                 <p class="text-xs text-gray-500 dark:text-gray-400">
-                  {{ event.date }}
+                  {{ formatEventDate(event) }}
+                </p>
+                <p
+                  v-if="event.address"
+                  class="text-xs text-gray-500 dark:text-gray-400 truncate"
+                >
+                  {{ event.address }}
                 </p>
               </div>
               <span
-                class="text-xs px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                v-if="event.isVolunteer"
+                class="text-xs px-2 py-1 rounded-full shrink-0 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
               >
-                {{ event.hours }}h
+                {{ event.isTraining ? 'Training' : 'Volunteering' }}
               </span>
-            </div>
+              <span
+                v-else
+                class="text-xs px-2 py-1 rounded-full shrink-0 bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400"
+              >
+                Attending
+              </span>
+            </NuxtLink>
           </div>
+          <p
+            v-else
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            You haven't signed up for any upcoming events.
+            <NuxtLink
+              to="/events"
+              class="text-brand4 hover:underline"
+            >
+              Browse events
+            </NuxtLink>
+          </p>
+        </div>
 
+        <!-- Volunteer-only sections; hidden until someone has applied -->
+        <template v-if="isVolunteer">
           <!-- Hour Logs -->
           <div class="flex items-center justify-between">
             <h3 class="text-lg font-semibold text-brand4">
@@ -173,7 +228,7 @@ const { isVolunteer } = useUserRoles()
                   <div class="flex items-start justify-between">
                     <div>
                       <p class="font-medium text-sm">
-                        {{ log.event.title }}
+                        {{ log.event }}
                       </p>
                       <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                         {{ log.date }}
@@ -222,7 +277,7 @@ const { isVolunteer } = useUserRoles()
                   <div class="flex items-start justify-between">
                     <div>
                       <p class="font-medium text-sm">
-                        {{ log.event.title }}
+                        {{ log.event }}
                       </p>
                       <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                         {{ log.date }}
@@ -272,7 +327,7 @@ const { isVolunteer } = useUserRoles()
                   <div class="flex items-start justify-between mb-2">
                     <div>
                       <p class="font-medium text-sm">
-                        {{ log.event.title }}
+                        {{ log.event }}
                       </p>
                       <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                         {{ log.date }}
