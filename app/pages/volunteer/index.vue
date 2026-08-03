@@ -34,6 +34,71 @@ const { data: upcomingEvents } = await useFetch<UpcomingEvent[]>(
   { headers, default: () => [] },
 )
 
+/** Local-time `YYYY-MM-DD`, the key the calendar pips are looked up by. */
+const toDateKey = (year: number, month: number, day: number) =>
+  `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+
+// Which kinds of sign-up fall on each day, so the calendar can mark them.
+// An event contributes an entry for every day it spans, not just its first.
+const signUpsByDate = computed(() => {
+  const days = new Map<string, { volunteering: boolean, attending: boolean }>()
+
+  for (const event of upcomingEvents.value ?? []) {
+    const cursor = new Date(event.startTime)
+    cursor.setHours(0, 0, 0, 0)
+    const last = new Date(event.endTime)
+    last.setHours(0, 0, 0, 0)
+
+    // Always marks the start day, then walks to the end. Bounded so bad data
+    // (an endTime before its startTime, or a wildly long range) can't hang the
+    // render.
+    for (let i = 0; i < 366; i++) {
+      const key = toDateKey(cursor.getFullYear(), cursor.getMonth() + 1, cursor.getDate())
+      const day = days.get(key) ?? { volunteering: false, attending: false }
+
+      if (event.isVolunteer) day.volunteering = true
+      else day.attending = true
+
+      days.set(key, day)
+
+      if (cursor >= last) break
+      cursor.setDate(cursor.getDate() + 1)
+    }
+  }
+
+  return days
+})
+
+// Fills the whole day cell, using the same colors as the badges on the
+// Upcoming Events list below: emerald for volunteering/training, sky for
+// attending.
+const DAY_HIGHLIGHTS = {
+  volunteering: {
+    label: 'Volunteering',
+    class: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300',
+  },
+  attending: {
+    label: 'Attending',
+    class: 'bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300',
+  },
+  // A hard-stop gradient rather than a blend, so a day with both keeps each
+  // half at its exact badge color instead of turning teal down the middle.
+  both: {
+    label: 'Volunteering and attending',
+    class: 'bg-[linear-gradient(to_right,var(--color-emerald-100)_50%,var(--color-sky-100)_50%)] text-gray-900 '
+      + 'dark:bg-[linear-gradient(to_right,var(--color-emerald-900)_50%,var(--color-sky-900)_50%)] dark:text-white',
+  },
+}
+
+const highlightForDay = (day: DateValue) => {
+  const signUps = signUpsByDate.value.get(toDateKey(day.year, day.month, day.day))
+  if (!signUps) return null
+  if (signUps.volunteering && signUps.attending) return DAY_HIGHLIGHTS.both
+  return signUps.volunteering ? DAY_HIGHLIGHTS.volunteering : DAY_HIGHLIGHTS.attending
+}
+
+const hasSignUps = computed(() => signUpsByDate.value.size > 0)
+
 const formatEventDate = (event: UpcomingEvent) => {
   const start = new Date(event.startTime)
   const date = start.toLocaleDateString('en-US', {
@@ -115,7 +180,38 @@ const { isVolunteer } = useUserRoles()
             weekday-format="short"
             :first-day-of-week="0"
             class="rounded-2xl"
-          />
+          >
+            <template #day="{ day }">
+              <span
+                v-if="highlightForDay(day)"
+                :class="[
+                  'absolute inset-0 flex items-center justify-center rounded-full font-semibold',
+                  highlightForDay(day)?.class,
+                ]"
+              >
+                {{ day.day }}
+                <span class="sr-only">, {{ highlightForDay(day)?.label }}</span>
+              </span>
+              <template v-else>
+                {{ day.day }}
+              </template>
+            </template>
+          </UCalendar>
+
+          <!-- Key for the shaded days; pointless when nothing is marked. -->
+          <div
+            v-if="hasSignUps"
+            class="flex items-center justify-center gap-4 pt-3 text-xs text-gray-500 dark:text-gray-400"
+          >
+            <span class="flex items-center gap-1.5">
+              <span class="size-3 rounded-full bg-emerald-100 dark:bg-emerald-900/50" />
+              Volunteering
+            </span>
+            <span class="flex items-center gap-1.5">
+              <span class="size-3 rounded-full bg-sky-100 dark:bg-sky-900/50" />
+              Attending
+            </span>
+          </div>
         </UCard>
 
         <!-- Upcoming Events (Signed Up) — everyone with an account sees these,
