@@ -1,8 +1,6 @@
 import { requireRole } from '~~/server/utils/requireRole';
 import type { UserData } from '~~/app/types/user/user-data';
 
-const UNDEFINED_FIELD_TEXT = '-';
-
 function humanize(value: string | null | undefined): string | undefined {
   if (!value) return undefined;
   return value
@@ -48,7 +46,6 @@ export default defineEventHandler(async (event): Promise<UserData> => {
   }
 
   const volunteer = user.volunteer;
-
   const hasEmergencyContact =
     volunteer &&
     (volunteer.emergencyContactName1 ||
@@ -58,30 +55,32 @@ export default defineEventHandler(async (event): Promise<UserData> => {
 
   const userData: UserData = {
     id: user.id,
-    name: user.name ?? UNDEFINED_FIELD_TEXT,
+    name: user.name ?? undefined,
     email: user.email,
-    phoneNumber: user.phone ?? UNDEFINED_FIELD_TEXT,
+    phoneNumber: user.phone ?? undefined,
     imageUrl: user.imageURL ?? undefined,
     createdAt: user.createdAt,
     roles: user.roles.filter((r) => r.active).map((r) => humanize(r.role)!),
+    adminNote: user.adminNote ?? undefined,
     volunteer: volunteer
       ? {
-          gender: humanize(volunteer.gender) ?? UNDEFINED_FIELD_TEXT,
-          ethnicity: humanize(volunteer.ethinicity) ?? UNDEFINED_FIELD_TEXT,
+          gender: humanize(volunteer.gender),
+          ethnicity: humanize(volunteer.ethinicity),
+          isActive: volunteer.isActive,
           languages: volunteer.languages.map((l) => humanize(l.language)!),
           availabilities: volunteer.availabilities.map((a) => humanize(a.availability)!),
           volunteerAreas: volunteer.volunteerAreas.map((v) => humanize(v.volunteerArea)!),
           certifications: volunteer.certifications.map((c) => humanize(c.certification)!),
-          otherVolunteerArea: volunteer.otherVolunteerAreaDescription ?? UNDEFINED_FIELD_TEXT,
-          otherCertification: volunteer.otherCertificationDescription ?? UNDEFINED_FIELD_TEXT,
+          otherVolunteerArea: volunteer.otherVolunteerAreaDescription ?? undefined,
+          otherCertification: volunteer.otherCertificationDescription ?? undefined,
         }
       : undefined,
     emergencyContact: hasEmergencyContact
       ? {
-          emergencyContactName1: volunteer!.emergencyContactName1 ?? UNDEFINED_FIELD_TEXT,
-          emergencyContactPhone1: volunteer!.emergencyContactPhone1 ?? UNDEFINED_FIELD_TEXT,
-          emergencyContactName2: volunteer!.emergencyContactName2 ?? UNDEFINED_FIELD_TEXT,
-          emergencyContactPhone2: volunteer!.emergencyContactPhone2 ?? UNDEFINED_FIELD_TEXT,
+          emergencyContactName1: volunteer!.emergencyContactName1 ?? undefined,
+          emergencyContactPhone1: volunteer!.emergencyContactPhone1 ?? undefined,
+          emergencyContactName2: volunteer!.emergencyContactName2 ?? undefined,
+          emergencyContactPhone2: volunteer!.emergencyContactPhone2 ?? undefined,
         }
       : undefined,
     hourLogs: (volunteer?.hourLogs ?? []).map((log) => ({

@@ -2,7 +2,7 @@
 import type { InputMenuItem } from '@nuxt/ui';
 import { computed } from 'vue';
 
-type FieldType = 'text' | 'tel' | 'date' | 'number' | 'select';
+type FieldType = 'text' | 'tel' | 'date' | 'number' | 'select' | 'checkbox';
 
 interface FieldOption {
   label: string;
@@ -11,11 +11,11 @@ interface FieldOption {
 
 const props = withDefaults(defineProps<{
   label: string
-  value?: string | number | string[] | null
+  value?: string | number | boolean | string[] | null
   editable?: boolean
   type?: FieldType
   multiple?: boolean,
-  modelValue?: string | number
+  modelValue?: string | number | boolean
   options?: InputMenuItem[]
   autocomplete?: string
 }>(), {
@@ -24,7 +24,7 @@ const props = withDefaults(defineProps<{
 });
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string | number]
+  'update:modelValue': [value: string | number | boolean]
 }>();
 
 const fieldOptions = computed<FieldOption[]>(() => {
@@ -34,17 +34,37 @@ const fieldOptions = computed<FieldOption[]>(() => {
       label: inputMenuItem.label,
     }));
   }
-
   return [];
 });
 
+const isEmpty = computed(() => {
+  const v = props.value;
+  if (v === null || v === undefined) return true;
+  if (Array.isArray(v)) return v.length === 0;
+  if (typeof v === 'string') return v.trim() === '';
+  return false;
+});
+
+const displayText = computed(() => {
+  if (isEmpty.value) return '-';
+  if (Array.isArray(props.value)) return props.value.join(', ');
+  if (typeof props.value === 'boolean') return props.value ? 'Yes' : 'No';
+  return props.value;
+});
 </script>
+
 <template>
   <div class="mb-4">
     <h2 class="text-teal-700 font-bold">{{ label }}</h2>
 
+    <UCheckbox
+      v-if="editable && type === 'checkbox'"
+      :model-value="!!modelValue"
+      @update:model-value="(v) => emit('update:modelValue', !!v)"
+    />
+
     <USelect
-      v-if="editable && type === 'select'"
+      v-else-if="editable && type === 'select'"
       :model-value="modelValue"
       :items="fieldOptions"
       :multiple="multiple"
@@ -62,7 +82,7 @@ const fieldOptions = computed<FieldOption[]>(() => {
     />
 
     <p v-else class="font-normal">
-      {{ Array.isArray(value) ? (value.length ? value.join(', ') : '-') : (value ?? '-') }}
+      {{ displayText }}
     </p>
   </div>
 </template>

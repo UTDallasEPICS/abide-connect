@@ -28,7 +28,6 @@ const activeSection = ref<Section>('GENERAL');
 const route = useRoute();
 const userId = route.params.id as string;
 
-// Manually forward the cookie header so the server route sees the session on SSR requests
 const headers = useRequestHeaders(['cookie']);
 
 const { data: userData, error, refresh } = await useFetch<UserData>(`/api/user/${userId}`, { headers });
@@ -44,14 +43,12 @@ function toDateInputValue(value: Date | string) {
   return new Date(value).toISOString().slice(0, 10);
 }
 
-// ---- Global edit mode ----
-// One toggle governs everything: General fields, every Hour Log row,
-// and every RSVP row all become editable at once. There's a single
-// Save/Cancel bar at the bottom that commits (or discards) all of it.
 const isEditMode = ref(false);
 
 const generalDraft = reactive<GeneralDraft>({
   phoneNumber: '',
+  adminNote: '',
+  isActive: false,
   gender: '',
   ethinicity: '',
   languages: [],
@@ -73,6 +70,8 @@ function populateDrafts() {
   if (!userData.value) return;
 
   generalDraft.phoneNumber = userData.value.phoneNumber ?? '';
+  generalDraft.adminNote = userData.value.adminNote ?? '';
+  generalDraft.isActive = userData.value.isActive ?? false;
   generalDraft.gender = userData.value.volunteer?.gender ?? '';
   generalDraft.ethinicity = userData.value.volunteer?.ethnicity ?? '';
   generalDraft.languages = [...(userData.value.volunteer?.languages ?? [])];
@@ -104,7 +103,6 @@ function populateDrafts() {
 
 function toggleEditMode() {
   if (isEditMode.value) {
-    // Cancel — discard any in-progress edits.
     isEditMode.value = false;
   } else {
     populateDrafts();
@@ -150,9 +148,6 @@ async function deleteRsvp(rsvp: NonNullable<typeof userData.value>['rsvps'][numb
   await refresh();
 }
 
-// ---- Roles ----
-// ADMIN is deliberately excluded from both lists — it isn't
-// manageable through this quick-action menu.
 const MANAGEABLE_ROLES = ['User', 'Volunteer'];
 
 const rolesAvailableToAdd = computed(() =>
@@ -190,7 +185,6 @@ async function handleDelete() {
   });
   await navigateTo('/admin/member-management');
 }
-
 </script>
 
 <template>
@@ -199,7 +193,6 @@ async function handleDelete() {
     class="w-full max-w-(--ui-container) mx-auto mt-19 min-h-[calc(100vh-4.75rem)] flex flex-col"
   >
     <div class="mx-10">
-      <!-- User Name and Pfp -->
       <div class="flex gap-4">
         <div class="lg:w-25 lg:h-25 w-15 h-15">
           <UserAvatar :name="userData.name" :src="userData.imageUrl" />
@@ -210,7 +203,6 @@ async function handleDelete() {
         </div>
       </div>
 
-      <!-- Section switcher -->
       <div class="w-full my-5 rounded-2xl flex items-center gap-2">
         <SectionButton
           v-for="section in sections"
@@ -222,7 +214,6 @@ async function handleDelete() {
         />
       </div>
 
-      <!-- Action buttons -->
       <div class="w-full mb-5 p-2 bg-gray-100 rounded-xl flex items-center flex-wrap">
         <UButton
           label="Add Role"
@@ -281,7 +272,6 @@ async function handleDelete() {
         @delete="deleteRsvp"
       />
 
-      <!-- Single save/cancel bar, visible regardless of active tab -->
       <div v-if="isEditMode" class="sticky bottom-4 mt-6 flex items-center gap-2 bg-white dark:bg-gray-900 py-2">
         <UButton label="Save Changes" color="primary" variant="solid" @click="requestSaveAll" />
         <UButton label="Cancel" color="neutral" variant="ghost" @click="toggleEditMode" />

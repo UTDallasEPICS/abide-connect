@@ -3,6 +3,7 @@ model User {
   name          String?
   email         String              @unique
   phone         String?
+  adminNote     String?
   emailVerified Boolean             @default(false)
   imageURL      String?
   createdAt     DateTime            @default(now())

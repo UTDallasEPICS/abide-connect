@@ -6,6 +6,8 @@ import { genderItems, ethinicityItems, languageItems, availabilityItems, volunte
 
 export interface GeneralDraft {
   phoneNumber: string;
+  adminNote: string;
+  isActive: boolean;
   gender: string;
   ethinicity: string;
   languages: string[];
@@ -37,14 +39,6 @@ const formattedCreatedAt = computed(() => {
     day: 'numeric',
   });
 });
-function toggleInArray(arr: string[], value: string) {
-  const idx = arr.indexOf(value);
-  if (idx === -1) {
-    arr.push(value);
-  } else {
-    arr.splice(idx, 1);
-  }
-}
 </script>
 
 <template>
@@ -61,6 +55,20 @@ function toggleInArray(arr: string[], value: string) {
       <DetailField label="Roles" :value="userData.roles" />
       <DetailField label="Created At" :value="formattedCreatedAt" />
       <DetailField label="User ID" :value="userData.id" />
+      <DetailField
+        label="Active"
+        :value="userData.isActive"
+        :editable="isEditMode"
+        type="checkbox"
+        v-model="draft.isActive"
+      />
+      <DetailField
+        label="Note"
+        :value="userData.adminNote"
+        :editable="isEditMode"
+        autocomplete="off"
+        v-model="draft.adminNote"
+      />
     </DetailSection>
 
     <DetailSection v-if="userData.emergencyContact || isEditMode" title="Emergency Contact">
@@ -116,7 +124,6 @@ function toggleInArray(arr: string[], value: string) {
         v-model="draft.ethinicity"
       />
 
-      <!-- Languages -->
       <DetailField 
         label="Languages"
         :value="userData.volunteer.languages" 
@@ -127,7 +134,6 @@ function toggleInArray(arr: string[], value: string) {
         v-model="draft.languages"
       />
 
-      <!-- Availabilities -->
       <DetailField 
         label="Availabilities" 
         :value="userData.volunteer.availabilities" 
@@ -138,7 +144,6 @@ function toggleInArray(arr: string[], value: string) {
         v-model="draft.availabilities"
        />
 
-      <!-- Volunteer Areas -->
       <DetailField 
         label="Volunteer Areas" 
         :value="userData.volunteer.volunteerAreas" 
@@ -148,7 +153,6 @@ function toggleInArray(arr: string[], value: string) {
         :options="volunteerAreaItems"
         v-model="draft.volunteerAreas"
        />
-      <!-- Certifications -->
       <DetailField 
         label="Certifications" 
         :value="userData.volunteer.certifications" 

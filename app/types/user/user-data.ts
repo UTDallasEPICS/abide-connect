@@ -19,15 +19,17 @@ export interface RsvpData {
 
 export interface UserData {
   id: string;
-  name: string;
+  name?: string;
   email: string;
-  phoneNumber: string;
+  phoneNumber?: string;
+  adminNote?: string;
   imageUrl?: string;
   createdAt: Date;
   roles: string[];
   volunteer?: {
     gender?: string;
     ethnicity?: string;
+    isActive?: boolean;
     languages: string[];
     availabilities?: string[];
     volunteerAreas?: string[];
