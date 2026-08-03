@@ -13,7 +13,10 @@ interface RouteRoleConfig {
 const routeRoles: Record<string, RouteRoleConfig> = {
   '/admin':                     { role: 'admin' },
   '/events/manage':             { role: 'admin' },
-  '/volunteer':                 { role: 'volunteer', unauthorizedPage: '/volunteer-application/form-required' },
+  // The profile page is open to any signed-in user. Users who haven't applied
+  // to volunteer see it with a prompt to apply, instead of being bounced to
+  // an error.
+  '/volunteer':                 { role: 'user' },
   '/volunteer-application':     { role: 'user' },
 }
 

@@ -1,5 +1,10 @@
 <script setup lang="ts">
-const nav = ref([
+const { isAdmin } = useUserRoles()
+
+// Admins get the dashboard; everyone else gets their profile.
+const profileLink = computed(() => (isAdmin.value ? '/admin' : '/volunteer'))
+
+const nav = computed(() => [
   {
     id: 1,
     icon: 'i-lucide-house',
@@ -18,7 +23,7 @@ const nav = ref([
   {
     id: 4,
     icon: 'i-lucide-square-user-round',
-    to: '/volunteer',
+    to: profileLink.value,
   },
 ])
 </script>
