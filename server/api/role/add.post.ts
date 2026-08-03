@@ -38,12 +38,12 @@ export default defineEventHandler(async (event) => {
     // undefined.
     if (role === 'VOLUNTEER') {
       const blankStringFields = {
-        otherVolunteerAreaDescription: '-',
-        otherCertificationDescription: '-',
-        emergencyContactName1: '-',
-        emergencyContactPhone1: '-',
-        emergencyContactName2: '-',
-        emergencyContactPhone2: '-',
+        otherVolunteerAreaDescription: '',
+        otherCertificationDescription: '',
+        emergencyContactName1: '',
+        emergencyContactPhone1: '',
+        emergencyContactName2: '',
+        emergencyContactPhone2: '',
       }
 
       await tx.volunteer.upsert({

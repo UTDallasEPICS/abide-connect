@@ -71,7 +71,7 @@ const formattedCreatedAt = computed(() => {
       />
     </DetailSection>
 
-    <DetailSection v-if="userData.emergencyContact || isEditMode" title="Emergency Contact">
+    <DetailSection v-if="userData.volunteer && userData.roles.includes('Volunteer')" title="Emergency Contact">
       <DetailField
         label="Emergency Contact Name 1"
         :value="userData.emergencyContact?.emergencyContactName1"

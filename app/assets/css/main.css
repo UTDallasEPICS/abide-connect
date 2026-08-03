@@ -9,6 +9,7 @@
 @layer base {
   /* Default text uses Poppins; */
   html, body {
+    overflow-x: hidden;
     font-family: var(--font-poppins);
     font-weight: 700;
   }

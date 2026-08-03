@@ -23,19 +23,23 @@ watch(
 
 function handleConfirm() {
   if (!selectedRole.value) return;
+
   emit('confirm', selectedRole.value);
   emit('update:open', false);
 }
 </script>
 
 <template>
-  <UModal :open="open" :ui="{ overlay: 'bg-black/70' }" @update:open="$emit('update:open', $event)">
-    <template #content>
-      <div class="p-6 flex flex-col gap-4">
-        <div>
-          <h3 class="text-lg font-semibold">{{ title }}</h3>
-          <p class="text-sm font-normal text-gray-400">{{ description }}</p>
-        </div>
+  <UModal
+    :open="open"
+    :title="title"
+    @update:open="(v) => emit('update:open', v)"
+  >
+    <template #body>
+      <div class="flex flex-col gap-4">
+        <p class="font-normal text-sm text-gray-400">
+          {{ description }}
+        </p>
 
         <USelectMenu
           v-model="selectedRole"
@@ -43,22 +47,23 @@ function handleConfirm() {
           placeholder="Select a role"
           class="w-full"
         />
+      </div>
+    </template>
 
-        <div class="flex justify-end gap-2 mt-2">
-          <UButton
-            :label="confirmLabel ?? 'Confirm'"
-            class="font-semibold px-4 rounded-md"
-            :disabled="!selectedRole"
-            @click="handleConfirm"
-          />
-          <UButton
-            label="Cancel"
-            color="neutral"
-            variant="ghost"
-            class="rounded-md    font-semibold px-4"
-            @click="$emit('update:open', false)"
-          />
-        </div>
+    <template #footer>
+      <div class="flex justify-end gap-2">
+        <UButton
+          :label="confirmLabel ?? 'Confirm'"
+          :disabled="!selectedRole"
+          @click="handleConfirm"
+        />
+
+        <UButton
+          label="Cancel"
+          color="neutral"
+          variant="ghost"
+          @click="emit('update:open', false)"
+        />
       </div>
     </template>
   </UModal>

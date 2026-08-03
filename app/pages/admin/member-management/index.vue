@@ -10,7 +10,7 @@ definePageMeta({
 
 type RoleFilter = 'ALL' | 'VOLUNTEER' | 'ADMIN'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 10
 /* ... */
 const SEARCH_DEBOUNCE_MS = 200
 /* A loading screen only shows up if a fetch is still pending after this long.  */
@@ -138,9 +138,10 @@ const roleStyles: Record<string, string> = {
 
       <!-- Backdrop -->
       <div class="w-screen relative left-1/2 right-1/2 -mx-[50vw] bg-gray-50 dark:bg-gray-900 flex-1 min-h-0 mt-7 rounded-4xl">
-        <div class="w-full max-w-(--ui-container) mx-auto px-10 pt-5 pb-10 h-full flex flex-col">
+        <div class="w-full max-w-(--ui-container) mx-auto px-4 sm:px-10 pt-5 pb-10 h-full flex flex-col">
           <!-- User list -->
           <div class="w-full flex-1 min-h-0 rounded-lg border border-gray-300 dark:border-gray-700 divide-y divide-gray-300 dark:divide-gray-700 overflow-y-auto bg-white dark:bg-gray-800">
+            
             <!-- Loading -->
             <div v-if="showLoadingScreen" class="flex items-center justify-center py-16">
               <UIcon name="i-lucide-loader-2" class="animate-spin text-3xl text-gray-400 dark:text-gray-500" />

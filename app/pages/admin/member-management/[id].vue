@@ -220,7 +220,7 @@ async function handleDelete() {
           icon="i-lucide-user-plus"
           color="neutral"
           variant="ghost"
-          class="rounded-full font-semibold px-3"
+          class="rounded-xl font-semibold px-3 hover:bg-gray-200 transition-colors"
           @click="isAddRoleModalOpen = true"
         />
         <UButton
@@ -228,7 +228,7 @@ async function handleDelete() {
           icon="i-lucide-user-minus"
           color="neutral"
           variant="ghost"
-          class="rounded-full font-semibold px-3"
+          class="rounded-xl font-semibold px-3 hover:bg-gray-200 transition-colors"
           @click="isRemoveRoleModalOpen = true"
         />
         <UButton
@@ -236,7 +236,7 @@ async function handleDelete() {
           icon="i-lucide-pencil"
           color="neutral"
           variant="ghost"
-          class="rounded-full font-semibold px-3"
+          class="rounded-xl font-semibold px-3 hover:bg-gray-200 transition-colors"
           @click="toggleEditMode"
         />
         <UButton
@@ -244,7 +244,7 @@ async function handleDelete() {
           icon="i-lucide-trash-2"
           color="neutral"
           variant="ghost"
-          class="rounded-full font-semibold px-3"
+          class="rounded-xl font-semibold px-3 hover:bg-gray-200 transition-colors"
           @click="isDeleteModalOpen = true"
         />
       </div>
