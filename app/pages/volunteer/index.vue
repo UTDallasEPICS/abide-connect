@@ -6,8 +6,11 @@ const tz = getLocalTimeZone()
 
 // The session data bugs unuless we pass the cookie header to the fetch request
 const headers = useRequestHeaders(['cookie']);
-const volunteer = await useFetch('/api/volunteer/me', { headers }).data.value;
-const user = await useFetch('/api/user/me', { headers }).data.value;
+// Keep the ref useFetch hands back and await the request itself. Reading
+// `.data.value` off the un-awaited call snapshots it while it's still null,
+// which leaves the name blank on any client-side navigation (e.g. the
+// redirect straight after sign-in).
+const { data: user } = await useFetch('/api/user/me', { headers })
 
 
 const value = ref<DateValue>(today(tz))
@@ -56,7 +59,7 @@ const { isVolunteer } = useUserRoles()
     <main class="flex-1 px-4 pt-24 pb-24">
       <div class="max-w-4xl mx-auto space-y-6">
         <h2 class="text-center text-2xl font-bold text-brand4 dark:text-teal-400">
-          Welcome back, {{ user?.name}}
+          Welcome back, {{ user?.name }}
         </h2>
 
         <!-- Volunteer application prompt (users who haven't applied yet) -->
