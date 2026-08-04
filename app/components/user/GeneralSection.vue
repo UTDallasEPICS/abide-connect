@@ -45,6 +45,13 @@ const formattedCreatedAt = computed(() => {
   <div>
     <DetailSection title="Details">
       <DetailField
+        label="Note"
+        :value="userData.adminNote"
+        :editable="isEditMode"
+        autocomplete="off"
+        v-model="draft.adminNote"
+      />
+      <DetailField
         label="Phone Number"
         :value="userData.phoneNumber"
         :editable="isEditMode"
@@ -55,20 +62,6 @@ const formattedCreatedAt = computed(() => {
       <DetailField label="Roles" :value="userData.roles" />
       <DetailField label="Created At" :value="formattedCreatedAt" />
       <DetailField label="User ID" :value="userData.id" />
-      <DetailField
-        label="Active"
-        :value="userData.isActive"
-        :editable="isEditMode"
-        type="checkbox"
-        v-model="draft.isActive"
-      />
-      <DetailField
-        label="Note"
-        :value="userData.adminNote"
-        :editable="isEditMode"
-        autocomplete="off"
-        v-model="draft.adminNote"
-      />
     </DetailSection>
 
     <DetailSection v-if="userData.volunteer && userData.roles.includes('Volunteer')" title="Emergency Contact">
@@ -106,6 +99,14 @@ const formattedCreatedAt = computed(() => {
 
     <!-- Only shown while the Volunteer role is active -->
     <DetailSection v-if="userData.volunteer && userData.roles.includes('Volunteer')" title="Volunteer Data">
+      <DetailField
+        label="Active"
+        :value="userData.volunteer.isActive"
+        :editable="isEditMode"
+        type="checkbox"
+        v-model="draft.isActive"
+      />
+      
       <DetailField
         label="Gender"
         :value="userData.volunteer.gender"

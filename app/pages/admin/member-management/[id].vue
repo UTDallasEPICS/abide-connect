@@ -4,6 +4,7 @@ import SectionButton from '~/components/buttons/SectionButton.vue';
 import RoleModal from '~/components/modals/RoleModal.vue';
 import ConfirmModal from '~/components/modals/ConfirmModal.vue';
 import SaveChangesModal from '~/components/modals/SaveChangesModal.vue';
+import AddHourLogModal from '~/components/modals/AddHourLogModal.vue';
 import GeneralSection, { type GeneralDraft } from '~/components/user/GeneralSection.vue';
 import HourLogSection, { type HourLogDraft } from '~/components/user/HourLogSection.vue';
 import RsvpsSection, { type RsvpDraft } from '~/components/user/RsvpsSection.vue';
@@ -111,41 +112,158 @@ function toggleEditMode() {
 }
 
 const isConfirmSaveAllOpen = ref(false);
+const isSavingAll = ref(false);
+const saveAllError = ref<string | null>(null);
 
 function requestSaveAll() {
+  saveAllError.value = null;
   isConfirmSaveAllOpen.value = true;
 }
 
 async function confirmSaveAll() {
-  await Promise.all([
-    $fetch('/api/user/update', {
+  isSavingAll.value = true;
+  saveAllError.value = null;
+
+  try {
+    // Guard against drafts referencing records that no longer exist
+    // (e.g. an hour log or rsvp deleted earlier in this edit session).
+    const validHourLogIds = new Set((userData.value?.hourLogs ?? []).map((l) => l.id));
+    const validRsvpEventIds = new Set((userData.value?.rsvps ?? []).map((r) => r.eventId));
+
+    await Promise.all([
+      $fetch('/api/user/update', {
+        method: 'POST',
+        body: {
+          userId,
+          ...generalDraft,
+        },
+      }),
+      ...Object.entries(hourLogDrafts)
+        .filter(([id]) => validHourLogIds.has(Number(id)))
+        .map(([id, draft]) =>
+          $fetch(`/api/hour-log/${id}`, { method: 'PATCH', body: draft })
+        ),
+      ...Object.entries(rsvpDrafts)
+        .filter(([eventId]) => validRsvpEventIds.has(eventId))
+        .map(([eventId, draft]) =>
+          $fetch(`/api/rsvp/${userId}/${eventId}`, { method: 'PATCH', body: draft })
+        ),
+    ]);
+
+    isConfirmSaveAllOpen.value = false;
+    isEditMode.value = false;
+    await refresh();
+  } catch (err: any) {
+    saveAllError.value =
+      err?.data?.message ?? err?.message ?? 'Something went wrong while saving. Please try again.';
+  } finally {
+    isSavingAll.value = false;
+  }
+}
+
+// ----- Account deletion (with confirmation) -----
+const isDeleteModalOpen = ref(false);
+const isDeletingAccount = ref(false);
+const deleteAccountError = ref<string | null>(null);
+
+async function handleDelete() {
+  isDeletingAccount.value = true;
+  deleteAccountError.value = null;
+  try {
+    await $fetch('/api/user/delete', {
       method: 'POST',
-      body: {
-        userId,
-        ...generalDraft,
-      },
-    }),
-    ...Object.entries(hourLogDrafts).map(([id, draft]) =>
-      $fetch(`/api/hour-log/${id}`, { method: 'PATCH', body: draft })
-    ),
-    ...Object.entries(rsvpDrafts).map(([eventId, draft]) =>
-      $fetch(`/api/rsvp/${userId}/${eventId}`, { method: 'PATCH', body: draft })
-    ),
-  ]);
-
-  isConfirmSaveAllOpen.value = false;
-  isEditMode.value = false;
-  await refresh();
+      body: { userId },
+    });
+    await navigateTo('/admin/member-management');
+  } catch (err: any) {
+    deleteAccountError.value =
+      err?.data?.message ?? err?.message ?? 'Failed to delete account. Please try again.';
+  } finally {
+    isDeletingAccount.value = false;
+  }
 }
 
-async function deleteHourLog(log: NonNullable<typeof userData.value>['hourLogs'][number]) {
-  await $fetch(`/api/hour-log/${log.id}`, { method: 'DELETE' });
-  await refresh();
+// ----- Hour log deletion (with confirmation) -----
+type HourLog = NonNullable<typeof userData.value>['hourLogs'][number];
+
+const isDeleteHourLogModalOpen = ref(false);
+const isDeletingHourLog = ref(false);
+const deleteHourLogError = ref<string | null>(null);
+const pendingHourLogDelete = ref<HourLog | null>(null);
+
+function requestDeleteHourLog(log: HourLog) {
+  pendingHourLogDelete.value = log;
+  deleteHourLogError.value = null;
+  isDeleteHourLogModalOpen.value = true;
 }
 
-async function deleteRsvp(rsvp: NonNullable<typeof userData.value>['rsvps'][number]) {
-  await $fetch(`/api/rsvp/${userId}/${rsvp.eventId}`, { method: 'DELETE' });
+async function confirmDeleteHourLog() {
+  if (!pendingHourLogDelete.value) return;
+  const log = pendingHourLogDelete.value;
+
+  isDeletingHourLog.value = true;
+  deleteHourLogError.value = null;
+
+  try {
+    await $fetch(`/api/hour-log/${log.id}`, { method: 'DELETE' });
+    delete hourLogDrafts[log.id];
+    await refresh();
+
+    isDeleteHourLogModalOpen.value = false;
+    pendingHourLogDelete.value = null;
+  } catch (err: any) {
+    deleteHourLogError.value =
+      err?.data?.message ?? err?.message ?? 'Failed to delete hour log. Please try again.';
+  } finally {
+    isDeletingHourLog.value = false;
+  }
+}
+
+// ----- Add hour log -----
+const isAddHourLogModalOpen = ref(false);
+
+async function handleHourLogCreated() {
   await refresh();
+  // Re-sync drafts so a freshly-added log is reflected if the admin is mid-edit
+  if (isEditMode.value) {
+    populateDrafts();
+  }
+}
+
+// ----- RSVP deletion (with confirmation) -----
+type Rsvp = NonNullable<typeof userData.value>['rsvps'][number];
+
+const isDeleteRsvpModalOpen = ref(false);
+const isDeletingRsvp = ref(false);
+const deleteRsvpError = ref<string | null>(null);
+const pendingRsvpDelete = ref<Rsvp | null>(null);
+
+function requestDeleteRsvp(rsvp: Rsvp) {
+  pendingRsvpDelete.value = rsvp;
+  deleteRsvpError.value = null;
+  isDeleteRsvpModalOpen.value = true;
+}
+
+async function confirmDeleteRsvp() {
+  if (!pendingRsvpDelete.value) return;
+  const rsvp = pendingRsvpDelete.value;
+
+  isDeletingRsvp.value = true;
+  deleteRsvpError.value = null;
+
+  try {
+    await $fetch(`/api/rsvp/${userId}/${rsvp.eventId}`, { method: 'DELETE' });
+    delete rsvpDrafts[rsvp.eventId];
+    await refresh();
+
+    isDeleteRsvpModalOpen.value = false;
+    pendingRsvpDelete.value = null;
+  } catch (err: any) {
+    deleteRsvpError.value =
+      err?.data?.message ?? err?.message ?? 'Failed to delete RSVP. Please try again.';
+  } finally {
+    isDeletingRsvp.value = false;
+  }
 }
 
 const MANAGEABLE_ROLES = ['User', 'Volunteer'];
@@ -160,7 +278,6 @@ const rolesAvailableToRemove = computed(() =>
 
 const isAddRoleModalOpen = ref(false);
 const isRemoveRoleModalOpen = ref(false);
-const isDeleteModalOpen = ref(false);
 
 async function handleAddRole(role: string) {
   await $fetch('/api/role/add', {
@@ -176,14 +293,6 @@ async function handleRemoveRole(role: string) {
     body: { userId, role: role.toUpperCase() },
   });
   await refresh();
-}
-
-async function handleDelete() {
-  await $fetch('/api/user/delete', {
-    method: 'POST',
-    body: { userId },
-  });
-  await navigateTo('/admin/member-management');
 }
 </script>
 
@@ -232,6 +341,15 @@ async function handleDelete() {
           @click="isRemoveRoleModalOpen = true"
         />
         <UButton
+          v-if="activeSection === 'HOUR_LOG'"
+          label="Add Hour Log"
+          icon="i-lucide-clock-plus"
+          color="neutral"
+          variant="ghost"
+          class="rounded-xl font-semibold px-3 hover:bg-gray-200 transition-colors"
+          @click="isAddHourLogModalOpen = true"
+        />
+        <UButton
           label="Edit"
           icon="i-lucide-pencil"
           color="neutral"
@@ -261,7 +379,7 @@ async function handleDelete() {
         :hour-logs="userData.hourLogs"
         :is-edit-mode="isEditMode"
         v-model="hourLogDrafts"
-        @delete="deleteHourLog"
+        @delete="requestDeleteHourLog"
       />
 
       <RsvpsSection
@@ -269,7 +387,7 @@ async function handleDelete() {
         :rsvps="userData.rsvps"
         :is-edit-mode="isEditMode"
         v-model="rsvpDrafts"
-        @delete="deleteRsvp"
+        @delete="requestDeleteRsvp"
       />
 
       <div v-if="isEditMode" class="sticky bottom-4 mt-6 flex items-center gap-2 bg-white dark:bg-gray-900 py-2">
@@ -297,14 +415,41 @@ async function handleDelete() {
     />
     <SaveChangesModal
       v-model:open="isConfirmSaveAllOpen"
+      :loading="isSavingAll"
+      :error="saveAllError"
       @confirm="confirmSaveAll"
+    />
+    <AddHourLogModal
+      v-model:open="isAddHourLogModalOpen"
+      :user-id="userId"
+      @created="handleHourLogCreated"
     />
     <ConfirmModal
       v-model:open="isDeleteModalOpen"
       title="Delete this account?"
       description="Are you sure you want to delete this account? This action cannot be undone."
       confirm-label="Delete"
+      :loading="isDeletingAccount"
+      :error="deleteAccountError"
       @confirm="handleDelete"
+    />
+    <ConfirmModal
+      v-model:open="isDeleteHourLogModalOpen"
+      title="Delete this hour log?"
+      description="Are you sure you want to delete this hour log entry? This action cannot be undone."
+      confirm-label="Delete"
+      :loading="isDeletingHourLog"
+      :error="deleteHourLogError"
+      @confirm="confirmDeleteHourLog"
+    />
+    <ConfirmModal
+      v-model:open="isDeleteRsvpModalOpen"
+      title="Delete this RSVP?"
+      description="Are you sure you want to remove this RSVP? This action cannot be undone."
+      confirm-label="Delete"
+      :loading="isDeletingRsvp"
+      :error="deleteRsvpError"
+      @confirm="confirmDeleteRsvp"
     />
   </div>
 </template>

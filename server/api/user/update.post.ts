@@ -21,10 +21,23 @@ type UpdateUserBody = {
   emergencyContactPhone2?: string | null
 }
 
-// Treats '' and undefined as "clear the field" (null), everything else passes through as-is.
-function normalizeNullable(value: string | null | undefined) {
-  if (value === undefined || value === '') return null
-  return value
+// '' -> null (explicit clear). Only call this for values that are already known to be defined.
+function normalizeNullable(value: string | null) {
+  return value === '' ? null : value
+}
+
+// Only adds the key to the returned object if `value` is not undefined.
+// Lets us skip fields the client didn't send instead of overwriting them with null.
+function field<T extends string>(key: T, value: string | null | undefined) {
+  if (value === undefined) return {}
+  return { [key]: normalizeNullable(value) }
+}
+
+// For enum columns: '' and undefined both mean "don't touch this field" —
+// an enum can't be set to '', and may not be nullable either.
+function enumField<T extends string>(key: T, value: string | null | undefined) {
+  if (value === undefined || value === '') return {}
+  return { [key]: value }
 }
 
 export default defineEventHandler(async (event) => {
@@ -34,9 +47,6 @@ export default defineEventHandler(async (event) => {
   if (!userId) {
     throw createError({ statusCode: 400, statusMessage: 'Missing userId' })
   }
-
-  const gender = normalizeNullable(body.gender)
-  const ethinicity = normalizeNullable(body.ethinicity)
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -51,8 +61,8 @@ export default defineEventHandler(async (event) => {
     const updatedUser = await tx.user.update({
       where: { id: userId },
       data: {
-        phone: normalizeNullable(body.phoneNumber),
-        adminNote: normalizeNullable(body.adminNote),
+        ...field('phone', body.phoneNumber),
+        ...field('adminNote', body.adminNote),
       },
     })
 
@@ -64,15 +74,15 @@ export default defineEventHandler(async (event) => {
       updatedVolunteer = await tx.volunteer.update({
         where: { userId },
         data: {
-          gender: gender as any,
-          ethinicity: ethinicity as any,
-          otherVolunteerAreaDescription: normalizeNullable(body.otherVolunteerArea),
-          otherCertificationDescription: normalizeNullable(body.otherCertification),
-          emergencyContactName1: normalizeNullable(body.emergencyContactName1),
-          emergencyContactPhone1: normalizeNullable(body.emergencyContactPhone1),
-          emergencyContactName2: normalizeNullable(body.emergencyContactName2),
-          emergencyContactPhone2: normalizeNullable(body.emergencyContactPhone2),
-        ...(body.isActive !== undefined ? { isActive: body.isActive } : {}),
+          ...enumField('gender', body.gender as any),
+          ...enumField('ethinicity', body.ethinicity as any),
+          ...field('otherVolunteerAreaDescription', body.otherVolunteerArea),
+          ...field('otherCertificationDescription', body.otherCertification),
+          ...field('emergencyContactName1', body.emergencyContactName1),
+          ...field('emergencyContactPhone1', body.emergencyContactPhone1),
+          ...field('emergencyContactName2', body.emergencyContactName2),
+          ...field('emergencyContactPhone2', body.emergencyContactPhone2),
+          ...(body.isActive !== undefined ? { isActive: body.isActive } : {}),
         },
       })
 

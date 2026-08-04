@@ -12,12 +12,10 @@ function humanize(value: string | null | undefined): string | undefined {
 
 export default defineEventHandler(async (event): Promise<UserData> => {
   await requireRole(event, 'Admin');
-
   const id = getRouterParam(event, 'id');
   if (!id) {
     throw createError({ statusCode: 400, statusMessage: 'User id is required' });
   }
-
   const user = await prisma.user.findUnique({
     where: { id },
     include: {
@@ -40,11 +38,9 @@ export default defineEventHandler(async (event): Promise<UserData> => {
       },
     },
   });
-
   if (!user) {
     throw createError({ statusCode: 404, statusMessage: 'User not found' });
   }
-
   const volunteer = user.volunteer;
   const hasEmergencyContact =
     volunteer &&
@@ -52,7 +48,6 @@ export default defineEventHandler(async (event): Promise<UserData> => {
       volunteer.emergencyContactPhone1 ||
       volunteer.emergencyContactName2 ||
       volunteer.emergencyContactPhone2);
-
   const userData: UserData = {
     id: user.id,
     name: user.name ?? undefined,
@@ -60,17 +55,20 @@ export default defineEventHandler(async (event): Promise<UserData> => {
     phoneNumber: user.phone ?? undefined,
     imageUrl: user.imageURL ?? undefined,
     createdAt: user.createdAt,
+    // Role names are display-only (not fed back into a select), so humanize is fine here.
     roles: user.roles.filter((r) => r.active).map((r) => humanize(r.role)!),
     adminNote: user.adminNote ?? undefined,
     volunteer: volunteer
       ? {
-          gender: humanize(volunteer.gender),
-          ethnicity: humanize(volunteer.ethinicity),
+          // Raw enum values — must match option `id`s so selects can pre-select them
+          // and so re-saving an untouched field sends a valid enum back.
+          gender: volunteer.gender ?? undefined,
+          ethnicity: volunteer.ethinicity ?? undefined,
           isActive: volunteer.isActive,
-          languages: volunteer.languages.map((l) => humanize(l.language)!),
-          availabilities: volunteer.availabilities.map((a) => humanize(a.availability)!),
-          volunteerAreas: volunteer.volunteerAreas.map((v) => humanize(v.volunteerArea)!),
-          certifications: volunteer.certifications.map((c) => humanize(c.certification)!),
+          languages: volunteer.languages.map((l) => l.language),
+          availabilities: volunteer.availabilities.map((a) => a.availability),
+          volunteerAreas: volunteer.volunteerAreas.map((v) => v.volunteerArea),
+          certifications: volunteer.certifications.map((c) => c.certification),
           otherVolunteerArea: volunteer.otherVolunteerAreaDescription ?? undefined,
           otherCertification: volunteer.otherCertificationDescription ?? undefined,
         }
@@ -100,6 +98,5 @@ export default defineEventHandler(async (event): Promise<UserData> => {
       isVolunteer: rsvp.isVolunteer,
     })),
   };
-
   return userData;
 });
