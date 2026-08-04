@@ -2,14 +2,15 @@
 import type { DateValue } from '@internationalized/date'
 import { getLocalTimeZone, today } from '@internationalized/date'
 
-definePageMeta({
-  middleware: 'auth',
-})
-
 const tz = getLocalTimeZone()
 
+// The session data bugs unuless we pass the cookie header to the fetch request
+const headers = useRequestHeaders(['cookie']);
+const volunteer = await useFetch('/api/volunteer/me', { headers }).data.value;
+const user = await useFetch('/api/user/me', { headers }).data.value;
+
+
 const value = ref<DateValue>(today(tz))
-const volunteer = await $fetch('/api/volunteer/me')
 const isDateDisabled = (d: DateValue) =>
   d.toDate(tz) < new Date(new Date().setHours(0, 0, 0, 0))
 
@@ -21,25 +22,23 @@ const upcomingEvents = ref([
 ])
 
 // Hour logs
-const approvedLogs = ref([
-  { id: 1, event: 'Park Cleanup', hours: 3, date: 'Mar 10, 2024' },
-  { id: 2, event: 'Library Support', hours: 2, date: 'Mar 5, 2024' },
-])
+interface HourLog {
+  id: string
+  eventId: string
+  event: { title: string }
+  date: string
+  hours: number
+  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED'
+  comment?: string
+}
 
-const deniedLogs = ref([
-  {
-    id: 1,
-    event: 'Street Fair',
-    hours: 5,
-    date: 'Mar 1, 2024',
-    reason: 'Incorrect documentation',
-  },
-])
 
-const pendingLogs = ref([
-  { id: 1, event: 'Beach Cleanup', hours: 4, date: 'Mar 20, 2024' },
-  { id: 2, event: 'Animal Shelter', hours: 3, date: 'Mar 22, 2024' },
-])
+const { logs } = await $fetch<{ logs: HourLog[] }>('/api/volunteer/logs', { headers })
+const logsRef = ref<HourLog[]>(logs)
+
+const approvedLogs = computed(() => logsRef.value.filter(l => l.approvalStatus === 'APPROVED'))
+const pendingLogs = computed(() => logsRef.value.filter(l => l.approvalStatus === 'PENDING'))
+const deniedLogs = computed(() => logsRef.value.filter(l => l.approvalStatus === 'REJECTED'))
 
 // Toggle states for accordions
 const showApproved = ref(false)
@@ -52,7 +51,7 @@ const showPending = ref(false)
     <main class="flex-1 px-4 pt-24 pb-24">
       <div class="max-w-4xl mx-auto space-y-6">
         <h2 class="text-center text-2xl font-bold text-brand4 dark:text-teal-400">
-          Welcome back, {{ volunteer?.name }}
+          Welcome back, {{ user?.name}}
         </h2>
         <!-- Calendar Card -->
         <UCard>
@@ -143,7 +142,7 @@ const showPending = ref(false)
                 <div class="flex items-start justify-between">
                   <div>
                     <p class="font-medium text-sm">
-                      {{ log.event }}
+                      {{ log.event.title }}
                     </p>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                       {{ log.date }}
@@ -192,7 +191,7 @@ const showPending = ref(false)
                 <div class="flex items-start justify-between">
                   <div>
                     <p class="font-medium text-sm">
-                      {{ log.event }}
+                      {{ log.event.title }}
                     </p>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                       {{ log.date }}
@@ -242,7 +241,7 @@ const showPending = ref(false)
                 <div class="flex items-start justify-between mb-2">
                   <div>
                     <p class="font-medium text-sm">
-                      {{ log.event }}
+                      {{ log.event.title }}
                     </p>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                       {{ log.date }}
@@ -253,7 +252,7 @@ const showPending = ref(false)
                   </span>
                 </div>
                 <p class="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-2 rounded">
-                  {{ log.reason }}
+                  {{ log.comment }}
                 </p>
               </div>
             </div>

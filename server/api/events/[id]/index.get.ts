@@ -1,4 +1,6 @@
 import prisma from '#server/utils/prisma'
+import { getEventViewer } from '#server/utils/eventViewer'
+import { canViewEvent } from '#shared/utils/eventType'
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
@@ -16,6 +18,13 @@ export default defineEventHandler(async (event) => {
   })
 
   if (!foundEvent) {
+    throw createError({ statusCode: 404, message: 'Event not found' })
+  }
+
+  // Same 404 for a hidden event as for a missing one, so a volunteer-only
+  // event can't be confirmed to exist by guessing its URL.
+  const viewer = await getEventViewer(event)
+  if (!canViewEvent(foundEvent, viewer)) {
     throw createError({ statusCode: 404, message: 'Event not found' })
   }
 

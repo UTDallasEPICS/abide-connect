@@ -1,6 +1,9 @@
 import prisma from '#server/utils/prisma'
+import { requireRole } from '~~/server/utils/requireRole';
 
-export default eventHandler(async () => {
+export default eventHandler(async (event) => {
+  const session = await requireRole(event, 'admin');
+
   try {
     const logs = await prisma.volunteer_Hour_Log.findMany({
       include: {
@@ -20,7 +23,7 @@ export default eventHandler(async () => {
       id: String(log.id),
       name:
         log.volunteer.user?.name
-        ?? log.volunteer.user?.contactEmail
+        ?? log.volunteer.user?.email
         ?? 'Unknown',
       event: log.event.title,
       date: log.date.toLocaleDateString('en-US', {
