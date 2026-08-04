@@ -1,6 +1,10 @@
 import prisma from '#server/utils/prisma'
+import { requireRole } from '#server/utils/requireRole'
 
 export default defineEventHandler(async (event) => {
+  // Sign-up lists carry names and emails, so they're staff-only.
+  await requireRole(event, 'admin')
+
   const id = getRouterParam(event, 'id')
 
   if (!id) {
@@ -15,10 +19,33 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'Event not found' })
   }
 
-  const rsvps = await prisma.guestRSVP.findMany({
+  const guestRsvps = await prisma.guestRSVP.findMany({
     where: { eventId: id },
     orderBy: { createdAt: 'asc' },
   })
+
+  // Signed-in sign-ups live in a separate table, but staff want one list.
+  const userRsvps = await prisma.rSVP.findMany({
+    where: { eventId: id },
+    include: { user: { select: { name: true, email: true } } },
+  })
+
+  const rsvps = [
+    ...userRsvps.map(r => ({
+      id: r.userId,
+      name: r.user?.name ?? '',
+      email: r.user?.email ?? '',
+      isVolunteer: r.isVolunteer,
+      isGuest: false,
+    })),
+    ...guestRsvps.map(r => ({
+      id: r.id,
+      name: r.name,
+      email: r.email,
+      isVolunteer: r.isVolunteer,
+      isGuest: true,
+    })),
+  ]
 
   const volunteers = rsvps.filter(r => r.isVolunteer)
   const attendees = rsvps.filter(r => !r.isVolunteer)

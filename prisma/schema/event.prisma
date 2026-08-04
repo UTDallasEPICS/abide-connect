@@ -8,8 +8,10 @@ model Event {
   location        Location @relation(fields: [locationId], references: [id])
   locationId      String
   calendarURL     String?
+  calendarEventId String?
   allowVolunteers Boolean
   allowAttendees  Boolean
+  isTraining      Boolean @default(false)
   logsGenerated   Boolean @default(false)
 
   mobileClinic   MobileClinic? @relation(fields: [mobileClinicId], references: [id])

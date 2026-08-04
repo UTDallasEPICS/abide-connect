@@ -1,4 +1,7 @@
 import prisma from '#server/utils/prisma'
+import { createCalendarEvent, updateCalendarEvent } from '#server/utils/googleCalendar'
+import { requireRole } from '#server/utils/requireRole'
+import { eventTypeToFlags, isEventType } from '#shared/utils/eventType'
 
 // Geocode location using Nominatim
 async function geocodeLocation(location: string) {
@@ -39,6 +42,9 @@ async function geocodeLocation(location: string) {
 }
 
 export default defineEventHandler(async (event) => {
+  // Editing events is staff-only.
+  await requireRole(event, 'admin')
+
   const id = getRouterParam(event, 'id')
   const body = await readBody(event)
   console.log(body)
@@ -106,11 +112,19 @@ export default defineEventHandler(async (event) => {
       }
     }
 
+    // `location` and `mobileClinic` are relations handled separately below,
+    // and `eventType` is the client-facing name for the audience booleans —
+    // none of them can be passed straight through to Prisma.
+    const { eventType, location: _location, mobileClinic: _mobileClinic, ...eventFields } = body
+
+    const audience = isEventType(eventType) ? eventTypeToFlags(eventType) : {}
+
     // Update the event
     const updatedEvent = await prisma.event.update({
       where: { id },
       data: {
-        ...body,
+        ...eventFields,
+        ...audience,
         location: {
           connectOrCreate: {
             where: {
@@ -128,6 +142,36 @@ export default defineEventHandler(async (event) => {
     })
 
     console.log('✅ Event updated:', updatedEvent)
+
+    // Best-effort: keep the shared Google Calendar in sync with the edit. If the
+    // event was never pushed (e.g. created before sync existed, or by a
+    // non-Google user), create it now; otherwise patch the existing entry.
+    const userId = event.context.session?.user?.id
+    if (userId) {
+      const calendarInput = {
+        title: updatedEvent.title,
+        description: updatedEvent.description,
+        location: updatedEvent.location?.address ?? null,
+        startTime: updatedEvent.startTime,
+        endTime: updatedEvent.endTime,
+      }
+
+      const calendarRef = foundEvent.calendarEventId
+        ? await updateCalendarEvent(userId, foundEvent.calendarEventId, calendarInput)
+        : await createCalendarEvent(userId, calendarInput)
+
+      if (calendarRef && calendarRef.id !== foundEvent.calendarEventId) {
+        return await prisma.event.update({
+          where: { id },
+          data: {
+            calendarEventId: calendarRef.id,
+            calendarURL: calendarRef.htmlLink,
+          },
+          include: { eventAssets: true, location: true },
+        })
+      }
+    }
+
     return updatedEvent
   }
   catch (error) {
