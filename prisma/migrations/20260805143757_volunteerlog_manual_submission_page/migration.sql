@@ -10,6 +10,7 @@ CREATE TABLE "new_events" (
     "endTime" DATETIME NOT NULL,
     "locationId" TEXT NOT NULL,
     "calendarURL" TEXT,
+    "calendarEventId" TEXT,
     "allowVolunteers" BOOLEAN NOT NULL,
     "allowAttendees" BOOLEAN NOT NULL,
     "isTraining" BOOLEAN NOT NULL DEFAULT false,
@@ -20,7 +21,7 @@ CREATE TABLE "new_events" (
     CONSTRAINT "events_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "Location" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "events_mobileClinicId_fkey" FOREIGN KEY ("mobileClinicId") REFERENCES "mobileClinic" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
-INSERT INTO "new_events" ("allowAttendees", "allowVolunteers", "calendarURL", "createdAt", "description", "endTime", "id", "locationId", "logsGenerated", "mobileClinicId", "shortDesc", "startTime", "title", "updatedAt") SELECT "allowAttendees", "allowVolunteers", "calendarURL", "createdAt", "description", "endTime", "id", "locationId", "logsGenerated", "mobileClinicId", "shortDesc", "startTime", "title", "updatedAt" FROM "events";
+INSERT INTO "new_events" ("allowAttendees", "allowVolunteers", "calendarEventId", "calendarURL", "createdAt", "description", "endTime", "id", "locationId", "logsGenerated", "mobileClinicId", "shortDesc", "startTime", "title", "updatedAt") SELECT "allowAttendees", "allowVolunteers", "calendarEventId", "calendarURL", "createdAt", "description", "endTime", "id", "locationId", "logsGenerated", "mobileClinicId", "shortDesc", "startTime", "title", "updatedAt" FROM "events";
 DROP TABLE "events";
 ALTER TABLE "new_events" RENAME TO "events";
 CREATE TABLE "new_users" (
@@ -37,6 +38,23 @@ INSERT INTO "new_users" ("createdAt", "email", "emailVerified", "id", "imageURL"
 DROP TABLE "users";
 ALTER TABLE "new_users" RENAME TO "users";
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+CREATE TABLE "new_volunteer_hour_logs" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "volunteerId" TEXT NOT NULL,
+    "eventId" TEXT,
+    "eventName" TEXT,
+    "date" DATETIME NOT NULL,
+    "hours" REAL NOT NULL,
+    "approvalStatus" TEXT NOT NULL DEFAULT 'PENDING',
+    "comment" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "volunteer_hour_logs_volunteerId_fkey" FOREIGN KEY ("volunteerId") REFERENCES "volunteers" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "volunteer_hour_logs_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "events" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+INSERT INTO "new_volunteer_hour_logs" ("approvalStatus", "comment", "createdAt", "date", "eventId", "hours", "id", "updatedAt", "volunteerId") SELECT "approvalStatus", "comment", "createdAt", "date", "eventId", "hours", "id", "updatedAt", "volunteerId" FROM "volunteer_hour_logs";
+DROP TABLE "volunteer_hour_logs";
+ALTER TABLE "new_volunteer_hour_logs" RENAME TO "volunteer_hour_logs";
 CREATE TABLE "new_volunteers" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT,
