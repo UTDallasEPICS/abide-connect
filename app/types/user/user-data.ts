@@ -1,13 +1,12 @@
 export interface HourLogData {
   id: number;
-  eventId: string;
-  eventTitle: string;
+  eventId: string | null;
+  eventTitle: string | null;
   date: Date | string;
   hours: number;
   approvalStatus: string;
   comment?: string;
 }
-
 export interface RsvpData {
   eventId: string;
   eventTitle: string;
@@ -15,8 +14,6 @@ export interface RsvpData {
   endTime: Date | string;
   isVolunteer: boolean;
 }
-
-
 export interface UserData {
   id: string;
   name?: string;

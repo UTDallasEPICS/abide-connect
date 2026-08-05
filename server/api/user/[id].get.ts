@@ -81,15 +81,15 @@ export default defineEventHandler(async (event): Promise<UserData> => {
           emergencyContactPhone2: volunteer!.emergencyContactPhone2 ?? undefined,
         }
       : undefined,
-    hourLogs: (volunteer?.hourLogs ?? []).map((log) => ({
-      id: log.id,
-      eventId: log.eventId,
-      eventTitle: log.event.title,
-      date: log.date,
-      hours: log.hours,
-      approvalStatus: humanize(log.approvalStatus)!,
-      comment: log.comment ?? undefined,
-    })),
+      hourLogs: (volunteer?.hourLogs ?? []).map((log) => ({
+        id: log.id,
+        eventId: log.eventId,
+        eventTitle: log.event?.title ?? log.eventName ?? null,
+        date: log.date,
+        hours: log.hours,
+        approvalStatus: humanize(log.approvalStatus)!,
+        comment: log.comment ?? undefined,
+      })),
     rsvps: user.RSVPs.map((rsvp) => ({
       eventId: rsvp.eventId,
       eventTitle: rsvp.event.title,

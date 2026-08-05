@@ -341,15 +341,6 @@ async function handleRemoveRole(role: string) {
           @click="isRemoveRoleModalOpen = true"
         />
         <UButton
-          v-if="activeSection === 'HOUR_LOG'"
-          label="Add Hour Log"
-          icon="i-lucide-clock-plus"
-          color="neutral"
-          variant="ghost"
-          class="rounded-xl font-semibold px-3 hover:bg-gray-200 transition-colors"
-          @click="isAddHourLogModalOpen = true"
-        />
-        <UButton
           label="Edit"
           icon="i-lucide-pencil"
           color="neutral"
@@ -364,6 +355,15 @@ async function handleRemoveRole(role: string) {
           variant="ghost"
           class="rounded-xl font-semibold px-3 hover:bg-gray-200 transition-colors"
           @click="isDeleteModalOpen = true"
+        />
+        <UButton
+          v-if="activeSection === 'HOUR_LOG'"
+          label="Add Hour Log"
+          icon="i-lucide-clock-plus"
+          color="neutral"
+          variant="ghost"
+          class="rounded-xl font-semibold px-3 hover:bg-gray-200 transition-colors"
+          @click="isAddHourLogModalOpen = true"
         />
       </div>
 

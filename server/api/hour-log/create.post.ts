@@ -3,41 +3,48 @@ import { requireRole } from '~~/server/utils/requireRole';
 export default defineEventHandler(async (event) => {
   await requireRole(event, 'Admin');
 
-  const body = await readBody(event);
-  const { userId, eventId, date, hours, approvalStatus, comment } = body;
+  const body = await readBody<{
+    userId?: string;
+    eventId?: string;
+    eventName?: string;
+    date?: string;
+    hours?: number;
+    approvalStatus?: string;
+    comment?: string;
+  }>(event);
 
-  if (!userId || !eventId || !date || hours === undefined || hours === null) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'userId, eventId, date, and hours are required',
-    });
+  if (!body.userId) {
+    throw createError({ statusCode: 400, statusMessage: 'User id is required' });
+  }
+  if (!body.date) {
+    throw createError({ statusCode: 400, statusMessage: 'Date is required' });
+  }
+  if (body.hours === undefined || body.hours === null || body.hours <= 0) {
+    throw createError({ statusCode: 400, statusMessage: 'A valid number of hours is required' });
   }
 
-  const parsedHours = Number(hours);
-  if (Number.isNaN(parsedHours) || parsedHours <= 0) {
-    throw createError({ statusCode: 400, statusMessage: 'hours must be a positive number' });
-  }
+  // body.userId is the User.id — look up the corresponding Volunteer record,
+  // since Volunteer_Hour_Log.volunteerId references Volunteer.id, not User.id
+  const volunteer = await prisma.volunteer.findUnique({
+    where: { userId: body.userId },
+    select: { id: true },
+  });
 
-  const volunteer = await prisma.volunteer.findUnique({ where: { userId } });
   if (!volunteer) {
-    throw createError({ statusCode: 404, statusMessage: 'Volunteer profile not found for this user' });
+    throw createError({ statusCode: 404, statusMessage: 'Volunteer record not found for this user' });
   }
 
-  const eventExists = await prisma.event.findUnique({ where: { id: eventId } });
-  if (!eventExists) {
-    throw createError({ statusCode: 404, statusMessage: 'Event not found' });
-  }
-
-  const hourLog = await prisma.volunteer_Hour_Log.create({
+  const created = await prisma.volunteer_Hour_Log.create({
     data: {
       volunteerId: volunteer.id,
-      eventId,
-      date: new Date(date),
-      hours: parsedHours,
-      approvalStatus: approvalStatus ?? 'PENDING',
-      comment: comment || undefined,
+      eventId: body.eventId || null,
+      eventName: body.eventName || null,
+      date: new Date(body.date),
+      hours: body.hours,
+      approvalStatus: (body.approvalStatus as any) ?? 'PENDING',
+      comment: body.comment || null,
     },
   });
 
-  return hourLog;
+  return created;
 });

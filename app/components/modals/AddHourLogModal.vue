@@ -11,33 +11,6 @@ const emit = defineEmits<{
   (e: 'created'): void;
 }>();
 
-interface EventOption {
-  id: string;
-  title: string;
-}
-
-const events = ref<EventOption[]>([]);
-const eventsLoading = ref(false);
-const eventsError = ref<string | null>(null);
-
-async function loadEvents() {
-  eventsLoading.value = true;
-  eventsError.value = null;
-  try {
-    // NOTE: adjust this endpoint to match your actual events list API if different
-    const data = await $fetch<EventOption[]>('/api/event/list');
-    events.value = data;
-  } catch (err: any) {
-    eventsError.value = err?.data?.message ?? err?.message ?? 'Failed to load events';
-  } finally {
-    eventsLoading.value = false;
-  }
-}
-
-const eventItems = computed(() =>
-  events.value.map((e) => ({ label: e.title, value: e.id }))
-);
-
 const approvalStatusItems: { label: string; value: ApprovalStatusOption }[] = [
   { label: 'Pending', value: 'PENDING' },
   { label: 'Approved', value: 'APPROVED' },
@@ -45,7 +18,7 @@ const approvalStatusItems: { label: string; value: ApprovalStatusOption }[] = [
 ];
 
 const form = reactive({
-  eventId: '',
+  eventName: '',
   date: '',
   hours: null as number | null,
   approvalStatus: 'PENDING' as ApprovalStatusOption,
@@ -56,7 +29,7 @@ const isSubmitting = ref(false);
 const formError = ref<string | null>(null);
 
 function resetForm() {
-  form.eventId = '';
+  form.eventName = '';
   form.date = '';
   form.hours = null;
   form.approvalStatus = 'PENDING';
@@ -69,7 +42,6 @@ watch(
   (isOpen) => {
     if (isOpen) {
       resetForm();
-      loadEvents();
     }
   }
 );
@@ -82,10 +54,6 @@ function handleOpenUpdate(v: boolean) {
 async function handleSubmit() {
   formError.value = null;
 
-  if (!form.eventId) {
-    formError.value = 'Please select an event.';
-    return;
-  }
   if (!form.date) {
     formError.value = 'Please select a date.';
     return;
@@ -101,7 +69,7 @@ async function handleSubmit() {
       method: 'POST',
       body: {
         userId: props.userId,
-        eventId: form.eventId,
+        eventName: form.eventName || undefined,
         date: form.date,
         hours: form.hours,
         approvalStatus: form.approvalStatus,
@@ -128,15 +96,12 @@ async function handleSubmit() {
     <template #body>
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-gray-600">Event</label>
-          <USelect
-            v-model="form.eventId"
-            :items="eventItems"
-            :loading="eventsLoading"
-            placeholder="Select an event"
+          <label class="text-sm font-medium text-gray-600">Name</label>
+          <UInput
+            v-model="form.eventName"
+            placeholder="Hour log title (optional)"
             class="w-full"
           />
-          <p v-if="eventsError" class="text-xs text-red-500">{{ eventsError }}</p>
         </div>
 
         <div class="flex flex-col gap-1">
