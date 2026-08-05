@@ -42,17 +42,27 @@ Copy `.env.example` to `.env` before running anything. Required vars: `BETTER_AU
 
 When an event is created/updated/deleted, `server/utils/googleCalendar.ts` mirrors it to a single shared Google Calendar (`GOOGLE_CALENDAR_ID`). Writes use the acting volunteer's Google OAuth token — obtained via `auth.api.getAccessToken({ body: { providerId: 'google', userId } })`, which refreshes using the stored refresh token — so the Google provider requests the `calendar.events` scope with `accessType: 'offline'` + `prompt: 'consent'` (in `auth.ts`). The Google event id is stored on `Event.calendarEventId` (and its link on `Event.calendarURL`) for later update/delete. Sync is **best-effort**: if the acting volunteer signed in with email OTP (no Google token) or the Calendar API fails, the DB operation still succeeds and the calendar is simply not updated.
 
+### Web Push notifications
+
+Push is plain Web Push (VAPID) through the PWA's own service worker — no APNs certificate or FCM project. `pnpm push:keys` generates the `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` pair; the same pair must persist across restarts or every stored subscription is invalidated. With the keys unset, `pushConfigured` is false, sending is a no-op, and the settings toggle reports push as unavailable instead of erroring.
+
+- `server/utils/push.ts` — `sendPushToUsers(userIds, 'GENERAL' | 'VOLUNTEER', payload)` is the entry point feature code should call. It honours each user's `pushEnabled`/`pushScope`, fans out across all their devices, and prunes subscriptions the push service reports as gone (404/410). Best-effort: it never throws.
+- `public/push-sw.js` holds the `push`/`notificationclick` handlers, pulled into the generated Workbox service worker via `pwa.workbox.importScripts` in `nuxt.config.ts`. It's plain JS in `public/` because it runs in the service worker scope with no bundler pass.
+- `app/composables/usePushNotifications.ts` is the client half (permission prompt, subscribe/unsubscribe, iOS "add to Home Screen" detection).
+- `web-push` and its ASN.1 deps are CommonJS and must stay in `nitro.externals.inline` — left external, Nitro's dev server fails to load them and **every** server route 500s.
+
 ## Architecture
 
 This is a Nuxt 4 app, so the app source root is `app/` (pages, components, layouts, middleware, lib, types), while `server/` holds Nitro server routes/middleware/utils and is a separate root — cross-referencing it from `app/` code goes through the `#server` path alias (e.g. `import { auth } from '#server/utils/auth'`), not a relative path.
 
 ### Auth (better-auth)
 
-- `server/utils/auth.ts` configures `better-auth` with the Prisma adapter, pointed at a custom `Volunteer` model (via `user: { modelName: 'Volunteer', fields: { image: 'imageURL' } }`) instead of the default `User` model — the schema's own `User` model (`prisma/schema/user.prisma`) is a separate concept representing RSVP guests/contacts, not the authenticated principal.
+- `server/utils/auth.ts` configures `better-auth` with the Prisma adapter against the `User` model (via `user: { modelName: 'User', fields: { image: 'imageURL' } }`). So `session.user.id` is a `User.id`, and a volunteer record is reached with `prisma.volunteer.findUnique({ where: { userId: session.user.id } })` — `Volunteer` hangs off `User`, it is not the authenticated principal itself.
 - Two auth methods are wired: Google OAuth (`socialProviders.google`) and email OTP (`emailOTP` plugin, `disableSignUp: true` — sign-up must happen through the app's own sign-up flow, not automatically on first OTP request). OTP emails are sent via a nodemailer SMTP transport.
 - `server/api/auth/[...all].ts` mounts the better-auth handler for all `/api/auth/*` routes.
 - `server/middleware/authenticated.ts` runs on every request, attaches `event.context.session`, and hard-redirects unauthenticated requests to `/auth/login` for any path under `/volunteer` or `/api/volunteer`.
-- `app/middleware/auth.ts` is the client-side route guard: it calls `/api/auth/get-session` and redirects to `/auth/login` unless the route is in its `publicRoutes` allowlist. Add new public pages to that list explicitly.
+- `app/middleware/auth.ts` is an **opt-in** (non-global) route guard: it calls `/api/auth/get-session` and redirects to `/auth/login` unless the route is in its `publicRoutes` allowlist. Pages that need a session must declare `middleware: 'auth'` in `definePageMeta` (see `settings.vue`, `inbox.vue`) — it does not apply automatically.
+- `app/middleware/auth.global.ts` runs on every route and enforces the role requirements in its `routeRoles` map (`/admin`, `/events/manage`, `/volunteer`, `/volunteer-application`). It only guards those prefixes; everything else is unauthenticated unless the page opts into `auth`.
 - `server/utils/auth-client.ts` exports the `better-auth/vue` client (`authClient`) for use in components/pages.
 
 ### Data model (`prisma/schema/*.prisma`)

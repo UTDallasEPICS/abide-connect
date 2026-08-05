@@ -15,6 +15,9 @@ export default defineEventHandler(async (event) => {
       gender,
       ethinicity,
       languages,
+      // The form field is `availability` (singular); accept the plural too so
+      // any older client payload still applies.
+      availability,
       availabilities,
       volunteerAreas,
       certifications,
@@ -46,7 +49,7 @@ export default defineEventHandler(async (event) => {
             create: ((languages ?? []) as Language[]).map(language => ({ language })),
           },
           availabilities: {
-            create: ((availabilities ?? []) as Availability[]).map(availability => ({ availability })),
+            create: ((availability ?? availabilities ?? []) as Availability[]).map(a => ({ availability: a })),
           },
           volunteerAreas: {
             create: ((volunteerAreas ?? []) as VolunteerArea[]).map(volunteerArea => ({ volunteerArea })),

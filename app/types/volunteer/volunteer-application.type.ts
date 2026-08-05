@@ -34,6 +34,10 @@ const volunteerApplicationSchema = z.object({
 
   emergencyContactPhone1: z.string({ message: "Please enter the phone number of your emergency contact."}),
 
+  emergencyContactName2: z.string().nullable().optional(),
+
+  emergencyContactPhone2: z.string().nullable().optional(),
+
   ageEligibilityAcknowledgement: z.boolean({ message: 'You must confirm your eligibility' })
     .refine(v => v === true, { message: 'You must confirm your eligibility' }),
 
@@ -77,6 +81,10 @@ export const volunteerApplicationStepSchemas = [
   volunteerApplicationSchema.pick({
     emergencyContactName1: true,
     emergencyContactPhone1: true,
+    // Both step-2 forms render these, and `.pick()` strips anything it doesn't
+    // list, so omitting them silently dropped the secondary contact on submit.
+    emergencyContactName2: true,
+    emergencyContactPhone2: true,
   }),
 
 
@@ -106,27 +114,27 @@ function formatEnumLabel(value: string): string {
     .join(' ')
 }
 
-const languageItems: InputMenuItem[] = Object.values(Language).map(language => ({
+export const languageItems: InputMenuItem[] = Object.values(Language).map(language => ({
   id: language,
   label: formatEnumLabel(language),
 }))
 
-const genderItems: InputMenuItem[] = Object.values(Gender).map(gender => ({
+export const genderItems: InputMenuItem[] = Object.values(Gender).map(gender => ({
   id: gender,
   label: formatEnumLabel(gender),
 }))
 
-const ethinicityItems: InputMenuItem[] = Object.values(Ethinicity).map(e => ({
+export const ethinicityItems: InputMenuItem[] = Object.values(Ethinicity).map(e => ({
   id: e,
   label: formatEnumLabel(e),
 }))
 
-const availabilityItems: InputMenuItem[] = Object.values(Availability).map(a => ({
+export const availabilityItems: InputMenuItem[] = Object.values(Availability).map(a => ({
   id: a,
   label: formatEnumLabel(a),
 }))
 
-const volunteerAreaItems: InputMenuItem[] = [
+export const volunteerAreaItems: InputMenuItem[] = [
   { id: 'CLINIC_SUPPORT', label: 'Clinic Support (Volunteers will not be seeing clients)' },
   { id: 'MOBILE_CLINIC_OUTREACH', label: 'Mobile Clinic Outreach' },
   { id: 'EVENT_SUPPORT', label: 'Event Support' },
@@ -135,7 +143,7 @@ const volunteerAreaItems: InputMenuItem[] = [
   { id: 'OTHER', label: 'Other' },
 ]
 
-const certificationItems: InputMenuItem[] = [
+export const certificationItems: InputMenuItem[] = [
   { id: 'MEDICAL_CODING', label: 'Medical Coding' },
   { id: 'DOULA_CERTIFICATION', label: 'Doula Certification' },
   { id: 'CDL', label: 'CDL (Commercial Driver\'s License)' },

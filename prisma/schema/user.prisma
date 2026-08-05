@@ -14,6 +14,11 @@ model User {
   accounts      Account[]
   volunteer     Volunteer?
 
+  // Push notification preferences, managed from /settings.
+  pushEnabled       Boolean          @default(false)
+  pushScope         PushScope        @default(BOTH)
+  pushSubscriptions PushSubscription[]
+
   @@map("users")
 }
 
