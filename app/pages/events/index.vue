@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { DateValue } from '@internationalized/date'
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
+import { eventTypeFromFlags } from '#shared/utils/eventType'
 
 const tz = getLocalTimeZone()
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -9,9 +10,24 @@ const selectedDate = ref<any>(today(tz))
 // Load all events from API
 const { data: allEvents } = await useFetch('/api/events')
 
+// `/api/events` already hides volunteer-only and training events from anyone
+// who shouldn't see them, so whatever arrives here is safe to display — it
+// just gets split into its own section below.
+// Regular event lists exclude the training class.
+const nonTrainingEvents = computed(() =>
+  (allEvents.value || []).filter(event => !event.isTraining),
+)
+
+const trainingEvents = computed(() => {
+  const now = new Date()
+  return (allEvents.value || [])
+    .filter(event => event.isTraining && new Date(event.endTime) >= now)
+    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+})
+
 const upcomingEvents = computed(() => {
   const now = new Date()
-  return (allEvents.value || []).filter(event => new Date(event.endTime) >= now)
+  return nonTrainingEvents.value.filter(event => new Date(event.endTime) >= now)
 })
 
 // Dates that have events — used to highlight calendar
@@ -25,7 +41,7 @@ const eventDates = computed(() => {
 // Events on the selected calendar date
 const eventsOnSelectedDate = computed(() => {
   if (!selectedDate.value) return upcomingEvents.value
-  return (allEvents.value || []).filter((event) => {
+  return nonTrainingEvents.value.filter((event) => {
     const d = new Date(event.startTime)
     const cal = new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate())
     return cal.compare(selectedDate.value) === 0
@@ -103,7 +119,9 @@ function getEventSubtitle(event: any) {
     year: 'numeric',
   })
   const location = event.location?.address || ''
-  return [date, location].filter(Boolean).join(' · ')
+  // Flag the volunteer-only events so it's clear why others can't see them.
+  const audience = eventTypeFromFlags(event) === 'VOLUNTEERS' ? 'Volunteers only' : ''
+  return [date, location, audience].filter(Boolean).join(' · ')
 }
 
 function goToEvent(id: string) {
@@ -129,6 +147,30 @@ function goToEvent(id: string) {
           class="rounded-2xl"
         />
       </UCard>
+
+      <!-- Volunteer Training (pending volunteers only) -->
+      <div
+        v-if="trainingEvents.length > 0"
+        class="mb-8"
+      >
+        <h3 class="text-lg font-semibold text-brand7 mb-1">
+          Volunteer Training
+        </h3>
+        <p class="text-xs text-gray-500 mb-4">
+          Attend a training session to become an approved volunteer.
+        </p>
+        <div class="space-y-4">
+          <EventTile
+            v-for="event in trainingEvents"
+            :key="event.id"
+            :title="event.title"
+            :subtitle="getEventSubtitle(event)"
+            :image-url="getEventImage(event)"
+            @click="goToEvent(event.id)"
+            @add="goToEvent(event.id)"
+          />
+        </div>
+      </div>
 
       <h3 class="text-lg font-semibold text-brand4 mb-4 dark:text-teal-400">
         {{ eventsOnSelectedDate.length > 0 ? 'Events on this day' : 'Upcoming Events' }}

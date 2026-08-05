@@ -5,6 +5,7 @@ import type { AdminFeature } from '~/types/admin/admin-dash.type'
 const features: AdminFeature[] = [
   {
     id: 'events',
+    to: '/events/manage',
     label: 'Events Management',
     description: 'Create and manage event',
     icon: 'i-heroicons-calendar',
@@ -14,6 +15,7 @@ const features: AdminFeature[] = [
   },
   {
     id: 'training',
+    to: '/admin/training',
     label: 'Training Certificates',
     description: 'Approve pending volunteer certificates',
     icon: 'i-heroicons-trophy',
@@ -22,6 +24,7 @@ const features: AdminFeature[] = [
   },
   {
     id: 'donations',
+    to: '/admin/donations',
     label: 'Donations',
     description: 'Track and manage donations',
     icon: 'i-heroicons-currency-dollar',
@@ -30,6 +33,7 @@ const features: AdminFeature[] = [
   },
   {
     id: 'time-log',
+    to: '/admin/volunteer-logs',
     label: 'Volunteer Time Log',
     description: 'Approve and manage volunteer time log',
     icon: 'i-heroicons-clock',
@@ -110,6 +114,7 @@ const kpis = [
       <UButton
         v-for="feature in features"
         :key="feature.id"
+        :to="feature.to"
         color="brand6"
         class="group flex h-40 flex-col p-4 items-start justify-between rounded-3xl border-2 border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800 text-left shadow-xs transition-all duration-300 hover:shadow-xl hover:border-slate-300 dark:hover:border-gray-600 hover:bg-slate-100 dark:hover:bg-gray-700"
       >

@@ -1,8 +1,12 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import prisma from '#server/utils/prisma'
+import { requireRole } from '#server/utils/requireRole'
 
 export default defineEventHandler(async (event) => {
+  // Deleting event images is staff-only.
+  await requireRole(event, 'admin')
+
   const fileName = getRouterParam(event, 'name')
   const eventId = getRouterParam(event, 'id')
 
