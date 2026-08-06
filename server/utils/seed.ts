@@ -5,8 +5,10 @@ import type {
   Availability,
   Ethinicity,
   ApprovalStatus,
+  Certification,
 } from './generated/prisma/client.ts'
-import { PrismaClient } from './generated/prisma/client.ts'
+import { UserRole } from './generated/prisma/client'
+import { PrismaClient } from './generated/prisma/client'
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
 
 const adapter = new PrismaBetterSqlite3({
@@ -52,7 +54,7 @@ type RawVolunteer = {
   ethinicity?: string
   languages?: string[]
   availabilities?: string[]
-  certifications: string[]
+  certifications: Certification[]
   hourLogs: {
     event: {
       id: string
@@ -205,6 +207,39 @@ async function main() {
       },
     })
     console.log(volunteerResult)
+
+    //user_roles seeding
+    console.log('Seeding base user roles...')
+    for (const user of rawUsers) {
+      await prisma.user_Role.upsert({
+        where: {
+          userId_role: { userId: user.id, role: 'USER' },
+        },
+        update: {},
+        create: {
+          userId: user.id,
+          role: 'USER',
+          active: true,
+        },
+      })
+    }
+
+    console.log('Seeding user roles...')
+    for (const volunteer of rawVolunteers) {
+      if (!volunteer.userId) continue
+
+      await prisma.user_Role.upsert({
+        where: {
+          userId_role: { userId: volunteer.userId, role: UserRole.VOLUNTEER },
+        },
+        update: {},
+        create: {
+          userId: volunteer.userId,
+          role: UserRole.VOLUNTEER,
+          active: true,
+        },
+      })
+    }
 
     // Backfill RSVP.volunteerId wherever this user already has isVolunteer=true.
     // RSVP.isVolunteer is set at user-seed time; volunteerId can only be wired up

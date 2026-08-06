@@ -25,7 +25,7 @@ export default eventHandler(async (event) => {
         log.volunteer.user?.name
         ?? log.volunteer.user?.email
         ?? 'Unknown',
-      event: log.event.title,
+      event: log.event?.title ?? log.eventName ?? 'Manual submission',
       date: log.date.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
