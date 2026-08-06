@@ -39,6 +39,22 @@ export default defineNuxtConfig({
       ],
     },
   },
+  nitro: {
+    externals: {
+      // web-push and its ASN.1 dependencies are CommonJS. Left external,
+      // Nitro's dev server loads them through Node's ESM loader and every
+      // server route dies at module-compile time. Bundling the whole tree
+      // lets Rollup apply CJS interop consistently.
+      inline: ['web-push', 'asn1.js', 'bn.js'],
+    },
+  },
+  runtimeConfig: {
+    public: {
+      // VAPID public key, needed client-side to create a push subscription.
+      // Safe to expose — the private key stays on the server (server/utils/push.ts).
+      vapidPublicKey: process.env.VAPID_PUBLIC_KEY ?? '',
+    },
+  },
   compatibilityDate: '2025-07-15',
   vite: {
     optimizeDeps: {
@@ -95,7 +111,13 @@ export default defineNuxtConfig({
     workbox: {
       navigateFallback: '/',
       globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
+      // push-sw.js is imported into the service worker below, so it must not
+      // also be precached as a page asset.
+      globIgnores: ['**/push-sw.js'],
       navigateFallbackAllowlist: [/^\/(?!api)/],
+      // Adds the Web Push `push` / `notificationclick` handlers to the
+      // generated Workbox service worker. See public/push-sw.js.
+      importScripts: ['/push-sw.js'],
     },
     devOptions: {
       enabled: false,

@@ -7,3 +7,28 @@ model Notification {
 
   @@map("notifications")
 }
+
+/// Which kinds of event notification a user wants pushed to their devices.
+enum PushScope {
+  GENERAL
+  VOLUNTEER
+  BOTH
+}
+
+/// One Web Push subscription, i.e. one browser/installed-PWA on one device.
+/// A user can have several (phone + desktop), so pushes fan out across rows.
+/// `endpoint` is the push service URL and is globally unique, which lets an
+/// existing subscription be upserted when a device re-subscribes.
+model PushSubscription {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}
