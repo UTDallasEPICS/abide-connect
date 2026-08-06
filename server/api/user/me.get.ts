@@ -10,7 +10,5 @@ export default defineEventHandler(async (event) => {
     where: { id: session?.user.id },
   })
 
-  console.log("USER ON SERVER", user);
- 
   return user;
 })

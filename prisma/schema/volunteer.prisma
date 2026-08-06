@@ -2,6 +2,7 @@ model Volunteer {
   id     String  @id @default(uuid())
   user   User?   @relation(fields: [userId], references: [id])
   userId String? @unique
+  isActive       Boolean @default(true)
 
   approvalStatus ApprovalStatus @default(PENDING)
 

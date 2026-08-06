@@ -71,6 +71,9 @@ export const auth = betterAuth({
       // better-auth's user schema uses `image`; our User column is `imageURL`
       image: 'imageURL',
     },
+    deleteUser: {
+      enabled: true,
+    }
   },
   plugins: [
     emailOTP({
