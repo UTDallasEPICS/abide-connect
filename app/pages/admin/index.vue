@@ -1,5 +1,4 @@
 <script setup lang="ts">
-
 import type { AdminFeature } from '~/types/admin/admin-dash.type'
 
 const features: AdminFeature[] = [
@@ -23,11 +22,11 @@ const features: AdminFeature[] = [
     bg: 'bg-gradient-to-br from-[#F4E8E7] to-white',
   },
   {
-    id: 'donations',
-    to: '/admin/donations',
-    label: 'Donations',
-    description: 'Track and manage donations',
-    icon: 'i-heroicons-currency-dollar',
+    id: 'member-management',
+    to: '/admin/member-management',
+    label: 'Member Management',
+    description: 'View and manage members',
+    icon: 'i-heroicons-users',
     iconBg: 'bg-[#6b5745]',
     bg: 'bg-gradient-to-br from-[#e6d6c3] to-white',
   },
@@ -42,33 +41,43 @@ const features: AdminFeature[] = [
   },
 ]
 
+interface AdminStats {
+  totalUsers: number
+  activeVolunteers: number
+  pendingCertificates: number
+  pendingTimeLogs: number
+}
+
+const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+const { data: stats } = await useFetch<AdminStats>('/api/admin/stats', { headers })
+
 // KPI data for top cards
-const kpis = [
+const kpis = computed(() => [
   {
-    id: 'total-volunteers',
-    label: 'Total Volunteers',
-    value: '248',
+    id: 'total-users',
+    label: 'Total Users',
+    value: stats.value?.totalUsers ?? 0,
     icon: 'i-heroicons-user-group',
   },
   {
     id: 'pending-certificates',
     label: 'Pending Certificates',
-    value: '5',
+    value: stats.value?.pendingCertificates ?? 0,
     icon: 'i-heroicons-document-text',
   },
   {
-    id: 'total-donations',
-    label: 'Total Donations',
-    value: '$10,000',
-    icon: 'i-heroicons-currency-dollar',
+    id: 'active-volunteers',
+    label: 'Active Volunteers',
+    value: stats.value?.activeVolunteers ?? 0,
+    icon: 'i-heroicons-hand-raised',
   },
   {
     id: 'pending-timelog',
     label: 'Pending Time Log',
-    value: '3',
+    value: stats.value?.pendingTimeLogs ?? 0,
     icon: 'i-heroicons-clock',
   },
-]
+])
 </script>
 
 <template>
