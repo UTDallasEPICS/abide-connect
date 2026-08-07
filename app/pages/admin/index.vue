@@ -83,66 +83,66 @@ const kpis = computed(() => [
 <template>
   <div class="flex flex-col w-screen min-h-screen bg-slate-50 items-stretch pb-20 dark:bg-gray-900">
     <!-- Header for KPI -->
-    <div class="px-6 mt-20">
-      <h1 class="text-3xl font-bold text-[#313131] dark:text-teal-400">
+    <div class="px-4 sm:px-6 mt-20">
+      <h1 class="text-2xl sm:text-3xl font-bold text-[#313131] dark:text-teal-400">
         Welcome back, Admin!
       </h1>
     </div>
     <!-- KPI section -->
-    <section class="px-6 mt-7 grid grid-cols-1 md:grid-cols-2 gap-6">
+    <section class="px-4 sm:px-6 mt-7 grid grid-cols-2 gap-3 sm:gap-6">
       <div
         v-for="kpi in kpis"
         :key="kpi.id"
-        class="bg-white dark:bg-gray-800 rounded-2xl border-2 border-slate-200 dark:border-gray-700 p-6 shadow-sm hover:shadow-md transition-shadow duration-300"
+        class="bg-white dark:bg-gray-800 rounded-2xl border-2 border-slate-200 dark:border-gray-700 p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300"
       >
-        <div class="flex items-start justify-between mb-4">
+        <div class="flex items-start justify-between mb-3 sm:mb-4">
           <div
-            class="flex rounded-xl h-12 w-12 p-2 shadow-md bg-slate-100 dark:bg-gray-700"
+            class="flex rounded-xl h-10 w-10 sm:h-12 sm:w-12 p-2 shadow-md bg-slate-100 dark:bg-gray-700"
           >
             <UIcon
               :name="kpi.icon"
-              class="w-8 h-8 text-black dark:text-white"
+              class="w-6 h-6 sm:w-8 sm:h-8 text-black dark:text-white"
             />
           </div>
         </div>
 
         <div class="space-y-1">
-          <p class="text-sm font-medium text-slate-600 dark:text-gray-300">
+          <p class="text-xs sm:text-sm font-medium text-slate-600 dark:text-gray-300">
             {{ kpi.label }}
           </p>
-          <h3 class="text-3xl font-bold text-[#313131] dark:text-white">
+          <h3 class="text-2xl sm:text-3xl font-bold text-[#313131] dark:text-white">
             {{ kpi.value }}
           </h3>
           <div class="flex items-center gap-2 text-sm" />
         </div>
       </div>
     </section>
-    <USeparator class="mt-10" />
+    <USeparator class="mt-8 sm:mt-10" />
     <!-- Features section -->
-    <section class="px-6 mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
+    <section class="px-4 sm:px-6 mt-8 sm:mt-10 grid grid-cols-2 gap-3 sm:gap-6">
       <UButton
         v-for="feature in features"
         :key="feature.id"
         :to="feature.to"
         color="brand6"
-        class="group flex h-40 flex-col p-4 items-start justify-between rounded-3xl border-2 border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800 text-left shadow-xs transition-all duration-300 hover:shadow-xl hover:border-slate-300 dark:hover:border-gray-600 hover:bg-slate-100 dark:hover:bg-gray-700"
+        class="group flex h-40 flex-col p-3 sm:p-4 items-start justify-between rounded-3xl border-2 border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800 text-left shadow-xs transition-all duration-300 hover:shadow-xl hover:border-slate-300 dark:hover:border-gray-600 hover:bg-slate-100 dark:hover:bg-gray-700"
       >
         <div
           :class="feature.iconBg"
-          class="flex rounded-xl h-10 w-10 p-1.5 shadow-lg transition-transform duration-300 group-hover:scale-105"
+          class="flex rounded-xl h-9 w-9 sm:h-10 sm:w-10 p-1.5 shadow-lg transition-transform duration-300 group-hover:scale-105"
         >
           <UIcon
             :name="feature.icon"
-            class="w-7 h-7 text-white"
+            class="w-6 h-6 sm:w-7 sm:h-7 text-white"
           />
         </div>
-        <span class="text-lg font-bold tracking-wide text-[#313131] dark:text-white">
+        <span class="text-base sm:text-lg font-bold tracking-wide text-[#313131] dark:text-white text-balance whitespace-normal">
           {{ feature.label }}
         </span>
 
         <span
           v-if="feature.description"
-          class=" text-[11px] leading-tight text-slate-700 dark:text-gray-300"
+          class=" text-[11px] leading-tight text-slate-700 dark:text-gray-300 whitespace-normal"
         >
           {{ feature.description }}
         </span>
