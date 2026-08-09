@@ -8,6 +8,7 @@ import {
   verifyOtpSchema,
   type VerifyOtpSchema,
 } from '~/types/auth/login.type'
+import { errorMessage as toErrorMessage } from '~/lib/errorMessage'
 
 const isLoading = ref(false)
 const errorMessage = ref<string | null>(null)
@@ -37,6 +38,7 @@ onUnmounted(() => {
 })
 
 async function onRequestOtp(event: FormSubmitEvent<RequestOtpSchema>) {
+  if (isLoading.value) return
   isLoading.value = true
   errorMessage.value = null
 
@@ -50,7 +52,7 @@ async function onRequestOtp(event: FormSubmitEvent<RequestOtpSchema>) {
     startCooldown()
   }
   catch (error: unknown) {
-    errorMessage.value = (error as { message: string }).message
+    errorMessage.value = toErrorMessage(error)
   }
   finally {
     isLoading.value = false
@@ -58,6 +60,7 @@ async function onRequestOtp(event: FormSubmitEvent<RequestOtpSchema>) {
 }
 
 async function onVerifyOtp(event: FormSubmitEvent<VerifyOtpSchema>) {
+  if (isLoading.value) return
   isLoading.value = true
   errorMessage.value = null
 
@@ -73,7 +76,7 @@ async function onVerifyOtp(event: FormSubmitEvent<VerifyOtpSchema>) {
     await navigateTo('/')
   }
   catch (error: unknown) {
-    errorMessage.value = (error as { message: string }).message
+    errorMessage.value = toErrorMessage(error)
   }
   finally {
     isLoading.value = false
@@ -81,7 +84,7 @@ async function onVerifyOtp(event: FormSubmitEvent<VerifyOtpSchema>) {
 }
 
 async function resendOtp() {
-  if (!pendingEmail.value || resendCooldown.value > 0) return
+  if (!pendingEmail.value || resendCooldown.value > 0 || isResending.value) return
   isResending.value = true
   resendError.value = null
   try {
@@ -91,7 +94,7 @@ async function resendOtp() {
     })
     startCooldown()
   } catch (err: unknown) {
-    resendError.value = (err as { message: string }).message
+    resendError.value = toErrorMessage(err)
   } finally {
     isResending.value = false
   }
@@ -114,7 +117,7 @@ function goBack() {
       :fields="requestOtpFields"
       title="Welcome back!"
       icon="i-lucide-mail"
-      :submit="{ label: 'Send code', block: true, color: 'neutral' }"
+      :submit="{ label: 'Send code', block: true, color: 'neutral', loading: isLoading, disabled: isLoading }"
       @submit="onRequestOtp"
     >
       <template #description>
@@ -160,7 +163,7 @@ function goBack() {
       :fields="verifyOtpFields"
       title="Check your email"
       icon="i-lucide-shield-check"
-      :submit="{ label: 'Verify code', block: true, color: 'neutral' }"
+      :submit="{ label: 'Verify code', block: true, color: 'neutral', loading: isLoading, disabled: isLoading }"
       @submit="onVerifyOtp"
     >
       <template #description>

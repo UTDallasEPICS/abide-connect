@@ -3,12 +3,14 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 import type { SignUpSchema } from '~/types/auth/sign-up.type'
 import { signUpFields, signUpSchema } from '~/types/auth/sign-up.type'
 import { authProviders } from '~/types/auth/providers.type'
+import { errorMessage as toErrorMessage } from '~/lib/errorMessage'
 
 const errorMessage = ref<string | null>(null)
 
 const isLoading = ref(false)
 
 async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
+  if (isLoading.value) return
   isLoading.value = true
   errorMessage.value = null
   console.log(payload.data)
@@ -26,7 +28,7 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
   }
   catch (error: unknown) {
     console.log(error)
-    errorMessage.value = (error as { message: string }).message
+    errorMessage.value = toErrorMessage(error)
   }
   finally {
     isLoading.value = false
@@ -46,7 +48,7 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
       :separator="{
         icon: 'i-lucide-mail',
       }"
-      :submit="{ label: 'Sign up', block: true, color: 'neutral' }"
+      :submit="{ label: 'Sign up', block: true, color: 'neutral', loading: isLoading, disabled: isLoading }"
       @submit="onSubmit"
       @error="console.log('Sign up form error:', $event)"
     >

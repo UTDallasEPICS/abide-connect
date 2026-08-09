@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { authClient } from '#server/utils/auth-client'
+import { errorMessage } from '~/lib/errorMessage'
 import {
   languageItems,
   genderItems,
@@ -284,14 +285,6 @@ async function deleteAccount() {
 async function signOut() {
   await authClient.signOut().catch(() => {})
   await navigateTo('/auth/login', { external: true })
-}
-
-/** Pulls the human-readable message out of an $fetch error. */
-function errorMessage(error: unknown): string {
-  return (error as { statusMessage?: string }).statusMessage
-    ?? (error as { data?: { statusMessage?: string } }).data?.statusMessage
-    ?? (error as { message?: string }).message
-    ?? 'Please try again.'
 }
 </script>
 

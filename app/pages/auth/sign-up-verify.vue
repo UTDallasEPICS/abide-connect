@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { verifyOtpFields, verifyOtpSchema, type VerifyOtpSchema } from '~/types/auth/login.type'
+import { errorMessage as toErrorMessage } from '~/lib/errorMessage'
 
 const errorMessage = ref<string | null>(null)
 const isLoading = ref(false)
@@ -39,7 +40,7 @@ onUnmounted(() => {
 })
 
 async function resendOtp() {
-  if (!pendingSignUp.value?.email || resendCooldown.value > 0) return
+  if (!pendingSignUp.value?.email || resendCooldown.value > 0 || isResending.value) return
   isResending.value = true
   resendError.value = null
   try {
@@ -49,14 +50,14 @@ async function resendOtp() {
     })
     startCooldown()
   } catch (err: unknown) {
-    resendError.value = (err as { message: string }).message
+    resendError.value = toErrorMessage(err)
   } finally {
     isResending.value = false
   }
 }
 
 async function onVerify(event: FormSubmitEvent<VerifyOtpSchema>) {
-  if (!pendingSignUp.value) return
+  if (!pendingSignUp.value || isLoading.value) return
   isLoading.value = true
   errorMessage.value = null
 
@@ -74,7 +75,7 @@ async function onVerify(event: FormSubmitEvent<VerifyOtpSchema>) {
   }
   catch (error: unknown) {
     console.log(error)
-    errorMessage.value = (error as { message: string }).message
+    errorMessage.value = toErrorMessage(error)
   }
   finally {
     isLoading.value = false
@@ -90,7 +91,7 @@ async function onVerify(event: FormSubmitEvent<VerifyOtpSchema>) {
       :fields="verifyOtpFields"
       title="Check your email"
       icon="i-lucide-shield-check"
-      :submit="{ label: 'Verify & create account', block: true, color: 'neutral' }"
+      :submit="{ label: 'Verify & create account', block: true, color: 'neutral', loading: isLoading, disabled: isLoading }"
       @submit="onVerify"
     >
       <template #description>
