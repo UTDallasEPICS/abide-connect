@@ -2,6 +2,7 @@
 import ServiceComponent from '~/components/homepage/ServiceComponent.vue';
 import EventCard from '~/components/event/EventCard.vue';
 import EventCardSkeleton from '~/components/homepage/EventCardSkeleton.vue';
+import WeekCalender from '~/components/homepage/WeekCalender.vue';
 
 const items = [
   '/images/image2.jpg',
@@ -46,13 +47,11 @@ watch(status, (newStatus) => {
   }
 })
 
-// Current user session, forwarded from the incoming request so this
-// resolves correctly during SSR (not just after client hydration).
 const headers = useRequestHeaders(['cookie']);
 const { data: user } = await useFetch('/api/user/me', { headers })
 </script>
 <template>
-  <div class="mt-20 min-h-screen h-[2000px]">
+  <div class="mt-20 min-h-screen pb-50">
     <div class="w-full max-w-(--ui-container) mx-auto">
       <div class="lg:px-10 px-5">
         <!-- Carousel -->
@@ -71,7 +70,17 @@ const { data: user } = await useFetch('/api/user/me', { headers })
             <img :src="item" class="w-full aspect-video object-cover rounded-2xl" alt="">
         </UCarousel>
 
-        <!-- Your Event Calender -->
+          <h3 class="uppercase font-gray-900 mb-2 ">Your Event Calender</h3>
+          <WeekCalender
+            v-model="selectedDate"
+            :is-date-disabled="isDateDisabled"
+            locale="en-US"
+            weekday-format="short"
+            :first-day-of-week="0"
+            class="rounded-2xl"
+          />
+
+        <!-- Upcoming Events -->
         <div class="flex items-center justify-between mb-4">
           <h3 class="uppercase font-gray-900">Upcomming Events</h3>
           <UButton
@@ -101,7 +110,7 @@ const { data: user } = await useFetch('/api/user/me', { headers })
           :items="upcomingEvents"
           class="mb-4 min-h-30"
           :ui="{
-            viewport: 'overflow-visible lg:overflow-hidden',
+            viewport: 'overflow-visible lg:overflow-x-hidden',
             container: 'gap-1',
             item: 'basis-auto',
           }"

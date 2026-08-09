@@ -26,6 +26,8 @@ defineProps({
 <template>
   <NuxtLink
     :to="url"
+    target="_blank"
+    rel="noopener noreferrer"
     class="group relative flex w-full shrink-0 origin-center transform-gpu cursor-pointer flex-col overflow-hidden rounded-2xl border-2 border-gray-300 bg-white text-left shadow-sm transition-[background-color,transform] duration-100 ease-out hover:bg-gray-50 active:scale-[0.97] active:bg-gray-100 sm:w-64"
   >
     <!-- Hover-only click indicator -->
