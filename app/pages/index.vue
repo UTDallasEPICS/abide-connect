@@ -52,7 +52,7 @@ const headers = useRequestHeaders(['cookie']);
 const { data: user } = await useFetch('/api/user/me', { headers })
 </script>
 <template>
-  <div class="mt-22 min-h-screen h-[2000px]">
+  <div class="mt-20 min-h-screen h-[2000px]">
     <div class="w-full max-w-(--ui-container) mx-auto">
       <div class="lg:px-10 px-5">
         <!-- Carousel -->

@@ -6,10 +6,10 @@
     <div class="relative h-28 w-full overflow-hidden">
       <div class="h-full w-full bg-gray-200 animate-pulse" />
       <div
-        class="absolute left-3 top-3 flex w-12 flex-col items-center gap-1 rounded-lg border border-gray-100 bg-white/90 py-1.5 backdrop-blur-lg"
+        class="absolute left-3 top-3 flex w-12 flex-col items-center rounded-lg border border-gray-100 bg-white/90 py-1 backdrop-blur-lg"
       >
-        <div class="h-4 w-5 rounded bg-gray-300 animate-pulse" />
-        <div class="h-2.5 w-6 rounded bg-gray-300 animate-pulse" />
+        <div class="h-5 w-5 rounded bg-gray-300 animate-pulse" />
+        <div class="h-3 w-6 rounded bg-gray-300 animate-pulse mt-0.5" />
       </div>
     </div>
     <!-- Details -->
@@ -22,7 +22,7 @@
         <div class="h-3 w-2/3 rounded bg-gray-200 animate-pulse" />
       </div>
       <!-- Avatars + attendees -->
-      <div class="flex items-center gap-2 pt-1">
+      <div class="flex items-center gap-2">
         <div class="flex -space-x-2">
           <div class="h-6 w-6 shrink-0 rounded-full bg-gray-200 animate-pulse ring-2 ring-white" />
           <div class="h-6 w-6 shrink-0 rounded-full bg-gray-200 animate-pulse ring-2 ring-white" />
