@@ -5,7 +5,6 @@ import prisma from '#server/utils/prisma'
 import { requireRole } from '~~/server/utils/requireRole';
 
 export default defineEventHandler(async (event) => {
-  const session = await requireRole(event, 'admin');
   const id = getRouterParam(event, 'id')
   const form = await readMultipartFormData(event)
 
