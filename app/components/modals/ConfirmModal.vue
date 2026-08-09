@@ -1,4 +1,12 @@
 <script setup lang="ts">
+/**
+ * Generic "are you sure?" dialog, defaulting to destructive styling since
+ * that's what most confirmations here are (delete user, remove image, …).
+ *
+ * The parent owns the async work and feeds `loading` and `error` back in;
+ * while `loading` is set the modal refuses to close, including via backdrop
+ * click or Escape, so an in-flight request can't be abandoned halfway.
+ */
 const props = withDefaults(defineProps<{
   open: boolean;
   title: string;

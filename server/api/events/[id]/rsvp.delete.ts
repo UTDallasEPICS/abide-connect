@@ -1,6 +1,22 @@
 import { auth } from '#server/utils/auth'
 import prisma from '#server/utils/prisma'
 
+/**
+ * Cancels a sign-up. Mirrors `rsvp.post.ts`, and which record it removes is
+ * inferred the same way rather than from an explicit parameter:
+ *
+ *   - no `email` in the body + a session → deletes that user's own `RSVP`
+ *   - an `email` in the body            → deletes the matching `GuestRSVP`
+ *
+ * The guest branch is unauthenticated by necessity (guests have no account to
+ * authenticate with), so knowing an address is enough to cancel that person's
+ * place. Acceptable for cancelling a free event; it does mean a caller who
+ * guesses an attendee's email can remove them, and it also lets one probe
+ * whether a given address signed up, since a miss 404s.
+ *
+ * `readBody` is `.catch`-ed because a logged-in cancel legitimately sends no
+ * body at all, which would otherwise throw on parse.
+ */
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   const body = await readBody(event).catch(() => ({}))

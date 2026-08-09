@@ -1,5 +1,18 @@
 import { requireRole } from '~~/server/utils/requireRole';
 
+/**
+ * Records volunteer hours on someone's behalf, from the admin member-detail
+ * page. Admin only.
+ *
+ * `eventId` and `eventName` are alternatives, not a pair: hours logged against
+ * a real event carry the id, while ad-hoc work carries only the free-text name.
+ * Both are nullable, so a log can have neither.
+ *
+ * Defaults to `PENDING` even though an admin is creating it, keeping this
+ * consistent with volunteer-submitted logs and leaving approval an explicit
+ * step. `approvalStatus` is not validated against the enum — an unknown value
+ * fails at the DB rather than as a 400.
+ */
 export default defineEventHandler(async (event) => {
   await requireRole(event, 'Admin');
 

@@ -8,10 +8,22 @@ definePageMeta({
   backText: 'Management'
 })
 
+/**
+ * Paginated, searchable member directory.
+ *
+ * Search, role filter and pagination all live server-side (see
+ * `/api/admin/users`), so this page holds only the query state and re-fetches
+ * when it changes — the full member list is never loaded into the browser.
+ *
+ * Changing the search or filter resets to page 1, since the current page number
+ * is meaningless against a different result set.
+ */
+
 type RoleFilter = 'ALL' | 'VOLUNTEER' | 'ADMIN'
 
 const PAGE_SIZE = 10
-/* ... */
+/* Wait for a pause in typing before querying, so each keystroke isn't a
+   round-trip. Clearing the box skips the debounce and resets immediately. */
 const SEARCH_DEBOUNCE_MS = 200
 /* A loading screen only shows up if a fetch is still pending after this long.  */
 const LOADING_SCREEN_DELAY_MS = 100

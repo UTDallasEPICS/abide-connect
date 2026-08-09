@@ -1,4 +1,15 @@
 <script setup lang="ts">
+/**
+ * Volunteer hour-log review queue, tabbed by approval status.
+ *
+ * Defaults to PENDING because that's the actionable tab — the other two are
+ * history. Approving here is what makes hours count toward the totals shown on
+ * the member list, which sums approved logs only.
+ *
+ * All three tabs come from one `/api/volunteer-logs` fetch and are filtered
+ * client-side, so switching tabs costs nothing.
+ */
+
 const activeTab = ref('PENDING')
 
 const tabs = [

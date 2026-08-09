@@ -17,6 +17,16 @@ definePageMeta({
   middleware: 'auth',
 })
 
+/**
+ * Account settings: profile, appearance, push notifications, volunteer
+ * application details, and account deletion.
+ *
+ * Reads from two endpoints because the app has two records per person:
+ * `/api/user/me` for the account itself, `/api/volunteer/me` for the volunteer
+ * profile — the latter returns null for users who never applied, which is what
+ * hides the volunteer sections rather than an error.
+ */
+
 const toast = useToast()
 const colorMode = useColorMode()
 

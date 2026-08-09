@@ -1,4 +1,11 @@
 <script setup lang="ts">
+/**
+ * Save-confirmation dialog for the admin member-detail edit form.
+ *
+ * Like `ConfirmModal`, it won't close while `loading` is set, so the save can't
+ * be abandoned mid-request; failures surface as an in-dialog alert so the user
+ * can retry without losing their edits.
+ */
 const props = defineProps<{
   open: boolean;
   loading?: boolean;

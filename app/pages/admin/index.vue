@@ -2,6 +2,17 @@
 
 import type { AdminFeature } from '~/types/admin/admin-dash.type'
 
+/**
+ * Admin dashboard: KPI tiles plus navigation into each management area.
+ *
+ * Reachable only with the `admin` role (`auth.global.ts`, `/admin` prefix).
+ * Note the tiles link to `/events/manage`, which is guarded separately by its
+ * own prefix — the dashboard isn't what protects it.
+ *
+ * Tile colours are hardcoded hex values in Tailwind arbitrary-value syntax
+ * rather than the `brand*` palette, so they don't follow theme changes.
+ */
+
 const features: AdminFeature[] = [
   {
     id: 'events',

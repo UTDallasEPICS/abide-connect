@@ -1,4 +1,14 @@
 <script setup lang="ts">
+/**
+ * Back-button header for the `secondary` layout.
+ *
+ * Uses `router.back()` rather than a fixed parent route, so the user returns
+ * wherever they came from. The caveat is that a page opened directly (deep
+ * link, refresh) has no history to go back to and the button does nothing.
+ *
+ * The label beside the arrow comes from the page's own
+ * `definePageMeta({ backText: '…' })`, and is omitted when unset.
+ */
 const router = useRouter()
 const route = useRoute()
 </script>

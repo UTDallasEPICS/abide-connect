@@ -2,6 +2,18 @@
 import 'vue3-carousel/dist/carousel.css'
 import { Carousel, Slide, Pagination } from 'vue3-carousel'
 
+/**
+ * Public home page: donation campaign carousel plus upcoming events.
+ *
+ * Unauthenticated — `/api/events` audience-filters its response, so a
+ * logged-out visitor simply sees fewer events rather than being redirected.
+ */
+
+// NOTE: `/api/admin/donations` is admin-gated (`requireRole(event, 'admin')`),
+// but this is the public home page — so for anonymous and non-admin visitors
+// the request 403s, `donationsError` is set, and the carousel renders empty.
+// The campaigns it's meant to show are public content; this wants a public
+// read endpoint (or the existing one split) rather than the admin route.
 const {
   data: donations,
   pending: donationsPending,
@@ -123,6 +135,10 @@ const trainingEvents = computed(() =>
   upcoming.value.filter(e => e.isTraining).map(toTile),
 )
 
+// The `Event` annotation is wrong: callers pass a `toTile` result (id, title,
+// date, image), not the raw API `Event` (startTime, eventAssets), which is why
+// this reports a type error. Only `id` is actually read, so it works at
+// runtime; the fix is to type the parameter as the tile shape.
 const handleEventClick = (event: Event) => {
   navigateTo(`/events/${event.id}`)
 }

@@ -5,6 +5,15 @@ import { Prisma } from '#server/utils/generated/prisma/client'
 import type { H3Event } from 'h3'
 import { appendHeader, setHeader } from 'h3'
 
+/**
+ * Copies better-auth's response headers onto our own response.
+ *
+ * Necessary because `signInEmailOTP` is called server-to-server here rather
+ * than being reached by the browser directly, so the session cookie it mints
+ * would otherwise be discarded and the user would finish sign-up logged out.
+ * `set-cookie` is appended rather than set — there can legitimately be several
+ * (session token, CSRF) and `setHeader` would keep only the last.
+ */
 const forwardAuthHeaders = (event: H3Event, headers?: Headers) => {
   if (!headers) return
   headers.forEach((value, key) => {
@@ -17,6 +26,21 @@ const forwardAuthHeaders = (event: H3Event, headers?: Headers) => {
   })
 }
 
+/**
+ * Completes sign-up: checks the emailed code, creates the account, and returns
+ * with a live session — the second half of the flow started by
+ * `request-otp.post.ts`.
+ *
+ * The order matters and is a little counter-intuitive. The OTP is *verified*
+ * here but deliberately not consumed; the `Verification` row is left in place
+ * so that `signInEmailOTP` below can validate it a second time and retire it
+ * itself. Deleting it after the first check would leave the new account created
+ * but unable to sign in.
+ *
+ * Creating the user before signing in is also required, not incidental: the
+ * emailOTP plugin runs with `disableSignUp: true`, so `signInEmailOTP` only
+ * succeeds against an account that already exists.
+ */
 export default defineEventHandler(async (event) => {
   try {
     const {
@@ -42,6 +66,9 @@ export default defineEventHandler(async (event) => {
     }
 
 
+    // The transaction wraps a single statement and so buys nothing today; it's
+    // a seam left for the related rows (volunteer profile, notification
+    // preferences) that sign-up is expected to grow.
     await prisma.$transaction(async (tx) => {
       const createdUser = await tx.user.create({
         data: {
@@ -59,8 +86,10 @@ export default defineEventHandler(async (event) => {
 
     })
 
-    // OTP still in Verification table — signInEmailOTP validates it and creates
-    // a session now that the Volunteer record exists, then consumes the OTP.
+    // The OTP row is still present — signInEmailOTP validates it a second time,
+    // mints the session, and only then consumes it. (No Volunteer record is
+    // created during sign-up; volunteers apply separately via
+    // /volunteer-application.)
     const { response, headers } = await auth.api.signInEmailOTP({
       body: { email, otp },
       headers: event.headers,

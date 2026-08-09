@@ -2,6 +2,17 @@ import prisma from '#server/utils/prisma'
 import type { Language, Availability } from '#server/utils/generated/prisma/client'
 import { Prisma } from '#server/utils/generated/prisma/client'
 
+/**
+ * DEAD CODE — superseded by `sign-up-verify.post.ts`. Nothing calls this.
+ *
+ * It predates the OTP-verified sign-up flow and creates an account with no
+ * email verification at all. It also omits the `USER` role that
+ * `sign-up-verify` grants, so any account it did create would fail the role
+ * checks in `app/middleware/auth.global.ts` and be unable to reach the app.
+ *
+ * Kept only because removing it is a separate change; the live path is
+ * `request-otp` → `sign-up-verify`.
+ */
 export default defineEventHandler(async (event) => {
   try {
     const {
