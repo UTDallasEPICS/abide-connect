@@ -142,6 +142,18 @@ export function paragraph(html: string, options: { align?: 'left' | 'center', si
           </tr>`
 }
 
+/**
+ * Inline link in the house colour. `url` is escaped here; `labelHtml` is not,
+ * so escape it first when it comes from the database.
+ *
+ * The colour and underline are set inline because clients drop the browser's
+ * link styling and several of them (Gmail, Outlook) recolour anything they
+ * aren't told about.
+ */
+export function link(url: string, labelHtml: string): string {
+  return `<a href="${escapeHtml(url)}" style="color:${emailColors.accent}; text-decoration:underline;">${labelHtml}</a>`
+}
+
 /** Emphasised inline text — used for event titles inside a sentence. */
 export function strong(html: string): string {
   return `<strong style="color:${emailColors.heading};">${html}</strong>`

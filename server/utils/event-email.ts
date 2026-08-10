@@ -2,12 +2,15 @@ import {
   detailCard,
   escapeHtml,
   escapeHtmlMultiline,
+  link,
   paragraph,
   primaryButton,
   renderEmailShell,
   secondaryButton,
   strong,
 } from './email-theme'
+import type { DetailRow } from './email-theme'
+import { mapUrls } from './eventTime'
 
 /**
  * The two emails we send someone about an event they signed up for: the
@@ -82,6 +85,39 @@ function footNote(audience: 'user' | 'guest', hasCancelUrl: boolean): string {
   return 'You\'re receiving this because you signed up for this event in Abide Connect. You can manage your email preferences in Settings.'
 }
 
+/**
+ * The "Where" row: the address itself opens a pin in maps, and the line under
+ * it hands off to whichever app the reader actually navigates with — the point
+ * being that nobody has to retype an address into their phone on the morning of
+ * the event.
+ */
+function whereRow(address: string): DetailRow {
+  const maps = mapUrls(address)
+  if (!maps) return { label: 'Where', value: escapeHtml(address) }
+
+  return {
+    label: 'Where',
+    value: link(maps.place, escapeHtml(address)),
+    note: `Get directions: ${link(maps.appleDirections, 'Apple Maps')} &middot; ${link(maps.googleDirections, 'Google Maps')}`,
+  }
+}
+
+/** The same address and directions, for the plain-text twin. */
+function textLocationLines(location: string | null): string[] {
+  if (!location) return []
+
+  const maps = mapUrls(location)
+  return [
+    `Where: ${location}`,
+    ...(maps
+      ? [
+          `Directions (Apple Maps): ${maps.appleDirections}`,
+          `Directions (Google Maps): ${maps.googleDirections}`,
+        ]
+      : []),
+  ]
+}
+
 /** Shared closing lines for the plain-text twin. */
 function textLinks(input: EventEmailInput): string[] {
   const lines = [`Event details: ${input.eventUrl}`]
@@ -95,7 +131,7 @@ function eventDetails(input: EventEmailInput): string {
   return detailCard([
     { label: 'Event', value: escapeHtml(input.eventTitle) },
     { label: 'When', value: escapeHtml(input.when) },
-    input.location ? { label: 'Where', value: escapeHtml(input.location) } : null,
+    input.location ? whereRow(input.location) : null,
     {
       label: 'Your spot',
       value: input.isVolunteer ? 'Volunteering' : 'Attending',
@@ -128,7 +164,7 @@ export function buildEventSignupEmail(input: EventEmailInput): EventEmail {
     '',
     `Event: ${eventTitle}`,
     `When: ${when}`,
-    ...(location ? [`Where: ${location}`] : []),
+    ...textLocationLines(location),
     `Your spot: ${isVolunteer ? 'Volunteering' : 'Attending'}`,
     ...(description ? ['', description] : []),
     '',
@@ -187,7 +223,7 @@ export function buildEventReminderEmail(input: EventEmailInput): EventEmail {
     `This is a reminder that you're ${role} ${eventTitle} tomorrow.`,
     '',
     `When: ${when}`,
-    ...(location ? [`Where: ${location}`] : []),
+    ...textLocationLines(location),
     '',
     ...textLinks(input),
     '',
