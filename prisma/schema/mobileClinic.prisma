@@ -1,3 +1,5 @@
+/// A mobile clinic vehicle/unit. Currently just an identity to hang schedules
+/// and events off — it carries no attributes of its own yet.
 model MobileClinic {
   id String @id @default(uuid())
 
@@ -7,6 +9,20 @@ model MobileClinic {
   @@map("mobileClinic")
 }
 
+/// One recurring mobile clinic stop.
+///
+/// Each row is an *origin* date/time treated as a weekly recurrence, not a
+/// single dated stop — `/api/mobile-clinic/schedule` expands it into concrete
+/// occurrences at request time. Nothing persists those occurrences, so their
+/// ids are synthetic and not linkable.
+///
+/// NOTE: `@unique` on `startTime` and `endTime` is almost certainly wrong. It
+/// makes those columns globally unique, so two clinics can never be scheduled
+/// at the same time in different places, and adding a second stop at an
+/// existing time fails with a constraint error. A composite
+/// `@@unique([mobileClinicId, startTime])` is the likely intent. The seed
+/// relies on the current behaviour (it upserts on `startTime`), so changing it
+/// means updating `server/utils/seed.ts` too.
 model Mobile_Clinic_Schedule {
   id             Int          @id @default(autoincrement())
   mobileClinic   MobileClinic @relation(fields: [mobileClinicId], references: [id])

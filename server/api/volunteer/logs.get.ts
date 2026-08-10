@@ -1,6 +1,25 @@
 import prisma from '#server/utils/prisma'
 import { auth } from '#server/utils/auth'
 
+/**
+ * The signed-in volunteer's own hour logs, formatted for display.
+ *
+ * Returns an empty list rather than a 401/404 for signed-out users and for
+ * accounts with no volunteer profile, so the page renders an empty state
+ * instead of an error.
+ *
+ * The admin-facing counterpart is `volunteer-logs/index.get.ts`, which returns
+ * every volunteer's logs.
+ *
+ * BUG: `log.event.title` assumes every log has an event, but `eventId` is
+ * nullable — `hour-log/create.post.ts` and `volunteer-logs/index.post.ts` both
+ * create logs against a free-text `eventName` instead. Any such log makes this
+ * throw a 500. It needs the same fallback the admin endpoint uses:
+ * `log.event?.title ?? log.eventName ?? 'Manual submission'`.
+ *
+ * Dates are pre-formatted to `en-US` here rather than sent as ISO strings, so
+ * the response is display-ready but not re-parseable by the client.
+ */
 export default defineEventHandler(async (event) => {
   const session = await auth.api.getSession({ headers: event.headers })
 

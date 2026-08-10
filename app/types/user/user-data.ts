@@ -1,3 +1,19 @@
+/**
+ * Shape of the admin member-detail payload, returned by
+ * `server/api/user/[id].get.ts` and consumed by
+ * `app/pages/admin/member-management/[id].vue`.
+ *
+ * Not a Prisma type: it flattens `User` + `Volunteer` + their join tables into
+ * one object, and renames some fields to the form's vocabulary (`phone` →
+ * `phoneNumber`, `ethinicity` → `ethnicity` — note the DB column keeps the
+ * original misspelling).
+ *
+ * `volunteer` and `emergencyContact` are absent rather than empty when the user
+ * has no volunteer record, so the UI can skip those sections entirely.
+ *
+ * Dates are `Date | string` because they arrive as `Date` during SSR but as ISO
+ * strings once serialised to the client.
+ */
 export interface HourLogData {
   id: number;
   eventId: string | null;

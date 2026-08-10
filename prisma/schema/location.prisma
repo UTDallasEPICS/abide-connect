@@ -1,3 +1,13 @@
+/// A geocoded address, shared by events and clinic stops.
+///
+/// `address` is unique and acts as the natural key: the event handlers
+/// `connectOrCreate` on it, so an address is geocoded through Nominatim once
+/// and reused thereafter. That caching is what keeps the app within Nominatim's
+/// rate limit, so avoid creating locations by id.
+///
+/// Consequence worth knowing: editing an event's address doesn't move the
+/// existing `Location`, it points the event at a different one. Rows are never
+/// cleaned up, so orphans accumulate.
 model Location {
   id                   String                   @id @default(uuid())
   address              String                   @unique

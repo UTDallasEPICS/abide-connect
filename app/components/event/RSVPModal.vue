@@ -1,4 +1,14 @@
 <script setup lang="ts">
+/**
+ * Name + email sign-up form for visitors without an account.
+ *
+ * Only for guests: a signed-in user's RSVP is created straight from their
+ * session with no form, so this is never shown to them. The endpoint stores the
+ * result in `GuestRSVP` rather than `RSVP` (see `events/[id]/rsvp.post.ts`).
+ *
+ * `isVolunteer` switches the copy and is passed through to the API, which
+ * rejects guest volunteer sign-ups — volunteering requires a profile.
+ */
 const props = defineProps<{
   eventId: string
   isVolunteer: boolean

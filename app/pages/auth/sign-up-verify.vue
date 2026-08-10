@@ -2,6 +2,16 @@
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { verifyOtpFields, verifyOtpSchema, type VerifyOtpSchema } from '~/types/auth/login.type'
 
+/**
+ * Step two of sign-up: verify the emailed code and create the account.
+ *
+ * Reads the details /auth/sign-up parked in `sessionStorage` and posts them
+ * with the code to `/api/auth/sign-up-verify`, which creates the user and
+ * returns a live session. Landing here without those details (direct link, new
+ * tab, reopened browser) means there's nothing to submit, so `onMounted`
+ * redirects back to the start of the flow.
+ */
+
 const errorMessage = ref<string | null>(null)
 const isLoading = ref(false)
 const pendingSignUp = ref<Record<string, unknown> | null>(null)

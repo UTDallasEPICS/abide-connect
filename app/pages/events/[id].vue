@@ -10,6 +10,23 @@ import {
   type VolunteerStatus,
 } from '#shared/utils/eventType'
 
+/**
+ * Event detail page, doubling as the inline editor for admins.
+ *
+ * What renders depends on the viewer, assembled from three fetches (roles,
+ * volunteer profile, existing RSVP):
+ *   - admins get edit controls, the registration list and, for trainings, the
+ *     volunteer approval panel;
+ *   - approved volunteers get one-tap volunteer sign-up;
+ *   - pending volunteers get sign-up on training events only;
+ *   - everyone else gets attendee registration, as a guest if signed out.
+ *
+ * The `canSignUpAsVolunteer` / `canRegisterAsAttendee` helpers are the same
+ * ones the API enforces with, so the buttons shown match what the server will
+ * accept. A viewer who shouldn't see the event at all gets a 404 from
+ * `/api/events/[id]` rather than a 403, so `notFound` covers both cases.
+ */
+
 const colorMode = useColorMode()
 const isDark = computed(() => colorMode.value === 'dark')
 

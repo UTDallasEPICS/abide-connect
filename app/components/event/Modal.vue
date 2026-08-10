@@ -5,6 +5,18 @@ import type { EventType } from '#shared/utils/eventType'
 const colorMode = useColorMode()
 const isDark = computed(() => colorMode.value === 'dark')
 
+/**
+ * Create-event dialog. Unlike `Editor.vue` (which delegates writes to its
+ * parent) this owns the whole flow itself.
+ *
+ * Creation is two sequential requests, because images can only be attached
+ * once the event has an id: POST the event, then upload each file against the
+ * returned id. A failure partway leaves the event created with some or none of
+ * its images — there's no rollback.
+ *
+ * `emptyEvent()` is a factory rather than a shared constant so resetting the
+ * form after a save can't hand back an object the previous submission mutated.
+ */
 const emit = defineEmits(['save', 'close'])
 
 const emptyEvent = () => ({

@@ -1,6 +1,19 @@
 import prisma from '#server/utils/prisma'
 import { requireRole } from '~~/server/utils/requireRole';
 
+/**
+ * Approves or denies a submitted hour log, with an optional reviewer comment.
+ * Admin only.
+ *
+ * `status` is written through unvalidated, so it must already be a member of
+ * the `ApprovalStatus` enum (`PENDING` / `APPROVED` / `REJECTED`) — anything
+ * else fails at the database and surfaces as a 500. Note that unlike
+ * `hour-log/[id].patch.ts`, no `dehumanize` step runs here, so callers must
+ * send the raw enum value rather than a display string.
+ *
+ * `comment` is unconditionally overwritten: omitting it clears any existing
+ * reviewer note rather than leaving it in place.
+ */
 export default eventHandler(async (event) => {
   const session = await requireRole(event, 'admin');
 

@@ -2,6 +2,20 @@ import { auth } from '#server/utils/auth'
 import type { H3Event } from 'h3'
 import { appendHeader, setHeader } from 'h3'
 
+/**
+ * DEAD CODE — email + password sign-in. Nothing calls this, and it cannot
+ * succeed as written.
+ *
+ * `auth.api.signInEmail` requires the `emailAndPassword` provider, which is not
+ * enabled in `server/utils/auth.ts`; the app authenticates with Google OAuth
+ * and email OTP only, and there is no password column on `User`. Calling this
+ * route throws from better-auth rather than logging anyone in.
+ *
+ * Kept only because removing it is a separate change. Do not build on it —
+ * enabling password auth means configuring the provider first. See
+ * `request-otp.post.ts` / `sign-up-verify.post.ts` for the live flow.
+ */
+
 const forwardAuthHeaders = (event: H3Event, headers?: Headers) => {
   if (!headers) {
     return
