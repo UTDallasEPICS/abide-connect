@@ -36,6 +36,7 @@ model Event {
   participants   RSVP[]
   volunteerHours Volunteer_Hour_Log[]
   guestRSVPs     GuestRSVP[]
+  timeSlots      Event_Time_Slot[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -79,6 +80,59 @@ model RSVP {
 
   @@id([userId, eventId])
   @@map("rsvps")
+}
+
+/// A shift an admin drew on an event, e.g. 8am-12pm on an 8am-4pm event.
+/// Blocks are hand-authored rather than generated, so they may overlap each
+/// other and vary in length — there is deliberately no unique constraint.
+model Event_Time_Slot {
+  id        String   @id @default(uuid())
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId   String
+  startTime DateTime
+  endTime   DateTime
+  capacity  Int      @default(1)
+  note      String?
+
+  signups Event_Time_Slot_Signup[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([eventId])
+  @@map("event_time_slots")
+}
+
+/// One volunteer claiming one block. Cancelled rows are kept rather than
+/// deleted, so re-signing up is an upsert that flips `status` back to
+/// CONFIRMED — and every capacity count must filter on CONFIRMED, or
+/// cancelled rows silently consume capacity.
+model Event_Time_Slot_Signup {
+  id          String          @id @default(uuid())
+  timeSlot    Event_Time_Slot @relation(fields: [timeSlotId], references: [id], onDelete: Cascade)
+  timeSlotId  String
+  volunteer   Volunteer       @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  volunteerId String
+
+  status          SlotSignupStatus @default(CONFIRMED)
+  removedByUserId String?
+  removedAt       DateTime?
+  removalReason   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@unique([timeSlotId, volunteerId])
+  @@index([volunteerId])
+  @@map("event_time_slot_signups")
+}
+
+/// Why a signup is no longer active. A volunteer dropping out and staff
+/// removing someone are deliberately distinct.
+enum SlotSignupStatus {
+  CONFIRMED
+  CANCELLED_BY_VOLUNTEER
+  REMOVED_BY_ADMIN
 }
 
 /// A sign-up by someone with no account — name and email only.

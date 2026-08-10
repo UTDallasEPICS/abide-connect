@@ -49,6 +49,14 @@ type RawEvent = {
   allowVolunteers: boolean
   allowAttendees: boolean
   eventAssets: string[]
+  // Optional volunteer shifts. Blocks are hand-drawn by staff, so they may
+  // overlap each other and vary in length.
+  timeSlots?: {
+    startTime: string
+    endTime: string
+    capacity: number
+    note?: string
+  }[]
 }
 
 type RawUser = {
@@ -158,6 +166,14 @@ async function main() {
         },
         eventAssets: {
           create: event.eventAssets.map((imageUrl) => ({ imageUrl })),
+        },
+        timeSlots: {
+          create: (event.timeSlots ?? []).map(slot => ({
+            startTime: new Date(slot.startTime),
+            endTime: new Date(slot.endTime),
+            capacity: slot.capacity,
+            note: slot.note ?? null,
+          })),
         },
       },
     })
