@@ -51,6 +51,17 @@ Push is plain Web Push (VAPID) through the PWA's own service worker — no APNs 
 - `app/composables/usePushNotifications.ts` is the client half (permission prompt, subscribe/unsubscribe, iOS "add to Home Screen" detection).
 - `web-push` and its ASN.1 deps are CommonJS and must stay in `nitro.externals.inline` — left external, Nitro's dev server fails to load them and **every** server route 500s.
 
+### Transactional email
+
+All outgoing mail goes through the one nodemailer `transporter` in `server/utils/auth.ts` and shares a single look, so a new email should be assembled from the kit rather than hand-written:
+
+- `server/utils/email-theme.ts` — the branded shell (`renderEmailShell`) plus block helpers (`paragraph`, `detailCard`, `primaryButton`, `secondaryButton`, `escapeHtml`). Mail clients strip stylesheets and modern layout, so everything is nested `<table>`s with inline styles. Content from the database is escaped by the *caller*, except where a helper documents otherwise.
+- `server/utils/otp-email.ts` — sign-in code. `server/utils/event-email.ts` — the sign-up confirmation and the 24-hour reminder, which deliberately share a shape.
+- `server/utils/eventMailer.ts` — the delivery side: `eventEmailSelect`/`eventEmailDetails` turn an `Event` row into the fields the templates want, and `sendSignupConfirmation` is what a sign-up path calls. Every send is best-effort and swallows its own errors, like push and calendar sync.
+- Every email carries a plain-text twin. Keep it in sync with the HTML — clients in text mode need it and spam filters look for it.
+
+**Cancel links.** Confirmation and reminder emails carry a one-click "cancel my spot" link, which for a guest is the only handle they have on their sign-up. `server/utils/rsvpCancelToken.ts` signs a stateless HMAC token (`BETTER_AUTH_SECRET`) naming one RSVP — no extra table, and the token dies with the row. The link opens the `app/pages/rsvp/cancel.vue` page, which only posts to `server/api/rsvp/cancel.post.ts` after a real click: mail clients and security scanners fetch every URL in a message, so cancelling on GET would drop people from events they meant to attend.
+
 ## Architecture
 
 This is a Nuxt 4 app, so the app source root is `app/` (pages, components, layouts, middleware, lib, types), while `server/` holds Nitro server routes/middleware/utils and is a separate root — cross-referencing it from `app/` code goes through the `#server` path alias (e.g. `import { auth } from '#server/utils/auth'`), not a relative path.

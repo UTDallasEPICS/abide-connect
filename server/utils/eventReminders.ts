@@ -1,8 +1,8 @@
 import prisma from './prisma'
 import { sendPushToUsers } from './push'
-import { transporter } from './auth'
-import { buildEventReminderEmail } from './event-reminder-email'
-import type { ReminderEmailInput } from './event-reminder-email'
+import { buildEventReminderEmail } from './event-email'
+import { cancelUrlFor, eventEmailDetails, sendEventEmail } from './eventMailer'
+import { formatEventTime } from './eventTime'
 import type { ReminderChannel, ReminderKind } from './generated/prisma/client'
 
 /**
@@ -62,43 +62,6 @@ const REMINDERS: Array<{
   { kind: 'HOUR_BEFORE', fromMs: 0, toMs: HOUR_MS, lead: 'in about an hour', email: false },
 ]
 
-/**
- * Timezone every reminder is worded in. Abide operates in one place, so times
- * are formatted for that place rather than per-recipient — matching the `cron`
- * block in nuxt.config.ts, which schedules the job in the same zone.
- */
-const TIME_ZONE = 'America/Chicago'
-
-/** "Tuesday, March 4 at 9:00 AM" — used in the email body. */
-function formatFull(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: TIME_ZONE,
-  }).format(date).replace(/, (\d{1,2}:\d{2})/, ' at $1')
-}
-
-/** "9:00 AM" — used in the push body, where the lead-in supplies the day. */
-function formatTime(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: TIME_ZONE,
-  }).format(date)
-}
-
-/**
- * Base URL for links in reminder emails. Reuses `BETTER_AUTH_URL`, which is
- * already required and already has to be the app's public origin.
- */
-function appUrl(path: string): string {
-  const base = (process.env.BETTER_AUTH_URL ?? '').replace(/\/$/, '')
-  return `${base}${path}`
-}
-
 export type ReminderRunResult = { push: number, email: number }
 
 /**
@@ -129,11 +92,6 @@ export async function sendDueEventReminders(now: Date = new Date()): Promise<Rem
           },
         },
         reminders: { where: { kind: reminder.kind } },
-        // Guests are email-only and gated on the env flag, so there's no point
-        // loading them for the one-hour reminder or when the flag is off.
-        guestRSVPs: reminder.email && guestEmailsEnabled
-          ? { include: { reminders: { where: { kind: reminder.kind } } } }
-          : false,
       },
     })
 
@@ -156,7 +114,7 @@ export async function sendDueEventReminders(now: Date = new Date()): Promise<Rem
 
         const payload = {
           title: event.title,
-          body: `${reminder.kind === 'DAY_BEFORE' ? 'Tomorrow' : 'Starting soon'} — ${formatTime(event.startTime)}${event.location ? ` at ${event.location.address}` : ''}`,
+          body: `${reminder.kind === 'DAY_BEFORE' ? 'Tomorrow' : 'Starting soon'} — ${formatEventTime(event.startTime)}${event.location ? ` at ${event.location.address}` : ''}`,
           url: `/events/${event.id}`,
           // One tag per event and reminder, so a re-delivery replaces the old
           // notification on the device instead of stacking a second one.
@@ -174,12 +132,9 @@ export async function sendDueEventReminders(now: Date = new Date()): Promise<Rem
 
       if (!reminder.email) continue
 
-      const details = {
-        eventTitle: event.title,
-        when: formatFull(event.startTime),
-        location: event.location?.address ?? null,
-        eventUrl: appUrl(`/events/${event.id}`),
-      }
+      // Reminders don't re-state the blurb — the recipient already read it on
+      // the confirmation email — so the description is dropped here.
+      const details = { ...eventEmailDetails(event), description: null, calendarUrl: null }
 
       // Account holders — opted in from /settings.
       const emailCandidates = pending('EMAIL').filter(p => p.user.emailRemindersEnabled)
@@ -187,65 +142,52 @@ export async function sendDueEventReminders(now: Date = new Date()): Promise<Rem
         const emailClaimed = await claim(event.id, emailCandidates.map(p => p.userId), reminder.kind, 'EMAIL')
 
         for (const target of emailCandidates.filter(p => emailClaimed.has(p.userId))) {
-          const sent = await sendReminderEmail(target.user.email, {
+          const mail = buildEventReminderEmail({
             ...details,
             name: target.user.name,
             isVolunteer: target.isVolunteer,
             audience: 'user',
+            cancelUrl: cancelUrlFor({ type: 'user', userId: target.userId, eventId: event.id }),
           })
-          if (sent) result.email++
+
+          // The claim row is already written, so a permanently broken address
+          // is logged once rather than retried on every tick for the rest of
+          // the day — `sendEventEmail` swallows the failure for us.
+          if (await sendEventEmail(target.user.email, mail)) result.email++
         }
       }
 
       // Guests — no account, so `GUEST_EVENT_REMINDER_EMAILS` stands in for a
-      // per-person preference. `guestRSVPs` is only loaded when it's on.
-      for (const guest of event.guestRSVPs ?? []) {
+      // per-person preference. Fetched separately, and only when that flag is
+      // on: they're email-only, so the one-hour pass never needs them.
+      const guests = guestEmailsEnabled
+        ? await prisma.guestRSVP.findMany({
+            where: { eventId: event.id },
+            include: { reminders: { where: { kind: reminder.kind } } },
+          })
+        : []
+
+      for (const guest of guests) {
         if (guest.reminders.some(r => r.channel === 'EMAIL')) continue
 
         const claimed = await claimGuest(guest.id, reminder.kind, 'EMAIL')
         if (!claimed) continue
 
-        const sent = await sendReminderEmail(guest.email, {
+        const mail = buildEventReminderEmail({
           ...details,
           name: guest.name,
           isVolunteer: guest.isVolunteer,
           audience: 'guest',
+          // The only way back to a sign-up made without an account.
+          cancelUrl: cancelUrlFor({ type: 'guest', guestRsvpId: guest.id }),
         })
-        if (sent) result.email++
+
+        if (await sendEventEmail(guest.email, mail)) result.email++
       }
     }
   }
 
   return result
-}
-
-/**
- * Sends one reminder email. Returns whether it went out.
- *
- * Swallows transport errors on purpose: the claim row is already written, so a
- * permanently broken address is logged once and not retried on every tick for
- * the rest of the day, and one bad recipient can't stop the rest of the run.
- */
-async function sendReminderEmail(
-  to: string,
-  input: Omit<ReminderEmailInput, 'name'> & { name: string | null },
-): Promise<boolean> {
-  const mail = buildEventReminderEmail(input)
-
-  try {
-    await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
-      to,
-      subject: mail.subject,
-      text: mail.text,
-      html: mail.html,
-    })
-    return true
-  }
-  catch (error) {
-    console.error('[reminders] email failed for', to, error)
-    return false
-  }
 }
 
 /**
