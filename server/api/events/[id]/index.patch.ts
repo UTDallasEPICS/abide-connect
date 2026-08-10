@@ -8,7 +8,16 @@ import {
   parseTimeSlotPayload,
 } from '#server/utils/timeSlots'
 
-// Geocode location using Nominatim
+/**
+ * Resolves a free-text address to coordinates via OpenStreetMap's Nominatim.
+ *
+ * Duplicated verbatim from `server/api/events/index.post.ts` — if you change
+ * one, change the other, or lift both into `server/utils/`.
+ *
+ * Only called on a cache miss (`Location` rows are keyed by address and
+ * reused), since Nominatim's usage policy caps unauthenticated callers at
+ * roughly one request per second and requires the `User-Agent` sent below.
+ */
 async function geocodeLocation(location: string) {
   try {
     const response = await fetch(
@@ -46,6 +55,19 @@ async function geocodeLocation(location: string) {
   }
 }
 
+/**
+ * Updates an event and keeps the shared Google Calendar in step. Staff only.
+ *
+ * Two behaviours worth knowing:
+ *
+ * - Unknown body keys are spread straight into the Prisma `update`, so this
+ *   trusts the client's field names. `location`, `mobileClinic` and `eventType`
+ *   are pulled out first because they need relation/flag handling rather than a
+ *   direct column write.
+ * - An event with no `calendarEventId` (created before sync existed, or by
+ *   someone signed in via OTP) is *created* on the calendar here rather than
+ *   patched, so editing is the path by which older events get backfilled.
+ */
 export default defineEventHandler(async (event) => {
   // Editing events is staff-only.
   await requireRole(event, 'admin')
@@ -80,6 +102,8 @@ export default defineEventHandler(async (event) => {
 
   console.log('📍 Location data from DB:', locationData)
 
+  // Unreachable — the identical check above already returned (as a 500 rather
+  // than this 400). Harmless, but only one of the two should survive.
   if (!locationData) {
     throw createError({
       statusCode: 400,

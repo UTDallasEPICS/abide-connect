@@ -1,6 +1,17 @@
 import prisma from '#server/utils/prisma'
 import { requireRole } from '#server/utils/requireRole'
 
+/**
+ * The full sign-up list for an event, split into volunteers and attendees.
+ * Staff only — this returns names and email addresses.
+ *
+ * Merges the two tables sign-ups can land in (`RSVP` for account holders,
+ * `GuestRSVP` for anonymous ones) into a single list, since staff think in
+ * terms of "who is coming" rather than how each person registered. `isGuest`
+ * preserves the distinction, and note the `id` field means different things
+ * across the two: a `userId` for members, a `GuestRSVP.id` for guests — so it
+ * is only unique within its own group.
+ */
 export default defineEventHandler(async (event) => {
   // Sign-up lists carry names and emails, so they're staff-only.
   await requireRole(event, 'admin')

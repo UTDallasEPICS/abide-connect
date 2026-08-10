@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { authClient } from '#server/utils/auth-client'
 
+/**
+ * Top bar for the `default` layout: settings, notifications, theme, sign-out.
+ *
+ * The `right` slot is exposed so a page can replace the inbox button with
+ * something of its own while keeping the theme and logout controls.
+ */
+
 const colorMode = useColorMode()
 
 const onInboxClick = async (_e?: MouseEvent) => {
@@ -11,6 +18,9 @@ const onSettingsClick = async (_e?: MouseEvent) => {
 }
 const onLogout = async () => {
   await authClient.signOut()
+  // Full page load rather than navigateTo: it discards every cached useFetch
+  // payload (roles, session, user data), so no fragment of the previous
+  // account's state survives into the login screen.
   window.location.href = '/auth/login'
 }
 const toggleDarkMode = () => {

@@ -1,6 +1,16 @@
 <script setup lang="ts">
 import type { TrainingAttendee } from './TrainingApprovalList.vue'
 
+/**
+ * Volunteer approval panel on a training event's page: fetches the attendee
+ * list and hands it to `TrainingApprovalList`.
+ *
+ * Only rendered for admins — the endpoint it calls is admin-only and would 403
+ * otherwise. `refresh` is passed down so an approve/deny refetches rather than
+ * mutating the local list, keeping the panel truthful if two staff are
+ * reviewing at once.
+ */
+
 const props = defineProps<{
   eventId: string
 }>()

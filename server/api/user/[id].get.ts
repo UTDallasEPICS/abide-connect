@@ -1,6 +1,7 @@
 import { requireRole } from '~~/server/utils/requireRole';
 import type { UserData } from '~~/app/types/user/user-data';
 
+/** `PREFER_NOT_TO_SAY` → `Prefer Not To Say`, for display only. */
 function humanize(value: string | null | undefined): string | undefined {
   if (!value) return undefined;
   return value
@@ -10,6 +11,23 @@ function humanize(value: string | null | undefined): string | undefined {
     .join(' ');
 }
 
+/**
+ * Everything the admin member-detail page shows about one user: profile, roles,
+ * volunteer record, emergency contacts, hour logs and RSVPs. Admin only.
+ *
+ * Note which fields are humanized and which aren't, because it's a deliberate
+ * split rather than an inconsistency: roles and `approvalStatus` are
+ * display-only, so they're prettified; the volunteer enums (gender, ethnicity,
+ * languages…) stay raw because the edit form binds them to select options keyed
+ * by the enum value, and re-saving an untouched field has to send back
+ * something the DB accepts.
+ *
+ * `emergencyContact` collapses to `undefined` when every field is blank, so the
+ * UI can skip the whole section rather than render four empty rows.
+ *
+ * `hourLogs[].eventTitle` falls back to the free-text `eventName` — logs can be
+ * recorded against work that has no `Event` row.
+ */
 export default defineEventHandler(async (event): Promise<UserData> => {
   await requireRole(event, 'Admin');
   const id = getRouterParam(event, 'id');

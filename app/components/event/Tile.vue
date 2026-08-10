@@ -1,4 +1,12 @@
 <script setup lang="ts">
+/**
+ * Compact event row used in list views.
+ *
+ * Emits two separate events because the row has two targets: `click` for the
+ * row itself (open the event) and `add` for the trailing button (RSVP, or add
+ * to a selection). The button's handler is `@click.stop` so pressing it doesn't
+ * also fire the row's navigation.
+ */
 defineEmits(['add', 'click'])
 const props = defineProps<{
   title?: string
@@ -14,6 +22,7 @@ const iconName = computed(() =>
     : 'i-heroicons-plus',
 )
 
+// Unused — callers pass a ready-made `imageUrl` prop instead. Safe to remove.
 function getAssetUrl(imageUrl: string) {
   return `/api/events/${imageUrl}`
 }

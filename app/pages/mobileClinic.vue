@@ -58,13 +58,26 @@
 </template>
 
 <script setup>
+/**
+ * Public mobile clinic locator: a map with a draggable sheet listing upcoming
+ * stops and events. No account needed.
+ *
+ * Combines two sources — real events and the recurring clinic schedule, whose
+ * occurrences are generated on the fly by `/api/mobile-clinic/schedule` and so
+ * carry synthetic ids that aren't links. Tapping a tile recentres the map
+ * rather than navigating, except for real events which do open.
+ *
+ * Data loads in `onMounted` because the map is client-only, so there's nothing
+ * to render server-side anyway.
+ */
 import 'maplibre-gl/dist/maplibre-gl.css'
 
 const style = '/mapstyles.json'
+// Downtown Dallas — the default view before any stop is selected.
 const center = ref([-96.77049780046936, 32.772891246510596])
 const zoom = ref(15)
 
-// Pixel values
+// Drawer heights in pixels: peek, half, full.
 const snapPoints = ['230', '340', '450']
 
 const upcomingEvents = ref([])

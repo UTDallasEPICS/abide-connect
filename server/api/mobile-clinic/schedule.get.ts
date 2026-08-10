@@ -4,9 +4,29 @@ const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000
 const MAX_OCCURRENCES = 8
 const LOOKAHEAD_WEEKS = 4
 
+// Adds whole weeks as fixed 7×24h spans. This shifts wall-clock time by an hour
+// across a DST boundary — acceptable while the recurrence is display-only, but
+// it would need a timezone-aware calculation before these drive reminders.
 const addWeeks = (date: Date, weeks: number) =>
   new Date(date.getTime() + weeks * MS_PER_WEEK)
 
+/**
+ * Upcoming mobile clinic stops for the public locator map.
+ *
+ * Intentionally unauthenticated — clinic times and locations are public and the
+ * page is reachable without an account.
+ *
+ * Every `Mobile_Clinic_Schedule` row is treated as an open-ended *weekly*
+ * recurrence rather than a single dated stop: the table stores one origin
+ * date/time per stop, and this expands it into concrete occurrences for the
+ * next `LOOKAHEAD_WEEKS`. That means occurrences are computed, never stored,
+ * so the ids below (`<scheduleId>-<n>`) are synthetic and only stable within a
+ * single response — don't persist them or use them as links. `scheduleId` is
+ * the real row.
+ *
+ * `MAX_OCCURRENCES` is a belt-and-braces cap so a malformed row (say `endTime`
+ * before `startTime`) can't spin the loop.
+ */
 export default defineEventHandler(async () => {
   try {
     const scheduleEntries = await prisma.mobile_Clinic_Schedule.findMany({
@@ -34,6 +54,9 @@ export default defineEventHandler(async () => {
       let startTime = new Date(originStart)
       let endTime = new Date(originEnd)
 
+      // Origin dates are usually in the past, so jump straight to the first
+      // occurrence at or after now instead of stepping a week at a time — a
+      // stop seeded a year ago would otherwise take ~52 iterations to catch up.
       if (endTime < now) {
         const weeksAhead = Math.ceil(
           (now.getTime() - endTime.getTime()) / MS_PER_WEEK,

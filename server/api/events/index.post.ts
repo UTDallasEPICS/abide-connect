@@ -8,7 +8,17 @@ import {
   parseTimeSlotPayload,
 } from '#server/utils/timeSlots'
 
-// Geocode location using Nominatim
+/**
+ * Resolves a free-text address to coordinates via OpenStreetMap's Nominatim.
+ *
+ * Only ever called on a cache miss — `Location` rows are keyed by address and
+ * reused — because Nominatim's usage policy caps unauthenticated callers at
+ * roughly one request per second and requires the identifying `User-Agent`
+ * sent below.
+ *
+ * Returns null instead of throwing on any failure; the caller decides whether a
+ * missing geocode is fatal.
+ */
 async function geocodeLocation(location: string) {
   try {
     const response = await fetch(
@@ -46,6 +56,17 @@ async function geocodeLocation(location: string) {
   }
 }
 
+/**
+ * Creates an event and mirrors it to the shared Google Calendar. Staff only.
+ *
+ * The calendar sync is a second step rather than part of the create, because
+ * the Google event id only exists once Google has accepted the write — so a
+ * successful sync means an extra `update` to store `calendarEventId` /
+ * `calendarURL`. Sync is best-effort throughout: a volunteer who signed in with
+ * email OTP has no Google token, and the event is still created without a
+ * calendar entry (leaving `calendarEventId` null, which later edits and deletes
+ * handle by skipping their own sync).
+ */
 export default defineEventHandler(async (event) => {
   // Creating events is staff-only.
   await requireRole(event, 'admin')

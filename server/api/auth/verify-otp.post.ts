@@ -2,6 +2,16 @@ import { auth } from '#server/utils/auth'
 import type { H3Event } from 'h3'
 import { appendHeader, setHeader } from 'h3'
 
+/**
+ * Signs an existing user in with an emailed OTP — the second half of the login
+ * flow that `request-otp.post.ts` starts.
+ *
+ * Distinct from `sign-up-verify.post.ts`: that one creates the account first,
+ * this one assumes it already exists (the emailOTP plugin runs with
+ * `disableSignUp: true`, so an unknown address fails here rather than
+ * registering).
+ */
+
 // Copies response headers from better-auth onto the H3 event.
 // This is how session cookies get sent back to the browser.
 const forwardAuthHeaders = (event: H3Event, headers?: Headers) => {

@@ -2,6 +2,18 @@
 import { ref, watch } from 'vue'
 import { eventTypeFromFlags } from '#shared/utils/eventType'
 
+/**
+ * Event edit form. Owns a local copy of the event and emits `save`/`delete` —
+ * the parent performs the actual writes.
+ *
+ * Edits are made against `editedEvent`, a clone rebuilt whenever the `event`
+ * prop changes, so abandoning the form leaves the original untouched.
+ *
+ * Note images do not follow that pattern: `saveEvent` uploads pending files
+ * immediately, before emitting, so a user who uploads and then cancels has
+ * still changed the event's images.
+ */
+
 const props = defineProps({
   event: {
     type: Object,
@@ -47,6 +59,9 @@ async function saveEvent() {
         })
       }
       catch (err) {
+        // Swallowed deliberately so one bad image doesn't lose the user's text
+        // edits — but nothing surfaces the failure, so the save appears to
+        // succeed with the image missing. Worth a toast.
         console.error(`Failed to upload ${file.name}:`, err)
       }
     }

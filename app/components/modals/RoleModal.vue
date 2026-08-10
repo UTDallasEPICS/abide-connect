@@ -1,4 +1,13 @@
 <script setup lang="ts">
+/**
+ * Prompts for a single role, used by the admin member screens for both
+ * granting and revoking (the caller supplies the eligible `roles` list and the
+ * button label).
+ *
+ * Unlike `ConfirmModal` this closes itself on confirm rather than waiting on
+ * the parent, so it has no loading state — the caller handles failures with a
+ * toast rather than in the dialog.
+ */
 const props = defineProps<{
   open: boolean;
   title: string;
@@ -14,6 +23,8 @@ const emit = defineEmits<{
 
 const selectedRole = ref<string | null>(null);
 
+// Clear the selection each time the dialog opens — the component stays mounted
+// between uses, so without this it would reopen showing the previous choice.
 watch(
   () => props.open,
   (isOpen) => {

@@ -5,6 +5,20 @@ import { readBody, defineEventHandler, createError } from 'h3'
 const ADDABLE_ROLES = ['USER', 'VOLUNTEER'] as const
 type AddableRole = (typeof ADDABLE_ROLES)[number]
 
+/**
+ * Grants a role to a user, from the admin member-management screen.
+ *
+ * SECURITY: this handler performs no authorization. It never calls
+ * `requireRole`, and `server/middleware/authenticated.ts` is a no-op, so any
+ * caller — including an unauthenticated one — can POST a `userId` and grant
+ * VOLUNTEER to themselves or anyone else. The admin-only restriction currently
+ * exists solely in the UI that calls it, which is not enforcement.
+ *
+ * The `ADDABLE_ROLES` allowlist limits the blast radius to USER/VOLUNTEER
+ * (ADMIN cannot be granted here), but VOLUNTEER still unlocks volunteer-only
+ * events and hour logging. This wants `await requireRole(event, 'admin')` as
+ * its first line, matching every handler under `server/api/admin/`.
+ */
 export default defineEventHandler(async (event) => {
   const body = await readBody<{ userId?: string; role?: string }>(event)
   const userId = body.userId

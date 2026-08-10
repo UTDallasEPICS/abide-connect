@@ -16,6 +16,21 @@ definePageMeta({
   backText: 'Management'
 });
 
+/**
+ * Member detail and editor: profile, hour logs and RSVPs for one user.
+ *
+ * The page owns two parallel structures — the saved `userData` from the API and
+ * a set of mutable drafts (`GeneralDraft`, and per-row maps for hour logs and
+ * RSVPs). Sections render `userData` when not editing and bind the drafts when
+ * they are, so cancelling discards edits without a refetch. Saving diffs the
+ * drafts and issues only the calls that changed, then `refresh()`es.
+ *
+ * The write endpoints behind the general section (`/api/user/update`,
+ * `/api/user/delete`) currently perform no authorization of their own — see the
+ * SECURITY notes on those handlers. This page's `/admin` prefix guard is
+ * client-side only and is not what protects them.
+ */
+
 type Section = 'GENERAL' | 'HOUR_LOG' | 'RSVPS';
 
 const sections: { key: Section; label: string }[] = [

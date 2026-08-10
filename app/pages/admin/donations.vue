@@ -5,6 +5,16 @@ definePageMeta({
   layout: 'secondary',
 })
 
+/**
+ * Donation campaign management. Admin-gated by the `/admin` prefix in
+ * `auth.global.ts`, and again server-side by every endpoint it calls.
+ *
+ * Creating a campaign with an image is two requests: create the record, then
+ * POST the file to `<id>/image`, since the upload path is derived from the new
+ * record's id. `refresh()` after each mutation rather than local patching, so
+ * the table reflects what the server actually stored.
+ */
+
 // Backend
 interface DonationFund {
   id: string
@@ -21,7 +31,16 @@ const { data: fundsData, refresh } = await useAsyncData(
 )
 const funds = computed(() => fundsData.value ?? [])
 
-// Make dates pretty
+/**
+ * `MM/DD/YY` for the campaign table.
+ *
+ * BUG: `getDate() + 1` shifts every displayed date one day forward, and rolls
+ * past the end of the month (31 Jan renders as `01/32/26`). The `+ 1` on
+ * `getMonth()` above is correct — months are zero-based — but days are not, so
+ * this looks like the fix being copied one line too far. It was probably
+ * masking a timezone shift from parsing a date-only string as UTC; the real fix
+ * is to read the UTC components rather than to add a day.
+ */
 function formatShort(dateStr: string) {
   if (!dateStr) return ''
   const d = new Date(dateStr)

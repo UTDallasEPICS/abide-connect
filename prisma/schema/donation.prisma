@@ -1,3 +1,12 @@
+/// A donation campaign shown in the home page carousel.
+///
+/// `imageUrl` is a bare filename (a generated UUID), not a URL — the file lives
+/// at `$IMAGE_STORAGE_PATH/donations/<id>/<imageUrl>` and is served through
+/// `/api/admin/donations/<id>/image`. It is `""` between creating a campaign
+/// and uploading its image, since the upload needs the record's id.
+///
+/// `startDate`/`endDate` are descriptive only; nothing filters on them, so
+/// expired campaigns still render until deleted.
 model Donation {
   id        String   @id @default(uuid())
   name      String

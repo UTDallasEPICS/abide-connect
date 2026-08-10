@@ -1,4 +1,15 @@
 <script setup lang="ts">
+/**
+ * Logs hours on a member's behalf, from the admin member-detail page.
+ *
+ * Differs from the volunteer-facing `components/volunteer/HourLogModal.vue` in
+ * two ways: it takes an explicit `userId` rather than using the session, and it
+ * can set `approvalStatus` directly, so staff can record already-approved
+ * hours without a second review step.
+ *
+ * Posts to `/api/hour-log`, which resolves the `userId` to its `Volunteer`
+ * record and 404s if the member never applied to volunteer.
+ */
 type ApprovalStatusOption = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 const props = defineProps<{
