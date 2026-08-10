@@ -20,6 +20,13 @@ model User {
   pushScope         PushScope        @default(BOTH)
   pushSubscriptions PushSubscription[]
 
+  /// Opt-in for the emailed 24-hour reminder before an event they signed up
+  /// for. Off by default — push is the primary channel and mail is the noisier
+  /// one, so nobody gets it without asking in /settings.
+  emailRemindersEnabled Boolean @default(false)
+
+  eventReminders Event_Reminder[]
+
   @@map("users")
 }
 
