@@ -14,6 +14,7 @@ model Volunteer {
   certifications Volunteer_Certification[]
   hourLogs       Volunteer_Hour_Log[]
   events         RSVP[]
+  slotSignups    Event_Time_Slot_Signup[]
 
   otherVolunteerAreaDescription String?
   otherCertificationDescription String?

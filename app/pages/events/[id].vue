@@ -27,6 +27,7 @@ if (error.value) {
 
 const isEditMode = ref(false)
 const editForm = ref<any>({})
+const saveError = ref('')
 
 const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
 const { data: roles } = await useFetch<string[]>('/api/user/roles', {
@@ -38,6 +39,9 @@ const { data: myVolunteer } = await useFetch<{ approvalStatus?: string } | null>
   { headers, default: () => null },
 )
 const isAdmin = computed(() => roles.value?.includes('admin') ?? false)
+// `/api/user/roles` returns [] when there's no session, and every signed-in
+// user holds at least `user`.
+const isSignedIn = computed(() => (roles.value?.length ?? 0) > 0)
 
 const viewer = computed<EventViewer>(() => ({
   isAdmin: isAdmin.value,
@@ -61,6 +65,43 @@ const { data: myRsvp, refresh: refreshMyRsvp } = await useFetch<{ isVolunteer: b
 )
 const isSignedUpToVolunteer = computed(() => myRsvp.value?.isVolunteer === true)
 const isRegisteredToAttend = computed(() => myRsvp.value?.isVolunteer === false)
+
+interface EventTimeSlot {
+  id: string
+  startTime: string
+  endTime: string
+  capacity: number
+  note: string | null
+  signupCount: number
+  spotsRemaining: number
+  isFull: boolean
+  viewerSignedUp: boolean
+  /** Staff only. */
+  signups?: { volunteerId: string, name: string, email: string }[]
+}
+
+const {
+  data: timeSlotData,
+  error: timeSlotError,
+  refresh: refreshTimeSlots,
+} = await useFetch<{ slots: EventTimeSlot[] }>(
+  `/api/events/${eventId}/time-slots`,
+  { headers, default: () => ({ slots: [] }) },
+)
+
+const timeSlots = computed(() => timeSlotData.value?.slots ?? [])
+
+// Once an event has blocks, claiming a shift *is* how you volunteer for it —
+// the one-tap sign-up is hidden so the two can't disagree.
+const hasTimeSlots = computed(() => timeSlots.value.length > 0)
+
+// Blocks are volunteer shifts, so they only belong on events volunteers sign
+// up for. Kept visible while blocks still exist even if the admin switches the
+// type, so they can be removed deliberately rather than silently discarded.
+const acceptsTimeBlocks = computed(() =>
+  editForm.value.eventType === 'VOLUNTEERS'
+  || editForm.value.eventType === 'VOLUNTEERS_AND_ATTENDEES',
+)
 
 const showRsvpModal = ref(false)
 const rsvpIsVolunteer = ref(false)
@@ -116,6 +157,19 @@ async function cancelSignUp() {
   }
 }
 
+/**
+ * After a block is claimed, dropped, or a volunteer is removed: the counts
+ * change, and so does the RSVP (claiming a first block adds one, dropping the
+ * last removes it), so the stats panel has to be refreshed too.
+ */
+async function onTimeSlotsChanged() {
+  await Promise.all([
+    refreshTimeSlots(),
+    refreshMyRsvp(),
+    rsvpStatsRef.value?.refresh(),
+  ])
+}
+
 const filesToUpload = ref<File[]>([])
 
 function enterEditMode() {
@@ -124,6 +178,16 @@ function enterEditMode() {
     eventType: eventType.value,
     startTime: event.value?.startTime ? formatForInput(event.value.startTime) : '',
     endTime: event.value?.endTime ? formatForInput(event.value.endTime) : '',
+    // Each existing block keeps its id so the save updates it in place. A
+    // block that lost its id would be treated as new, and the row it replaced
+    // would be deleted — taking every sign-up on it.
+    timeSlots: timeSlots.value.map(slot => ({
+      id: slot.id,
+      startTime: formatForInput(slot.startTime),
+      endTime: formatForInput(slot.endTime),
+      capacity: slot.capacity,
+      signupCount: slot.signupCount,
+    })),
   }
   isEditMode.value = true
 }
@@ -147,6 +211,25 @@ function onFilesChanged(files: File[]) {
 
 async function saveChanges() {
   try {
+    // Omitted entirely rather than sent empty when the block list didn't load:
+    // an empty array means "delete them all", so a failed fetch would wipe
+    // every shift the moment someone saved an unrelated change.
+    const timeSlotPayload = timeSlotError.value
+      ? {}
+      : {
+          timeSlots: (editForm.value.timeSlots ?? []).map((slot: {
+            id: string | null
+            startTime: string
+            endTime: string
+            capacity: number
+          }) => ({
+            id: slot.id,
+            startTime: new Date(slot.startTime).toISOString(),
+            endTime: new Date(slot.endTime).toISOString(),
+            capacity: Number(slot.capacity),
+          })),
+        }
+
     await $fetch(`/api/events/${eventId}`, {
       method: 'PATCH',
       body: {
@@ -157,6 +240,7 @@ async function saveChanges() {
         startTime: new Date(editForm.value.startTime).toISOString(),
         endTime: new Date(editForm.value.endTime).toISOString(),
         eventType: editForm.value.eventType,
+        ...timeSlotPayload,
       },
     })
 
@@ -176,10 +260,16 @@ async function saveChanges() {
 
     filesToUpload.value = []
     isEditMode.value = false
-    await refresh()
+    saveError.value = ''
+    await Promise.all([refresh(), refreshTimeSlots()])
   }
   catch (error) {
     console.error('Error updating event:', error)
+    // Stay in edit mode and say what happened. The server rejects a save that
+    // would strand a block outside the event window, and that rejection is
+    // useless if the form closes as though it succeeded.
+    saveError.value = (error as { data?: { message?: string } })?.data?.message
+      || 'Could not save your changes. Please try again.'
   }
 }
 
@@ -302,6 +392,13 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
             </template>
           </div>
         </div>
+
+        <p
+          v-if="saveError"
+          class="max-w-4xl mx-auto px-4 pb-3 text-sm text-red-600 dark:text-red-400"
+        >
+          {{ saveError }}
+        </p>
       </div>
 
       <div class="max-w-4xl mx-auto px-4 py-8">
@@ -494,6 +591,23 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
               :color="brandColor"
             />
 
+            <EventTimeSlotEditor
+              v-if="acceptsTimeBlocks || (editForm.timeSlots?.length ?? 0) > 0"
+              v-model="editForm.timeSlots"
+              :event-start="editForm.startTime"
+              :event-end="editForm.endTime"
+              :color="brandColor"
+            />
+
+            <p
+              v-if="!acceptsTimeBlocks && (editForm.timeSlots?.length ?? 0) > 0"
+              class="text-xs text-amber-700 dark:text-amber-400"
+            >
+              This event type doesn't use time blocks. Remove the blocks above
+              before saving, or switch back to an event type that volunteers
+              sign up for.
+            </p>
+
             <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
               <div class="flex items-center gap-3">
                 <UIcon
@@ -559,6 +673,19 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
           :admin="isAdmin"
         />
 
+        <!-- Time blocks: replaces one-tap volunteering on events that have them -->
+        <EventTimeSlotList
+          v-if="!isEditMode && hasTimeSlots"
+          :event-id="eventId"
+          :slots="timeSlots"
+          :can-volunteer="canVolunteer"
+          :is-admin="isAdmin"
+          :volunteer-status="viewer.volunteerStatus"
+          :is-signed-in="isSignedIn"
+          :color="brandColor"
+          @changed="onTimeSlotsChanged"
+        />
+
         <!-- Action Buttons -->
         <div
           v-if="!isEditMode"
@@ -575,9 +702,11 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
             {{ eventTypeLabel(eventType) }} — only visible to volunteers
           </p>
 
-          <!-- Already signed up: no approval step, so just confirm it -->
+          <!-- Already signed up: no approval step, so just confirm it.
+               Hidden on events with blocks — the block list is the source of
+               truth there, and cancelling here would leave shifts claimed. -->
           <div
-            v-if="isSignedUpToVolunteer"
+            v-if="isSignedUpToVolunteer && !hasTimeSlots"
             class="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-brand6 dark:bg-gray-800 px-4 py-3"
           >
             <span class="flex items-center gap-2 text-sm font-medium text-brand4 dark:text-brand8">
@@ -600,7 +729,7 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
 
           <div class="flex gap-4">
             <UButton
-              v-if="canVolunteer && !isSignedUpToVolunteer"
+              v-if="canVolunteer && !isSignedUpToVolunteer && !hasTimeSlots"
               :color="brandColor"
               size="xl"
               block

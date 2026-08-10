@@ -13,7 +13,27 @@
       },
       "allowVolunteers": true,
       "allowAttendees": true,
-      "eventAssets": []
+      "eventAssets": [],
+      "timeSlots": [
+        {
+          "startTime": "2027-12-15T09:00:00.000Z",
+          "endTime": "2027-12-15T13:00:00.000Z",
+          "capacity": 4,
+          "note": "Morning setup and check-in"
+        },
+        {
+          "startTime": "2027-12-15T11:00:00.000Z",
+          "endTime": "2027-12-15T14:00:00.000Z",
+          "capacity": 2,
+          "note": "Lunch rush - extra hands on top of the other shifts"
+        },
+        {
+          "startTime": "2027-12-15T13:00:00.000Z",
+          "endTime": "2027-12-15T17:00:00.000Z",
+          "capacity": 4,
+          "note": "Afternoon sessions and teardown"
+        }
+      ]
     },
     {
       "id": "event2",
