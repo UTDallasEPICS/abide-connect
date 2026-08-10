@@ -30,9 +30,7 @@ export default defineEventHandler(async (event) => {
       image: e.eventAssets[0]?.imageUrl ?? '/images/default-event.jpg',
       day: start.getDate().toString().padStart(2, '0'),
       month: start.toLocaleString('en-US', { month: 'short' }),
-      location: e.location
-        ? [e.location.name, e.location.city].filter(Boolean).join(', ')
-        : 'Location TBD',
+      location: e.location.address,
       going: e.participants.length + e.guestRSVPs.length,
       startTime: e.startTime,
     }

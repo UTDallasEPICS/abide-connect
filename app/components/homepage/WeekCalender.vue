@@ -22,44 +22,62 @@ const monthLabel = computed(() =>
 function isToday(date: CalendarDate) {
   return date.compare(todayDate) === 0
 }
+
 function isSelected(date: CalendarDate) {
   return date.compare(selected.value) === 0
 }
+
 function selectDay(date: CalendarDate) {
   selected.value = date
   anchor.value = date
 }
+
 function prevWeek() {
   anchor.value = anchor.value.subtract({ weeks: 1 })
 }
+
 function nextWeek() {
   anchor.value = anchor.value.add({ weeks: 1 })
 }
 </script>
 
 <template>
-  <div class="w-full rounded-2xl border border-gray-200 bg-white px-5 py-4">
+  <div class="w-full rounded-2xl border-2 border-gray-300 bg-white px-5 py-4 shadow-sm">
     <div class="mb-4 flex items-center justify-between">
-      <UButton icon="i-lucide-chevron-left" color="neutral" variant="ghost" size="sm" square @click="prevWeek" />
-      <span class="text-[15px] font-medium text-gray-900">{{ monthLabel }}</span>
-      <UButton icon="i-lucide-chevron-right" color="neutral" variant="ghost" size="sm" square @click="nextWeek" />
+      <UButton
+        icon="i-lucide-chevron-left"
+        color="neutral"
+        variant="ghost"
+        size="sm"
+        square
+        @click="prevWeek"
+      />
+      <span class="text-[15px] font-semibold text-gray-900">{{ monthLabel }}</span>
+      <UButton
+        icon="i-lucide-chevron-right"
+        color="neutral"
+        variant="ghost"
+        size="sm"
+        square
+        @click="nextWeek"
+      />
     </div>
 
-    <div class="grid grid-cols-7 gap-1">
+    <div class="flex justify-center gap-20">
       <button
         v-for="(date, i) in weekDays"
         :key="date.toString()"
-        class="flex flex-col items-center gap-1.5 rounded-lg py-1"
+        class="flex flex-col items-center gap-1 py-1"
         @click="selectDay(date)"
       >
         <span class="text-[11px] font-medium uppercase text-gray-400">{{ weekdayNames[i] }}</span>
         <span
           class="flex h-7 w-7 items-center justify-center rounded-full text-sm font-medium"
-          :class="isSelected(date) ? 'bg-orange-100 text-orange-600' : 'text-gray-900'"
+          :class="isSelected(date) ? 'bg-rose-100 text-rose-600' : 'text-gray-900'"
         >
           {{ date.day }}
         </span>
-        <span class="h-1 w-1 rounded-full" :class="isToday(date) ? 'bg-primary-500' : 'bg-transparent'" />
+        <span class="h-1 w-1 rounded-full" :class="isToday(date) ? 'bg-rose-500' : 'bg-transparent'" />
       </button>
     </div>
   </div>
