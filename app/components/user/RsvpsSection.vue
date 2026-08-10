@@ -2,6 +2,16 @@
 import DetailSection from '~/components/user/DetailSection.vue';
 import type { UserData } from '~/types/user/user-data';
 
+/**
+ * Sign-up list on the admin member-detail page.
+ *
+ * Only `isVolunteer` is editable — the event and its times belong to the event,
+ * not the RSVP. Drafts are keyed by `eventId`, which is what identifies an RSVP
+ * for a given user (the API routes are `/api/rsvp/<userId>/<eventId>`).
+ *
+ * Account-holder RSVPs only; guest sign-ups aren't tied to a user and never
+ * appear here.
+ */
 export interface RsvpDraft {
   isVolunteer: boolean;
 }

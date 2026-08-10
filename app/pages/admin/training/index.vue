@@ -1,6 +1,18 @@
 <script setup lang="ts">
 import type { TrainingAttendee } from '~/components/event/TrainingApprovalList.vue'
 
+/**
+ * Training approval queue: past training events and the volunteers who
+ * attended, split into "needs review" and "completed".
+ *
+ * This is where PENDING volunteers become APPROVED — attending a training is
+ * the prerequisite, and staff confirm attendance here. Approving from this page
+ * is what unlocks volunteer-only events for that person.
+ *
+ * An event leaves the queue once no attendee is still PENDING, so denying
+ * everyone also counts as complete.
+ */
+
 interface TrainingEvent {
   id: string
   title: string

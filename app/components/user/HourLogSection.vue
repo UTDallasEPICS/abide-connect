@@ -2,6 +2,17 @@
 import DetailSection from '~/components/user/DetailSection.vue';
 import type { UserData } from '~/types/user/user-data';
 
+/**
+ * Hour-log list on the admin member-detail page, with inline editing.
+ *
+ * Drafts are keyed by log id rather than held as a list, so each row edits
+ * independently and the page can submit only the rows that actually changed.
+ *
+ * NOTE: `totalHours` sums every log regardless of approval status, so the
+ * heading here counts pending and rejected hours too. The `hours` figure in the
+ * member *list* (`server/api/admin/users.get.ts`) counts approved logs only, so
+ * the two numbers legitimately disagree for the same person.
+ */
 export interface HourLogDraft {
   hours: number;
   date: string;

@@ -5,6 +5,20 @@ import { signUpFields, signUpSchema } from '~/types/auth/sign-up.type'
 import { authProviders } from '~/types/auth/providers.type'
 import { errorMessage as toErrorMessage } from '~/lib/errorMessage'
 
+/**
+ * Step one of sign-up: collect details and send a verification code.
+ *
+ * No account is created here. The entered details are parked in
+ * `sessionStorage` under `pendingSignUp` and the user moves to
+ * /auth/sign-up-verify, which submits them together with the code — the account
+ * only exists once the email is proven.
+ *
+ * `sessionStorage` (not `localStorage`) so the half-finished sign-up dies with
+ * the tab rather than lingering on a shared device. The trade-off is that
+ * opening the emailed code in a *new* tab loses the pending details and bounces
+ * the user back here.
+ */
+
 const errorMessage = ref<string | null>(null)
 
 const isLoading = ref(false)

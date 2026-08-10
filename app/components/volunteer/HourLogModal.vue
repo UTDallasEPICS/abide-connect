@@ -1,4 +1,14 @@
 <script setup lang="ts">
+/**
+ * Lets a volunteer log their own hours, from their profile page.
+ *
+ * No status field: submissions are always created PENDING for staff to review
+ * (`/api/volunteer-logs`), and the log is attached to whatever volunteer owns
+ * the session — there's no user to choose.
+ *
+ * The admin counterpart, which logs hours on someone else's behalf and can set
+ * the status directly, is `components/modals/AddHourLogModal.vue`.
+ */
 const emit = defineEmits(['save', 'close'])
 
 const form = ref({

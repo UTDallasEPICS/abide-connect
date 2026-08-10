@@ -1,5 +1,13 @@
 import { requireRole } from '~~/server/utils/requireRole';
 
+/**
+ * Removes someone's sign-up on their behalf, from the admin member-detail page.
+ * Admin only.
+ *
+ * The staff counterpart to `events/[id]/rsvp.delete.ts`, which cancels the
+ * caller's own. Account-holder `RSVP` rows only — guest sign-ups are in
+ * `GuestRSVP` and cancelled through the event route instead.
+ */
 export default defineEventHandler(async (event) => {
   await requireRole(event, 'Admin');
 

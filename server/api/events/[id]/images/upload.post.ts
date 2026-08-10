@@ -3,6 +3,23 @@ import fs from 'fs'
 import prisma from '#server/utils/prisma'
 import { requireRole } from '#server/utils/requireRole'
 
+/**
+ * Attaches an image to an event. Staff only.
+ *
+ * The file goes to `$IMAGE_STORAGE_PATH/<eventId>/<filename>` and an
+ * `Event_Asset` row records it. Uploading a name that already exists is
+ * rejected rather than overwritten, since the client's filename is kept as-is
+ * (unlike donation images, which are renamed to a UUID) — so the name is the
+ * de-duplication key.
+ *
+ * Keeping the client's filename means it is worth validating: a name
+ * containing `..` would place the write outside the event's directory.
+ *
+ * NOTE: the stored `imageUrl` is `<eventId>/images/<filename>`, but the file is
+ * actually written to `<eventId>/<filename>` — the `images` segment exists only
+ * in the DB value. `[name].delete.ts` reproduces the same segment when looking
+ * the row up, so the two agree, but `imageUrl` is not a usable path on disk.
+ */
 export default defineEventHandler(async (event) => {
   // Uploading event images is staff-only.
   await requireRole(event, 'admin')

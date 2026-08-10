@@ -10,6 +10,19 @@ import {
 } from '~/types/auth/login.type'
 import { errorMessage as toErrorMessage } from '~/lib/errorMessage'
 
+/**
+ * Email-OTP login, as a two-step form on one route: request a code, then enter
+ * it. `step` drives which schema and fields render.
+ *
+ * Only for existing accounts — the OTP plugin runs with `disableSignUp: true`,
+ * so requesting a code for an unknown address fails rather than registering.
+ * New users go through /auth/sign-up.
+ *
+ * The 30s resend cooldown is client-side only — it keeps the button from being
+ * hammered, but `/api/auth/request-otp` has no throttle of its own, so it isn't
+ * enforcement.
+ */
+
 const isLoading = ref(false)
 const errorMessage = ref<string | null>(null)
 const step = ref<'request' | 'verify'>('request')

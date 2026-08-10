@@ -4,6 +4,20 @@ interface OtpEmail {
   html: string
 }
 
+/**
+ * Renders the one-time-passcode sign-in email, used by the `emailOTP` plugin's
+ * `sendVerificationOTP` hook in `auth.ts`.
+ *
+ * The markup is deliberately old-fashioned — nested `<table>` layout and inline
+ * styles — because that is what mail clients (Outlook especially) render
+ * reliably; external stylesheets and modern layout are widely stripped. The
+ * hidden `<div>` at the top of the body is the preheader: the grey text clients
+ * show next to the subject line in the inbox list.
+ *
+ * The `text` variant is not optional — clients that reject HTML fall back to
+ * it, and having one improves spam scoring. Keep the two in sync, including the
+ * expiry window, which must match `expiresIn` in the plugin config.
+ */
 export function buildOtpEmail(otp: string): OtpEmail {
   return {
     subject: 'Your Abide Connect code',
