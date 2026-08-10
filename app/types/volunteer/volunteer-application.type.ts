@@ -2,6 +2,19 @@ import * as z from 'zod'
 import { Gender, Availability, Ethinicity, Language, VolunteerArea, Certification } from '#server/utils/generated/prisma/enums'
 import type { InputMenuItem, AuthFormField } from '@nuxt/ui'
 
+/**
+ * Schema, step definitions and select options for the multi-step volunteer
+ * application form (`app/pages/volunteer-application/`).
+ *
+ * The enum members are imported from the generated Prisma client rather than
+ * redeclared, so the form's options and the database columns can't drift apart.
+ * `*Items` arrays below turn each enum into `@nuxt/ui` menu items, keyed by the
+ * raw enum value with a prettified label — the `id` must stay the raw value so
+ * submissions are valid enum members.
+ *
+ * NOTE: `ethinicity` is misspelled consistently, matching the Prisma column.
+ * Correcting it means a migration, not just a rename here.
+ */
 const volunteerApplicationSchema = z.object({
   languages: z.array(z.enum(Language), { message: "Please select at least one langauge." }),
 
@@ -65,6 +78,19 @@ const volunteerApplicationSchema = z.object({
 
 export type VolunterApplicationSchema = z.output<typeof volunteerApplicationSchema>
 
+/**
+ * Per-step slices of the full schema, so each step validates only its own
+ * fields and the user isn't shown errors for pages they haven't reached.
+ *
+ * Order matters — the form indexes into this array by step number:
+ *   0. About you (demographics, availability, areas, certifications)
+ *   1. Emergency contacts
+ *   2. Legal acknowledgements
+ *
+ * `.pick()` strips anything not listed, so a field rendered by a step but
+ * missing from its slice is silently dropped on submit rather than failing
+ * validation. Adding a field to a step means adding it here too.
+ */
 export const volunteerApplicationStepSchemas = [
 
   volunteerApplicationSchema.pick({
@@ -102,6 +128,7 @@ export const volunteerApplicationStepSchemas = [
 ] as const
 
 
+/** `HEALTH_AND_SAFETY` → `Health and Safety` — minor words stay lowercase. */
 function formatEnumLabel(value: string): string {
   const minorWords = new Set(['and', 'or', 'of', 'the', 'a', 'an', 'to', 'in', 'on'])
   return value

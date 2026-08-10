@@ -2,6 +2,15 @@
 import type { DateValue } from '@internationalized/date'
 import { getLocalTimeZone, today } from '@internationalized/date'
 
+/**
+ * The signed-in user's profile: their details, sign-ups, and hour logs.
+ *
+ * Guarded by `auth.global.ts` as `/volunteer` → role `user`, deliberately not
+ * `volunteer` — anyone signed in can open it, and those who haven't applied see
+ * a prompt to apply rather than being bounced. `useUserRoles().isVolunteer`
+ * below is what toggles the volunteer-only sections.
+ */
+
 const tz = getLocalTimeZone()
 
 // The session data bugs unuless we pass the cookie header to the fetch request

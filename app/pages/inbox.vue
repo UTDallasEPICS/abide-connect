@@ -4,6 +4,17 @@ definePageMeta({
   layout: 'secondary',
 })
 
+/**
+ * Notification inbox. Requires a session (`middleware: 'auth'`).
+ *
+ * The user id in the request path is decorative: `/api/notification/[id]`
+ * ignores its route parameter entirely and resolves the recipient from the
+ * session instead. It's passed because the route's shape demands a segment.
+ *
+ * The fetch is watch-driven rather than top-level `useFetch` because `userId`
+ * only becomes available once the session resolves.
+ */
+
 // type for API
 type Notification = {
   id: string

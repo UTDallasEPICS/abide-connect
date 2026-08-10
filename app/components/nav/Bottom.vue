@@ -1,4 +1,17 @@
 <script setup lang="ts">
+/**
+ * Fixed bottom tab bar, shown by the `default` layout.
+ *
+ * The last tab is role-dependent: admins land on the dashboard, everyone else
+ * on their volunteer profile. It's a computed rather than a static list because
+ * `useUserRoles` resolves asynchronously, so the destination fills in once
+ * roles arrive.
+ *
+ * NOTE: the buttons below carry `**flex-1**` / `**min-w-0**` in their class
+ * attribute. Those aren't valid Tailwind classes — the asterisks are leftover
+ * markdown emphasis, so neither rule applies and the tabs don't share width
+ * evenly. Should be plain `flex-1 min-w-0`.
+ */
 const { isAdmin } = useUserRoles()
 
 // Admins get the dashboard; everyone else gets their profile.

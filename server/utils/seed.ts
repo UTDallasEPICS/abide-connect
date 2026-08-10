@@ -11,6 +11,24 @@ import type {
 import { PrismaClient } from './generated/prisma/client.ts'
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
 
+/**
+ * Development seed data, run via `pnpm prisma db seed` (and automatically at
+ * the end of `pnpm prisma migrate reset`).
+ *
+ * Reads fixtures from `prisma/seed/*.json` so the sample content can be edited
+ * without touching this file. The `Raw*` types below describe those JSON
+ * shapes — they are not Prisma types, and the fields differ where the fixture
+ * format is more convenient (dates as strings, related records referenced by
+ * their fixture id).
+ *
+ * Every write is an `upsert` keyed on the fixture's own id, so re-running the
+ * seed is idempotent and won't duplicate rows or overwrite local edits.
+ *
+ * This deliberately builds its own PrismaClient rather than importing the
+ * singleton from `./prisma`: the seed runs as a standalone script outside
+ * Nitro, where the dev-only `globalThis` caching in that module is pointless.
+ */
+
 const adapter = new PrismaBetterSqlite3({
   url: process.env.DATABASE_URL,
 })
@@ -31,6 +49,14 @@ type RawEvent = {
   allowVolunteers: boolean
   allowAttendees: boolean
   eventAssets: string[]
+  // Optional volunteer shifts. Blocks are hand-drawn by staff, so they may
+  // overlap each other and vary in length.
+  timeSlots?: {
+    startTime: string
+    endTime: string
+    capacity: number
+    note?: string
+  }[]
 }
 
 type RawUser = {
@@ -99,6 +125,16 @@ async function upsertUserRole(userId: string, role: UserRole) {
   })
 }
 
+/**
+ * Seeds every fixture set in dependency order, which is why this is one long
+ * sequential function rather than parallel per-entity passes:
+ *
+ *   events → users (RSVP to events) → volunteers (link to users, log hours
+ *   against events) → clinic schedule → notifications (fan out to all users)
+ *
+ * Reordering these will break the `connect` calls that assume earlier rows
+ * already exist.
+ */
 async function main() {
   // Seed 5 events (3 future, 2 past) + images
   console.log('Seeding events...')
@@ -130,6 +166,14 @@ async function main() {
         },
         eventAssets: {
           create: event.eventAssets.map((imageUrl) => ({ imageUrl })),
+        },
+        timeSlots: {
+          create: (event.timeSlots ?? []).map(slot => ({
+            startTime: new Date(slot.startTime),
+            endTime: new Date(slot.endTime),
+            capacity: slot.capacity,
+            note: slot.note ?? null,
+          })),
         },
       },
     })
@@ -184,6 +228,9 @@ async function main() {
         select: { id: true },
       })
       if (!linkedUserExists) {
+        // NOTE: despite the wording, the link is not actually skipped — the
+        // `connect` below still runs and will fail the seed on a dangling id.
+        // The warning just surfaces which fixture is at fault first.
         console.warn(
           `Volunteer ${volunteer.id}: no user found for id "${volunteer.userId}", skipping user link.`,
         )

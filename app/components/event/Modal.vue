@@ -1,11 +1,31 @@
 <script setup lang="ts">
 import { useColorMode } from '#imports'
 import type { EventType } from '#shared/utils/eventType'
+import { fromDateTimeLocal, validateTimeSlots } from '#shared/utils/timeSlot'
 
 const colorMode = useColorMode()
 const isDark = computed(() => colorMode.value === 'dark')
 
+/**
+ * Create-event dialog. Unlike `Editor.vue` (which delegates writes to its
+ * parent) this owns the whole flow itself.
+ *
+ * Creation is two sequential requests, because images can only be attached
+ * once the event has an id: POST the event, then upload each file against the
+ * returned id. A failure partway leaves the event created with some or none of
+ * its images — there's no rollback.
+ *
+ * `emptyEvent()` is a factory rather than a shared constant so resetting the
+ * form after a save can't hand back an object the previous submission mutated.
+ */
 const emit = defineEmits(['save', 'close'])
+
+interface TimeSlotRow {
+  id: string | null
+  startTime: string
+  endTime: string
+  capacity: number
+}
 
 const emptyEvent = () => ({
   title: '',
@@ -17,9 +37,17 @@ const emptyEvent = () => ({
   eventType: 'VOLUNTEERS_AND_ATTENDEES' as EventType,
   mobileClinicId: null,
   eventAssets: [],
+  timeSlots: [] as TimeSlotRow[],
 })
 
 const newEvent = ref(emptyEvent())
+
+// Blocks are volunteer shifts, so they only make sense where volunteers can
+// sign up. An attendees-only or training event gets no editor and sends none.
+const acceptsTimeBlocks = computed(() =>
+  newEvent.value.eventType === 'VOLUNTEERS'
+  || newEvent.value.eventType === 'VOLUNTEERS_AND_ATTENDEES',
+)
 
 const isSaving = ref(false)
 
@@ -42,6 +70,28 @@ async function saveEvent() {
     return
   }
 
+  const timeSlots = acceptsTimeBlocks.value ? newEvent.value.timeSlots : []
+
+  // The same rules the server enforces, run here only so the admin gets a
+  // specific message instead of a round-trip. The server re-checks regardless.
+  const slotProblems = validateTimeSlots(
+    timeSlots.map(slot => ({
+      id: slot.id,
+      startTime: fromDateTimeLocal(slot.startTime),
+      endTime: fromDateTimeLocal(slot.endTime),
+      capacity: Number(slot.capacity),
+    })),
+    {
+      startTime: fromDateTimeLocal(newEvent.value.startTime),
+      endTime: fromDateTimeLocal(newEvent.value.endTime),
+    },
+  )
+
+  if (slotProblems.length > 0) {
+    alert(slotProblems.join('\n'))
+    return
+  }
+
   isSaving.value = true
 
   try {
@@ -57,6 +107,12 @@ async function saveEvent() {
         endTime: new Date(newEvent.value.endTime).toISOString(),
         eventType: newEvent.value.eventType,
         mobileClinicId: newEvent.value.mobileClinicId,
+        // Created in the same transaction as the event itself.
+        timeSlots: timeSlots.map(slot => ({
+          startTime: fromDateTimeLocal(slot.startTime).toISOString(),
+          endTime: fromDateTimeLocal(slot.endTime).toISOString(),
+          capacity: Number(slot.capacity),
+        })),
       },
     })
 
@@ -190,7 +246,17 @@ function cancel() {
         :color="isDark ? 'brand5' : 'primary'"
       />
 
-      <div>
+      <EventTimeSlotEditor
+        v-if="acceptsTimeBlocks"
+        v-model="newEvent.timeSlots"
+        :event-start="newEvent.startTime"
+        :event-end="newEvent.endTime"
+        :color="isDark ? 'brand5' : 'primary'"
+        seed-when-empty
+        class="mt-4"
+      />
+
+      <div class="mt-4">
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Event Images</label>
         <EventImageUpload
           @files-changed="onFilesChanged"

@@ -33,22 +33,88 @@ const error = ref(false)
 const { data: upcomingEvents, error: fetchError, status } = useLazyFetch<UpcomingEvent[]>('/api/events/upcoming', {
   query: { limit: 9 },
   default: () => [],
-  server: false,
 })
 
-// status goes 'idle' -> 'pending' -> 'success' | 'error'
-watch(status, (newStatus) => {
-  if (newStatus === 'success' || newStatus === 'error') {
-    pending.value = false
-    error.value = newStatus === 'error'
-    if (newStatus === 'error') {
-      console.error('Failed to load events:', fetchError.value)
-    }
-  }
+// `/api/events` already hides volunteer-only and training events from anyone
+// who shouldn't see them, so whatever arrives here is safe to display.
+
+const slides = ref([
+  { id: 1, src: '/images/image1.jpeg', alt: 'Slide 1' },
+  { id: 2, src: '/images/image1.jpeg', alt: 'Slide 2' },
+  { id: 3, src: '/images/image1.jpeg', alt: 'Slide 3' },
+  { id: 4, src: '/images/image1.jpeg', alt: 'Slide 4' },
+])
+
+const handleSignUp = () => {
+  navigateTo('/auth/sign-up')
+}
+
+const services = ref([
+  {
+    id: 1,
+    name: 'Prenatal Care',
+    image: '/images/image1.jpeg',
+    href: 'https://www.abidewomen.org/prenatalcare',
+  },
+  {
+    id: 2,
+    name: 'Postpatrum Care',
+    image: '/images/image1.jpeg',
+    href: 'https://www.abidewomen.org/postpartumcare',
+  },
+  {
+    id: 3,
+    name: 'Childbirth Education',
+    image: '/images/image1.jpeg',
+    href: 'https://www.abidewomen.org/childbirthed',
+  },
+  {
+    id: 4,
+    name: 'Mobile Clinic',
+    image: '/images/image1.jpeg',
+    href: 'https://www.abidewomen.org/mobile-clinic',
+  },
+])
+
+const imageAPI = (url: string | undefined) => {
+  return url ? `/api/events/${url}` : undefined
+}
+
+const toTile = (e: Event) => ({
+  id: e.id,
+  title: e.title,
+  date: new Date(e.startTime).toLocaleDateString('en-US', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric',
+  }),
+  location: e.location,
+  image: imageAPI(e.eventAssets?.[0]?.imageUrl) ?? '/images/image1.jpeg',
 })
 
-const headers = useRequestHeaders(['cookie']);
-const { data: user } = await useFetch('/api/user/me', { headers })
+const upcoming = computed(() =>
+  (eventsData.value || [])
+    .filter(e => new Date(e.startTime).getTime() >= Date.now())
+    .sort(
+      (a, b) =>
+        new Date(a.startTime).getTime()
+          - new Date(b.startTime).getTime(),
+    ),
+)
+
+// Regular events exclude the training class.
+const events = computed(() =>
+  upcoming.value.filter(e => !e.isTraining).slice(0, 6).map(toTile),
+)
+
+// Training events, only surfaced to pending volunteers.
+const trainingEvents = computed(() =>
+  upcoming.value.filter(e => e.isTraining).map(toTile),
+)
+
+const handleEventClick = (event: Event) => {
+  navigateTo(`/events/${event.id}`)
+}
 </script>
 <template>
   <div class="mt-20 min-h-screen pb-50">

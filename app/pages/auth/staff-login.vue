@@ -1,6 +1,20 @@
 <script setup lang="ts">
 import { authClient } from '#server/utils/auth-client'
 
+/**
+ * Staff sign-in. Not really a page — `onMounted` fires the Google OAuth
+ * redirect immediately, so it only renders while bouncing, or to show an error
+ * if the handoff fails.
+ *
+ * Separate from /auth/login because staff need the Google flow specifically:
+ * calendar sync writes to the shared Abide calendar using the acting user's
+ * Google token, which an email-OTP session doesn't have.
+ *
+ * `disableRedirect: true` asks better-auth for the target URL rather than
+ * navigating itself, so a failure surfaces as `error` here instead of a blank
+ * redirect. `isLoading` starts true because the redirect begins on mount.
+ */
+
 const isLoading = ref(true)
 const errorMessage = ref<string | null>(null)
 
