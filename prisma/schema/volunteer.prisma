@@ -1,7 +1,23 @@
+/// A volunteering profile. NOT the authenticated principal — see `User`.
+///
+/// `userId` is optional (and unique) so a profile can exist for someone with no
+/// account, e.g. seeded historical volunteers. Always look one up by
+/// `{ where: { userId } }`; passing a `User.id` as `Volunteer.id` silently
+/// matches nothing.
+///
+/// `approvalStatus` is the gate on volunteer-only events, and is separate from
+/// holding the VOLUNTEER role: applying grants the role and creates this row as
+/// PENDING, and only staff approval (after a training event) moves it to
+/// APPROVED. REJECTED is not a ban — rejected volunteers can still attend
+/// another training and be reconsidered.
+///
+/// Relations are deliberately not cascading, so deleting a volunteer means
+/// clearing the join tables and hour logs first (see `user/me.delete.ts`).
 model Volunteer {
   id     String  @id @default(uuid())
   user   User?   @relation(fields: [userId], references: [id])
   userId String? @unique
+  isActive       Boolean @default(true)
 
   approvalStatus ApprovalStatus @default(PENDING)
 
@@ -13,6 +29,7 @@ model Volunteer {
   certifications Volunteer_Certification[]
   hourLogs       Volunteer_Hour_Log[]
   events         RSVP[]
+  slotSignups    Event_Time_Slot_Signup[]
 
   otherVolunteerAreaDescription String?
   otherCertificationDescription String?
@@ -34,12 +51,23 @@ model Volunteer_Language {
   @@map("volunteer_languages")
 }
 
+/// Hours logged by (or on behalf of) a volunteer, pending staff approval.
+///
+/// `eventId` and `eventName` are alternatives, and both are nullable: a log
+/// either points at a real `Event` or carries a free-text description of ad-hoc
+/// work. Code that reads the event title must fall back —
+/// `log.event?.title ?? log.eventName` — since assuming an event is present is
+/// a live crash in `/api/volunteer/logs`.
+///
+/// Only APPROVED logs count toward the hour totals shown in the admin member
+/// list; some UI sums all statuses, so figures can legitimately differ.
 model Volunteer_Hour_Log {
   id             Int            @id @default(autoincrement())
   volunteer      Volunteer      @relation(fields: [volunteerId], references: [id])
   volunteerId    String
-  event          Event          @relation(fields: [eventId], references: [id])
-  eventId        String
+  event          Event?          @relation(fields: [eventId], references: [id])
+  eventId        String?
+  eventName      String?
   date           DateTime
   hours          Float
   approvalStatus ApprovalStatus @default(PENDING)
@@ -92,6 +120,10 @@ enum Availability {
   WEEKEND_AFTERNOON
 }
 
+/// NOTE: misspelled ("Ethinicity"). The typo is mirrored deliberately
+/// throughout the app — Prisma column, API payloads, and form fields — so it
+/// stays consistent. Correcting it requires a migration plus a rename across
+/// every layer, not a local fix.
 enum Ethinicity {
   WHITE
   BLACK_OR_AFRICAN_AMERICAN
@@ -102,6 +134,9 @@ enum Ethinicity {
   HISPANIC
 }
 
+/// Shared by `Volunteer.approvalStatus` (cleared to volunteer?) and
+/// `Volunteer_Hour_Log.approvalStatus` (are these hours counted?). Both default
+/// to PENDING, so nothing is approved implicitly.
 enum ApprovalStatus {
   PENDING
   APPROVED

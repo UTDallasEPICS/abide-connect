@@ -1,5 +1,16 @@
 import prisma from '#server/utils/prisma'
 
+/**
+ * The signed-in user's notifications, newest first, each flagged read/unread.
+ * Backs the notification dropdown in `NavTop`.
+ *
+ * The `[id]` route parameter is never read; the notification set comes entirely
+ * from the session. The file is named that way by accident and the route only
+ * works because callers pass some placeholder segment.
+ *
+ * NOTE: the `catch` swallows errors and returns `undefined` rather than the
+ * usual `{ success, notifications }`, so callers must tolerate that shape.
+ */
 export default eventHandler(async (event) => {
   try {
     const session = await auth.api.getSession({ headers: event.headers })
@@ -9,27 +20,22 @@ export default eventHandler(async (event) => {
         statusMessage: 'Unauthorized',
       })
     }
-    const volunteerId = session.user.id
-    const user = await prisma.volunteer.findUnique({
-      where: {
-        id: volunteerId,
-      },
-      select: {
-        userId: true,
-      },
-    })
+    // `User_Notification` is keyed on `userId`, and `session.user.id` *is* a
+    // `User.id` — no round-trip through `Volunteer` (which keys off a
+    // different id space) is needed or correct here.
+    const userId = session.user.id
     const notifications = await prisma.notification.findMany({
       where: {
         users: {
           some: {
-            userId: user?.userId ?? 'default',
+            userId,
           },
         },
       },
       include: {
         users: {
           where: {
-            userId: user?.userId ?? 'default',
+            userId,
           },
           select: {
             isRead: true,
@@ -40,7 +46,6 @@ export default eventHandler(async (event) => {
         createdAt: 'desc',
       },
     })
-    console.log(notifications)
 
     // format the response
     const formattedNotifications = notifications.map(notification => ({

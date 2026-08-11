@@ -1,3 +1,10 @@
+/// A broadcast message. The message body is stored once here and fanned out to
+/// recipients through `User_Notification`, which carries the per-user read
+/// state.
+///
+/// Unrelated to Web Push: this is the in-app inbox. `PushSubscription` below is
+/// the device-delivery side, and the two are not wired together — creating a
+/// Notification does not send a push.
 model Notification {
   id        String              @id @default(uuid())
   title     String
@@ -6,4 +13,86 @@ model Notification {
   createdAt DateTime            @default(now())
 
   @@map("notifications")
+}
+
+/// Which kinds of event notification a user wants pushed to their devices.
+enum PushScope {
+  GENERAL
+  VOLUNTEER
+  BOTH
+}
+
+/// One Web Push subscription, i.e. one browser/installed-PWA on one device.
+/// A user can have several (phone + desktop), so pushes fan out across rows.
+/// `endpoint` is the push service URL and is globally unique, which lets an
+/// existing subscription be upserted when a device re-subscribes.
+model PushSubscription {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
+/// Which reminder in the schedule a row represents.
+enum ReminderKind {
+  DAY_BEFORE
+  HOUR_BEFORE
+}
+
+/// How a reminder was delivered. Only DAY_BEFORE is ever sent over EMAIL.
+enum ReminderChannel {
+  PUSH
+  EMAIL
+}
+
+/// One "we have reminded this person about this event" marker, written by the
+/// `eventReminders` cron job (see `server/utils/eventReminders.ts`).
+///
+/// The composite key is the whole point: it's what stops a second cron tick
+/// inside the same due window from reminding someone twice. Rows are claimed
+/// *before* the send, so a crash mid-run drops a reminder rather than
+/// duplicating one — the cheaper failure of the two.
+///
+/// Rows cascade away with the event, so re-running against a deleted-and-
+/// recreated event starts clean.
+model Event_Reminder {
+  event    Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId  String
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  kind     ReminderKind
+  channel  ReminderChannel
+  sentAt   DateTime        @default(now())
+
+  @@id([eventId, userId, kind, channel])
+  @@index([userId])
+  @@map("event_reminders")
+}
+
+/// The `GuestRSVP` counterpart to `Event_Reminder`.
+///
+/// Separate model rather than nullable columns on that one: a guest has no
+/// `User` row to key against, and the dedup guarantee depends on the primary
+/// key being fully non-null. Keyed on the sign-up rather than on
+/// (event, email), so cancelling and re-signing-up gets a fresh reminder.
+///
+/// Only ever holds DAY_BEFORE/EMAIL rows today — guests have no device
+/// registered for push — but carries the same columns so the two tables stay
+/// readable side by side.
+model Guest_Event_Reminder {
+  guestRsvp   GuestRSVP       @relation(fields: [guestRsvpId], references: [id], onDelete: Cascade)
+  guestRsvpId String
+  kind        ReminderKind
+  channel     ReminderChannel
+  sentAt      DateTime        @default(now())
+
+  @@id([guestRsvpId, kind, channel])
+  @@map("guest_event_reminders")
 }

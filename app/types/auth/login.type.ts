@@ -1,6 +1,11 @@
 import * as z from 'zod'
 import type { AuthFormField } from '@nuxt/ui'
 
+/**
+ * Validation and field definitions for the two-step email-OTP login form:
+ * request a code, then verify it. The page swaps schemas between steps.
+ */
+
 export const requestOtpSchema = z.object({
   email: z.email('Invalid email address'),
 })

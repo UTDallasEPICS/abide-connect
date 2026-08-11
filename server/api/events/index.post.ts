@@ -2,8 +2,23 @@ import prisma from '#server/utils/prisma'
 import { createCalendarEvent } from '#server/utils/googleCalendar'
 import { requireRole } from '#server/utils/requireRole'
 import { eventTypeFromFlags, eventTypeToFlags, isEventType } from '#shared/utils/eventType'
+import {
+  assertEventAcceptsTimeSlots,
+  assertTimeSlotsValid,
+  parseTimeSlotPayload,
+} from '#server/utils/timeSlots'
 
-// Geocode location using Nominatim
+/**
+ * Resolves a free-text address to coordinates via OpenStreetMap's Nominatim.
+ *
+ * Only ever called on a cache miss — `Location` rows are keyed by address and
+ * reused — because Nominatim's usage policy caps unauthenticated callers at
+ * roughly one request per second and requires the identifying `User-Agent`
+ * sent below.
+ *
+ * Returns null instead of throwing on any failure; the caller decides whether a
+ * missing geocode is fatal.
+ */
 async function geocodeLocation(location: string) {
   try {
     const response = await fetch(
@@ -41,6 +56,17 @@ async function geocodeLocation(location: string) {
   }
 }
 
+/**
+ * Creates an event and mirrors it to the shared Google Calendar. Staff only.
+ *
+ * The calendar sync is a second step rather than part of the create, because
+ * the Google event id only exists once Google has accepted the write — so a
+ * successful sync means an extra `update` to store `calendarEventId` /
+ * `calendarURL`. Sync is best-effort throughout: a volunteer who signed in with
+ * email OTP has no Google token, and the event is still created without a
+ * calendar entry (leaving `calendarEventId` null, which later edits and deletes
+ * handle by skipping their own sync).
+ */
 export default defineEventHandler(async (event) => {
   // Creating events is staff-only.
   await requireRole(event, 'admin')
@@ -91,6 +117,24 @@ export default defineEventHandler(async (event) => {
     isEventType(body.eventType) ? body.eventType : eventTypeFromFlags(body),
   )
 
+  const startTime = new Date(body.startTime)
+  const endTime = new Date(body.endTime)
+
+  // Time blocks are optional: an event created without them behaves exactly as
+  // it did before this feature existed.
+  //
+  // Validated out here rather than inside the try below, because that catch
+  // turns every error into a generic 500 — an admin needs to be told which
+  // block is wrong, not just that something broke.
+  const timeSlots = Array.isArray(body.timeSlots)
+    ? parseTimeSlotPayload(body.timeSlots)
+    : []
+
+  if (timeSlots.length > 0) {
+    assertEventAcceptsTimeSlots(audience)
+    assertTimeSlotsValid(timeSlots, { startTime, endTime })
+  }
+
   try {
     // Create the event in the database
     const newEvent = await prisma.event.create({
@@ -106,12 +150,23 @@ export default defineEventHandler(async (event) => {
             create: locationData,
           },
         },
-        startTime: new Date(body.startTime),
-        endTime: new Date(body.endTime),
+        startTime,
+        endTime,
         ...audience,
+        // A nested create runs in the same implicit transaction as the event
+        // insert, so the event and its blocks land together or not at all.
+        timeSlots: {
+          create: timeSlots.map(slot => ({
+            startTime: slot.startTime,
+            endTime: slot.endTime,
+            capacity: slot.capacity,
+            note: slot.note,
+          })),
+        },
       },
       include: {
         eventAssets: true,
+        timeSlots: { orderBy: { startTime: 'asc' } },
       },
     })
 
@@ -136,7 +191,10 @@ export default defineEventHandler(async (event) => {
             calendarEventId: calendarRef.id,
             calendarURL: calendarRef.htmlLink,
           },
-          include: { eventAssets: true },
+          include: {
+            eventAssets: true,
+            timeSlots: { orderBy: { startTime: 'asc' } },
+          },
         })
         setResponseStatus(event, 201)
         return synced

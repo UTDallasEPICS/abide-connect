@@ -1,10 +1,29 @@
 <script setup lang="ts">
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { verifyOtpFields, verifyOtpSchema, type VerifyOtpSchema } from '~/types/auth/login.type'
+import { errorMessage as toErrorMessage } from '~/lib/errorMessage'
+import { safeRedirect } from '~/lib/safeRedirect'
+
+/**
+ * Step two of sign-up: verify the emailed code and create the account.
+ *
+ * Reads the details /auth/sign-up parked in `sessionStorage` and posts them
+ * with the code to `/api/auth/sign-up-verify`, which creates the user and
+ * returns a live session. Landing here without those details (direct link, new
+ * tab, reopened browser) means there's nothing to submit, so `onMounted`
+ * redirects back to the start of the flow.
+ *
+ * `pendingSignUpRedirect` is stored under its own key rather than inside
+ * `pendingSignUp`, because that object is spread wholesale into the request
+ * body — a `redirect` field living in it would be posted to the API. It sends
+ * the new account back to whatever they were trying to do (attend an event,
+ * say) instead of the volunteer dashboard.
+ */
 
 const errorMessage = ref<string | null>(null)
 const isLoading = ref(false)
 const pendingSignUp = ref<Record<string, unknown> | null>(null)
+const redirectTo = ref('/volunteer/')
 
 const resendCooldown = ref(0)
 const isResending = ref(false)
@@ -31,6 +50,7 @@ onMounted(() => {
     return
   }
   pendingSignUp.value = JSON.parse(stored)
+  redirectTo.value = safeRedirect(sessionStorage.getItem('pendingSignUpRedirect'), '/volunteer/')
   startCooldown()
 })
 
@@ -39,7 +59,7 @@ onUnmounted(() => {
 })
 
 async function resendOtp() {
-  if (!pendingSignUp.value?.email || resendCooldown.value > 0) return
+  if (!pendingSignUp.value?.email || resendCooldown.value > 0 || isResending.value) return
   isResending.value = true
   resendError.value = null
   try {
@@ -49,14 +69,14 @@ async function resendOtp() {
     })
     startCooldown()
   } catch (err: unknown) {
-    resendError.value = (err as { message: string }).message
+    resendError.value = toErrorMessage(err)
   } finally {
     isResending.value = false
   }
 }
 
 async function onVerify(event: FormSubmitEvent<VerifyOtpSchema>) {
-  if (!pendingSignUp.value) return
+  if (!pendingSignUp.value || isLoading.value) return
   isLoading.value = true
   errorMessage.value = null
 
@@ -69,12 +89,13 @@ async function onVerify(event: FormSubmitEvent<VerifyOtpSchema>) {
       },
     })
     sessionStorage.removeItem('pendingSignUp')
+    sessionStorage.removeItem('pendingSignUpRedirect')
     await nextTick()
-    await navigateTo('/volunteer/')
+    await navigateTo(redirectTo.value)
   }
   catch (error: unknown) {
     console.log(error)
-    errorMessage.value = (error as { message: string }).message
+    errorMessage.value = toErrorMessage(error)
   }
   finally {
     isLoading.value = false
@@ -90,7 +111,7 @@ async function onVerify(event: FormSubmitEvent<VerifyOtpSchema>) {
       :fields="verifyOtpFields"
       title="Check your email"
       icon="i-lucide-shield-check"
-      :submit="{ label: 'Verify & create account', block: true, color: 'neutral' }"
+      :submit="{ label: 'Verify & create account', block: true, color: 'neutral', loading: isLoading, disabled: isLoading }"
       @submit="onVerify"
     >
       <template #description>

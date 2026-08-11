@@ -1,7 +1,22 @@
 import prisma from '#server/utils/prisma'
 import { deleteCalendarEvent } from '#server/utils/googleCalendar'
+import { requireRole } from '#server/utils/requireRole'
 
+/**
+ * Deletes an event and its dependent rows, and removes the shared Google
+ * Calendar entry. Admin only, matching its `index.post.ts` and
+ * `index.patch.ts` siblings.
+ *
+ * The `requireRole` call does double duty: besides gating the route, it is what
+ * populates `event.context.session` (the global middleware is a no-op), and the
+ * calendar cleanup below needs a user id to mint a Google token from. Without
+ * it that `userId` is always undefined and the entry lingers on the shared
+ * calendar after the event disappears from the app — so the session is taken
+ * from `requireRole`'s return value rather than read back off the context.
+ */
 export default defineEventHandler(async (event) => {
+  const session = await requireRole(event, 'admin')
+
   const id = getRouterParam(event, 'id')
 
   if (!id) {
@@ -20,7 +35,7 @@ export default defineEventHandler(async (event) => {
   // the requesting volunteer's OAuth session. A failure here never blocks the
   // database deletion below.
   if (foundEvent.calendarEventId) {
-    const userId = event.context.session?.user?.id
+    const userId = session.user?.id
     if (userId) {
       await deleteCalendarEvent(userId, foundEvent.calendarEventId)
     }

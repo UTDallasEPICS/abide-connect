@@ -5,9 +5,29 @@ import type {
   Availability,
   Ethinicity,
   ApprovalStatus,
+  Certification,
+  UserRole,
 } from './generated/prisma/client.ts'
 import { PrismaClient } from './generated/prisma/client.ts'
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
+
+/**
+ * Development seed data, run via `pnpm prisma db seed` (and automatically at
+ * the end of `pnpm prisma migrate reset`).
+ *
+ * Reads fixtures from `prisma/seed/*.json` so the sample content can be edited
+ * without touching this file. The `Raw*` types below describe those JSON
+ * shapes — they are not Prisma types, and the fields differ where the fixture
+ * format is more convenient (dates as strings, related records referenced by
+ * their fixture id).
+ *
+ * Every write is an `upsert` keyed on the fixture's own id, so re-running the
+ * seed is idempotent and won't duplicate rows or overwrite local edits.
+ *
+ * This deliberately builds its own PrismaClient rather than importing the
+ * singleton from `./prisma`: the seed runs as a standalone script outside
+ * Nitro, where the dev-only `globalThis` caching in that module is pointless.
+ */
 
 const adapter = new PrismaBetterSqlite3({
   url: process.env.DATABASE_URL,
@@ -29,6 +49,14 @@ type RawEvent = {
   allowVolunteers: boolean
   allowAttendees: boolean
   eventAssets: string[]
+  // Optional volunteer shifts. Blocks are hand-drawn by staff, so they may
+  // overlap each other and vary in length.
+  timeSlots?: {
+    startTime: string
+    endTime: string
+    capacity: number
+    note?: string
+  }[]
 }
 
 type RawUser = {
@@ -37,6 +65,10 @@ type RawUser = {
   email: string
   phone: string
   imageURL?: string
+  // Optional explicit roles for this user. Defaults to ['USER'] when omitted.
+  // Volunteers get 'VOLUNTEER' added automatically when their volunteer
+  // profile is seeded, so it doesn't need to be listed here.
+  roles?: string[]
   RSVPs: {
     isVolunteer?: boolean
     id: string // eventId
@@ -83,6 +115,26 @@ type RawNotification = {
   content: string
 }
 
+// Ensures a User_Role row exists (active) for the given user/role, without
+// clobbering an existing row on re-run.
+async function upsertUserRole(userId: string, role: UserRole) {
+  await prisma.user_Role.upsert({
+    where: { userId_role: { userId, role } },
+    update: { active: true },
+    create: { userId, role, active: true },
+  })
+}
+
+/**
+ * Seeds every fixture set in dependency order, which is why this is one long
+ * sequential function rather than parallel per-entity passes:
+ *
+ *   events → users (RSVP to events) → volunteers (link to users, log hours
+ *   against events) → clinic schedule → notifications (fan out to all users)
+ *
+ * Reordering these will break the `connect` calls that assume earlier rows
+ * already exist.
+ */
 async function main() {
   // Seed 5 events (3 future, 2 past) + images
   console.log('Seeding events...')
@@ -115,6 +167,14 @@ async function main() {
         eventAssets: {
           create: event.eventAssets.map((imageUrl) => ({ imageUrl })),
         },
+        timeSlots: {
+          create: (event.timeSlots ?? []).map(slot => ({
+            startTime: new Date(slot.startTime),
+            endTime: new Date(slot.endTime),
+            capacity: slot.capacity,
+            note: slot.note ?? null,
+          })),
+        },
       },
     })
     console.log(eventResult)
@@ -144,6 +204,16 @@ async function main() {
       },
     })
     console.log(userResult)
+
+    // Every user gets a USER role by default. Additional roles (e.g. ADMIN)
+    // can be declared per-user in users.json via the optional `roles` field.
+    const roles = new Set<UserRole>(['USER' as UserRole])
+    for (const role of user.roles ?? []) {
+      roles.add(role as UserRole)
+    }
+    for (const role of roles) {
+      await upsertUserRole(userResult.id, role)
+    }
   }
 
   // Seed volunteers
@@ -158,6 +228,9 @@ async function main() {
         select: { id: true },
       })
       if (!linkedUserExists) {
+        // NOTE: despite the wording, the link is not actually skipped — the
+        // `connect` below still runs and will fail the seed on a dangling id.
+        // The warning just surfaces which fixture is at fault first.
         console.warn(
           `Volunteer ${volunteer.id}: no user found for id "${volunteer.userId}", skipping user link.`,
         )
@@ -190,7 +263,7 @@ async function main() {
           : undefined,
         certifications: {
           create: volunteer.certifications.map((cert) => ({
-            certification: cert,
+            certification: cert as Certification,
           })),
         },
         hourLogs: {
@@ -206,10 +279,14 @@ async function main() {
     })
     console.log(volunteerResult)
 
-    // Backfill RSVP.volunteerId wherever this user already has isVolunteer=true.
-    // RSVP.isVolunteer is set at user-seed time; volunteerId can only be wired up
-    // now that the Volunteer row exists.
+    // Every seeded volunteer profile implies a VOLUNTEER role on the linked
+    // user account (in addition to their default USER role).
     if (volunteer.userId) {
+      await upsertUserRole(volunteer.userId, 'VOLUNTEER' as UserRole)
+
+      // Backfill RSVP.volunteerId wherever this user already has isVolunteer=true.
+      // RSVP.isVolunteer is set at user-seed time; volunteerId can only be wired up
+      // now that the Volunteer row exists.
       const linked = await prisma.rSVP.updateMany({
         where: { userId: volunteer.userId, isVolunteer: true },
         data: { volunteerId: volunteerResult.id },

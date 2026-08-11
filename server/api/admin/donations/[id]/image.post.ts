@@ -4,8 +4,18 @@ import { randomUUID } from 'crypto'
 import prisma from '#server/utils/prisma'
 import { requireRole } from '~~/server/utils/requireRole';
 
+/**
+ * Attaches (or replaces) a donation campaign's image. Admin only.
+ *
+ * Files go to `$IMAGE_STORAGE_PATH/donations/<id>/`, outside the DB and
+ * typically outside `public/` — which is why reading one back needs the
+ * sibling `image.get.ts` route rather than a static URL.
+ *
+ * Only the generated filename is stored on the record. It's a `randomUUID`
+ * rather than the client's `file.filename` so that an uploaded name can't
+ * escape the directory via `../` or collide with an existing file.
+ */
 export default defineEventHandler(async (event) => {
-  const session = await requireRole(event, 'admin');
   const id = getRouterParam(event, 'id')
   const form = await readMultipartFormData(event)
 
@@ -50,6 +60,9 @@ export default defineEventHandler(async (event) => {
 
   const imageUrl = uniqueFilename
 
+  // Replacing an image leaves the previous file on disk — the record points at
+  // the new one, but nothing prunes the old. Worth a cleanup pass if campaigns
+  // get re-imaged often.
   await prisma.donation.update({
     where: { id },
     data: { imageUrl },

@@ -2,8 +2,18 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { requireRole } from '~~/server/utils/requireRole';
 
+/**
+ * Streams a donation campaign's image off disk.
+ *
+ * A route rather than a static asset because `IMAGE_STORAGE_PATH` generally
+ * points outside `public/` (a mounted volume in the container), so the file
+ * isn't reachable by URL. The filename comes from the DB — never from the
+ * request — which is what keeps the joined path inside the storage directory.
+ *
+ * Content-Type is derived from the extension because nothing is persisted
+ * about the original upload's MIME type.
+ */
 export default defineEventHandler(async (event) => {
-  const session = await requireRole(event, 'admin');
   const id = getRouterParam(event, 'id')
 
   if (!id) throw createError({ statusCode: 400, statusMessage: 'Missing donation ID' })

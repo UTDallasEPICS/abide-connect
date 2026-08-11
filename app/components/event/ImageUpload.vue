@@ -6,10 +6,18 @@
  * - Handles multiple image selection with drag & drop
  * - Shows existing server images alongside new uploads
  * - Supports deleting existing images from the server
+ *
+ * The two halves behave differently and it matters: newly selected files are
+ * only emitted to the parent (which uploads them on save), whereas deleting an
+ * existing image calls the API immediately and cannot be undone by cancelling
+ * the form.
  */
 
 interface ServerAsset {
-  imageUrl: string // just the fileName as stored in DB
+  // As stored on Event_Asset: `<eventId>/images/<fileName>`, not a bare
+  // filename. That prefix is what makes `getAssetUrl` below produce a valid
+  // `/api/events/<eventId>/images/<fileName>` route.
+  imageUrl: string
 }
 
 const props = defineProps<{
