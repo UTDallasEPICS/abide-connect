@@ -113,6 +113,7 @@ export default defineNuxtConfig({
     workbox: {
       navigateFallback: '/',
       globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
+      maximumFileSizeToCacheInBytes: 4194304,
       // push-sw.js is imported into the service worker below, so it must not
       // also be precached as a page asset.
       globIgnores: ['**/push-sw.js'],
