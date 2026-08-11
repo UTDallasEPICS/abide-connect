@@ -1,3 +1,5 @@
+import prisma from '#server/utils/prisma'
+
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const limit = Number(query.limit) || 9
@@ -5,8 +7,7 @@ export default defineEventHandler(async (event) => {
   const events = await prisma.event.findMany({
     where: {
       startTime: { gte: now },
-      allowAttendees: true,
-      isTraining: false,
+      isTraining: true,
     },
     orderBy: { startTime: 'asc' },
     take: limit,
@@ -23,7 +24,6 @@ export default defineEventHandler(async (event) => {
     const image = asset
         ? `/api/events/${e.id}/images/${asset.imageUrl.split('/').pop()}`
         : '/images/default-event.jpg'
-
     return {
       id: e.id,
       title: e.title,
