@@ -93,7 +93,7 @@ function deleteEvent() {
 
 <template>
   <div class="space-y-4">
-    <h3 class="text-xl font-semibold">
+    <h3 class="text-xl font-semibold dark:text-gray-100">
       Edit Event
     </h3>
 

@@ -68,7 +68,7 @@ const displayText = computed(() => {
 
 <template>
   <div class="mb-4">
-    <h2 class="text-teal-700 font-bold">
+    <h2 class="text-teal-700 dark:text-teal-400 font-bold">
       {{ label }}
     </h2>
     <UCheckbox

@@ -354,13 +354,13 @@ async function handleRemoveRole(role: string) {
         />
       </div>
 
-      <div class="w-full mb-5 p-2 bg-gray-100 rounded-xl flex items-center flex-wrap">
+      <div class="w-full mb-5 p-2 bg-gray-100 dark:bg-gray-700/50 rounded-xl flex items-center flex-wrap">
         <UButton
           label="Add Role"
           icon="i-lucide-user-plus"
           color="neutral"
           variant="ghost"
-          class="rounded-xl font-semibold px-3 hover:bg-gray-200 transition-colors"
+          class="rounded-xl font-semibold px-3 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           @click="isAddRoleModalOpen = true"
         />
         <UButton
@@ -368,7 +368,7 @@ async function handleRemoveRole(role: string) {
           icon="i-lucide-user-minus"
           color="neutral"
           variant="ghost"
-          class="rounded-xl font-semibold px-3 hover:bg-gray-200 transition-colors"
+          class="rounded-xl font-semibold px-3 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           @click="isRemoveRoleModalOpen = true"
         />
         <UButton
@@ -376,7 +376,7 @@ async function handleRemoveRole(role: string) {
           icon="i-lucide-pencil"
           color="neutral"
           variant="ghost"
-          class="rounded-xl font-semibold px-3 hover:bg-gray-200 transition-colors"
+          class="rounded-xl font-semibold px-3 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           @click="toggleEditMode"
         />
         <UButton
@@ -384,7 +384,7 @@ async function handleRemoveRole(role: string) {
           icon="i-lucide-trash-2"
           color="neutral"
           variant="ghost"
-          class="rounded-xl font-semibold px-3 hover:bg-gray-200 transition-colors"
+          class="rounded-xl font-semibold px-3 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           @click="isDeleteModalOpen = true"
         />
         <UButton
@@ -393,7 +393,7 @@ async function handleRemoveRole(role: string) {
           icon="i-lucide-clock-plus"
           color="neutral"
           variant="ghost"
-          class="rounded-xl font-semibold px-3 hover:bg-gray-200 transition-colors"
+          class="rounded-xl font-semibold px-3 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           @click="isAddHourLogModalOpen = true"
         />
       </div>

@@ -55,7 +55,7 @@ export default defineNuxtConfig({
   },
   vite: {
     optimizeDeps: {
-      include: ['maplibre-gl', 'vue3-carousel', 'better-auth/vue', 'zod'],
+      include: ['maplibre-gl', 'vue3-carousel', 'better-auth/vue', 'zod', '@internationalized/date'],
     },
   },
   cron: {

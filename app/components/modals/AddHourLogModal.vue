@@ -110,7 +110,7 @@ async function handleSubmit() {
     <template #body>
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-gray-600">Name</label>
+          <label class="text-sm font-medium text-gray-600 dark:text-gray-300">Name</label>
           <UInput
             v-model="form.eventName"
             placeholder="Hour log title (optional)"
@@ -119,7 +119,7 @@ async function handleSubmit() {
         </div>
 
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-gray-600">Date</label>
+          <label class="text-sm font-medium text-gray-600 dark:text-gray-300">Date</label>
           <UInput
             v-model="form.date"
             type="date"
@@ -128,7 +128,7 @@ async function handleSubmit() {
         </div>
 
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-gray-600">Hours</label>
+          <label class="text-sm font-medium text-gray-600 dark:text-gray-300">Hours</label>
           <UInput
             v-model.number="form.hours"
             type="number"
@@ -140,7 +140,7 @@ async function handleSubmit() {
         </div>
 
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-gray-600">Approval Status</label>
+          <label class="text-sm font-medium text-gray-600 dark:text-gray-300">Approval Status</label>
           <USelect
             v-model="form.approvalStatus"
             :items="approvalStatusItems"
@@ -149,7 +149,7 @@ async function handleSubmit() {
         </div>
 
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-gray-600">Comment</label>
+          <label class="text-sm font-medium text-gray-600 dark:text-gray-300">Comment</label>
           <UTextarea
             v-model="form.comment"
             placeholder="Optional comment"
@@ -159,7 +159,7 @@ async function handleSubmit() {
 
         <p
           v-if="formError"
-          class="text-sm text-red-500 font-medium"
+          class="text-sm text-red-500 dark:text-red-400 font-medium"
         >
           {{ formError }}
         </p>

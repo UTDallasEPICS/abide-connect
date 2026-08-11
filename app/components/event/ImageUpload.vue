@@ -74,14 +74,14 @@ async function deleteExistingAsset(asset: ServerAsset) {
   <div class="space-y-4">
     <!-- Existing server images -->
     <div v-if="remainingAssets.length > 0">
-      <p class="text-sm text-gray-500 mb-2">
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
         Current Images
       </p>
       <div class="grid grid-cols-3 gap-2">
         <div
           v-for="asset in remainingAssets"
           :key="asset.imageUrl"
-          class="relative group aspect-square rounded-lg overflow-hidden bg-gray-100"
+          class="relative group aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700"
         >
           <img
             :src="getAssetUrl(asset)"

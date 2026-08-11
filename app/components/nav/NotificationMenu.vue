@@ -156,9 +156,8 @@ const formatTime = (timestamp: string) => {
               Sign in to receive notifications.
             </p>
             <UButton
-              color="primary"
               size="sm"
-              class="mt-3"
+              class="mt-3 bg-brand9 text-white hover:bg-brand9 active:bg-brand9 dark:border-brand8 dark:bg-brand8 dark:text-gray-900 dark:hover:bg-brand8 dark:active:bg-brand8"
               icon="i-lucide-log-in"
               to="/auth/login"
             >
