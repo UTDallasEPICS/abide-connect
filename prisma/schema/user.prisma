@@ -9,8 +9,10 @@
 /// `prisma.volunteer.findUnique({ where: { userId: session.user.id } })`, never
 /// by passing a user id as a `Volunteer.id`.
 ///
-/// Separately, a `GuestRSVP` records someone who signed up for an event with
-/// just a name and email and has no `User` row at all.
+/// Separately, a `GuestRSVP` recorded someone who signed up for an event with
+/// just a name and email and has no `User` row at all. That path is gone —
+/// attending an event now requires an account, so a registration always leads
+/// back to a `User` and the name/phone/email on it.
 model User {
   id            String              @id @default(uuid())
   name          String?

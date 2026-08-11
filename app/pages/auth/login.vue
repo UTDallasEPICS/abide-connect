@@ -9,6 +9,7 @@ import {
   type VerifyOtpSchema,
 } from '~/types/auth/login.type'
 import { errorMessage as toErrorMessage } from '~/lib/errorMessage'
+import { safeRedirect } from '~/lib/safeRedirect'
 
 /**
  * Email-OTP login, as a two-step form on one route: request a code, then enter
@@ -18,10 +19,23 @@ import { errorMessage as toErrorMessage } from '~/lib/errorMessage'
  * so requesting a code for an unknown address fails rather than registering.
  * New users go through /auth/sign-up.
  *
+ * A `?redirect=` query param survives the whole flow, including the hop to
+ * sign-up: pages that turn a signed-out visitor away (an event's "Sign in to
+ * register", say) set it so the user lands back where they were instead of on
+ * the home page. It's run through `safeRedirect`, so an off-site value is
+ * discarded rather than followed.
+ *
  * The 30s resend cooldown is client-side only — it keeps the button from being
  * hammered, but `/api/auth/request-otp` has no throttle of its own, so it isn't
  * enforcement.
  */
+
+const route = useRoute()
+const redirectTo = computed(() => safeRedirect(route.query.redirect))
+const signUpLink = computed(() => ({
+  path: '/auth/sign-up',
+  query: route.query.redirect ? { redirect: route.query.redirect } : undefined,
+}))
 
 const isLoading = ref(false)
 const errorMessage = ref<string | null>(null)
@@ -86,7 +100,7 @@ async function onVerifyOtp(event: FormSubmitEvent<VerifyOtpSchema>) {
       },
     })
     await nextTick()
-    await navigateTo('/')
+    await navigateTo(redirectTo.value)
   }
   catch (error: unknown) {
     errorMessage.value = toErrorMessage(error)
@@ -136,7 +150,7 @@ function goBack() {
       <template #description>
         Don't have an account?
         <ULink
-          to="/auth/sign-up"
+          :to="signUpLink"
           class="text-primary font-medium"
         >
           Sign up

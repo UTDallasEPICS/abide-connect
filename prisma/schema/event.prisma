@@ -135,11 +135,17 @@ enum SlotSignupStatus {
   REMOVED_BY_ADMIN
 }
 
-/// A sign-up by someone with no account — name and email only.
+/// DEPRECATED — a sign-up by someone with no account, name and email only.
 ///
-/// Deliberately has no unique constraint on (eventId, email): duplicates are
-/// prevented by a findFirst check in the RSVP handler, which is racy under
-/// concurrent submissions. Cancelling one only requires knowing the email.
+/// Guest sign-up has been removed: attending now requires an account, so every
+/// new registration is an `RSVP` and nothing writes this table any more. The
+/// rows are kept because they are real people holding real places on events
+/// that may not have happened yet; staff still see them in the sign-up list
+/// (flagged `isGuest`) and can clear them through `events/[id]/rsvp.delete.ts`,
+/// which is now admin-only. Safe to drop once no future event has guest rows.
+///
+/// Has no unique constraint on (eventId, email) — duplicate prevention was a
+/// racy findFirst check in the handler that created these.
 ///
 /// The only relation here that cascades on delete, so guest sign-ups clean
 /// themselves up when an event is removed while other relations don't.

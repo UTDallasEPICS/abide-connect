@@ -2,6 +2,7 @@
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { verifyOtpFields, verifyOtpSchema, type VerifyOtpSchema } from '~/types/auth/login.type'
 import { errorMessage as toErrorMessage } from '~/lib/errorMessage'
+import { safeRedirect } from '~/lib/safeRedirect'
 
 /**
  * Step two of sign-up: verify the emailed code and create the account.
@@ -11,11 +12,18 @@ import { errorMessage as toErrorMessage } from '~/lib/errorMessage'
  * returns a live session. Landing here without those details (direct link, new
  * tab, reopened browser) means there's nothing to submit, so `onMounted`
  * redirects back to the start of the flow.
+ *
+ * `pendingSignUpRedirect` is stored under its own key rather than inside
+ * `pendingSignUp`, because that object is spread wholesale into the request
+ * body — a `redirect` field living in it would be posted to the API. It sends
+ * the new account back to whatever they were trying to do (attend an event,
+ * say) instead of the volunteer dashboard.
  */
 
 const errorMessage = ref<string | null>(null)
 const isLoading = ref(false)
 const pendingSignUp = ref<Record<string, unknown> | null>(null)
+const redirectTo = ref('/volunteer/')
 
 const resendCooldown = ref(0)
 const isResending = ref(false)
@@ -42,6 +50,7 @@ onMounted(() => {
     return
   }
   pendingSignUp.value = JSON.parse(stored)
+  redirectTo.value = safeRedirect(sessionStorage.getItem('pendingSignUpRedirect'), '/volunteer/')
   startCooldown()
 })
 
@@ -80,8 +89,9 @@ async function onVerify(event: FormSubmitEvent<VerifyOtpSchema>) {
       },
     })
     sessionStorage.removeItem('pendingSignUp')
+    sessionStorage.removeItem('pendingSignUpRedirect')
     await nextTick()
-    await navigateTo('/volunteer/')
+    await navigateTo(redirectTo.value)
   }
   catch (error: unknown) {
     console.log(error)
