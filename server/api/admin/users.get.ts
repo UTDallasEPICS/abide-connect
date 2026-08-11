@@ -1,4 +1,5 @@
 import { getQuery, defineEventHandler } from 'h3'
+import { requireRole } from '#server/utils/requireRole'
 
 // ---- Config ----
 const DEFAULT_PAGE = 1
@@ -108,13 +109,13 @@ function toUserSummary(user: {
 // ---- Handler ----
 
 /**
- * GET handler for the paginated user list.
+ * GET handler for the paginated user list. Admin only.
  *
- * SECURITY: despite living under `server/api/admin/`, this handler performs no
- * authorization — it's the one route in that directory without a `requireRole`
- * call, and the global middleware is a no-op. It returns every user's name and
- * email, so it's an unauthenticated dump of the org's contact list. Add
- * `await requireRole(event, 'admin')` to match its siblings.
+ * Living under `server/api/admin/` grants nothing on its own — the directory is
+ * a convention, not a boundary, and the global middleware is a no-op. The
+ * `requireRole` call below is what stops this being an unauthenticated dump of
+ * the org's contact list, since the response carries every user's name and
+ * email.
  *
  * Query params:
  *   - search: filters by name/email substring
@@ -125,6 +126,8 @@ function toUserSummary(user: {
  * counts (for populating role filter tabs/badges in the UI).
  */
 export default defineEventHandler(async (event) => {
+  await requireRole(event, 'admin')
+
   const query = getQuery(event)
   const search = String(query.search ?? '').trim()
   const role = String(query.role ?? ALL_ROLES)
