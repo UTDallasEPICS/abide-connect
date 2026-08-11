@@ -1,4 +1,5 @@
 import { readBody, defineEventHandler, createError } from 'h3'
+import { requireRole } from '#server/utils/requireRole'
 
 type UpdateUserBody = {
   userId?: string
@@ -44,11 +45,11 @@ function enumField<T extends string>(key: T, value: string | null | undefined) {
  * Updates a user and their linked volunteer profile from the admin
  * member-management screen.
  *
- * SECURITY: unauthenticated. The target is whatever `userId` the body names and
- * nothing checks the caller, so any request can rewrite any account's profile —
- * including `adminNote` and `isActive`. Needs
- * `await requireRole(event, 'admin')`. Compare `user/me.patch.ts`, which
- * correctly scopes the update to the session's own user.
+ * Admin only. The target is whatever `userId` the body names — including
+ * staff-controlled fields like `adminNote` and `isActive` — so the
+ * `requireRole` call below is the whole authorization check. Compare
+ * `user/me.patch.ts`, which scopes the update to the session's own user and so
+ * needs a session but no role.
  *
  * The `field`/`enumField` helpers above encode a three-way distinction the
  * endpoint depends on: an absent key means "leave alone", `''` means "clear it"
@@ -58,6 +59,8 @@ function enumField<T extends string>(key: T, value: string | null | undefined) {
  * Volunteer fields are silently skipped when the user has no volunteer record.
  */
 export default defineEventHandler(async (event) => {
+  await requireRole(event, 'admin')
+
   const body = await readBody<UpdateUserBody>(event)
   const userId = body.userId
 

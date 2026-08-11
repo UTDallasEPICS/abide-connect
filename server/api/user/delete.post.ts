@@ -1,14 +1,15 @@
 import { readBody, defineEventHandler, createError } from 'h3'
+import { requireRole } from '#server/utils/requireRole'
 
 /**
  * Hard-deletes a user and everything hanging off them. Used by the admin
  * member-management screen.
  *
- * SECURITY: unauthenticated. The target is whatever `userId` the body names,
- * there is no `requireRole` call, and the global middleware is a no-op — so any
- * caller can permanently delete any account. This needs
- * `await requireRole(event, 'admin')` as its first line. Compare
- * `user/me.delete.ts`, which correctly deletes only the caller's own account.
+ * Admin only. The target is whatever `userId` the body names, so the
+ * `requireRole` call below is the only thing standing between this route and
+ * permanent deletion of any account — the global middleware is a no-op.
+ * Compare `user/me.delete.ts`, which deletes only the caller's own account and
+ * so needs a session but no role.
  *
  * Deletion is manual and ordered rather than relying on cascades: child rows go
  * first (hour logs, languages, availabilities, areas, certifications, RSVPs,
@@ -21,6 +22,8 @@ import { readBody, defineEventHandler, createError } from 'h3'
  * leaves the account stripped of its related records but still present.
  */
 export default defineEventHandler(async (event) => {
+  await requireRole(event, 'admin')
+
   const body = await readBody<{ userId?: string }>(event)
   const userId = body.userId
   if (!userId) {

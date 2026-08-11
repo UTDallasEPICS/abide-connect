@@ -1,4 +1,5 @@
 import { readBody, defineEventHandler, createError } from 'h3'
+import { requireRole } from '#server/utils/requireRole'
 
 // Only these two roles can be removed via this endpoint.
 // ADMIN is intentionally excluded.
@@ -8,17 +9,18 @@ type RemovableRole = (typeof REMOVABLE_ROLES)[number]
 /**
  * Revokes a role from a user, from the admin member-management screen.
  *
- * SECURITY: unauthenticated and unauthorized, exactly as in the sibling
- * `add.post.ts` — no `requireRole` call, and no global middleware behind it.
- * Any caller can strip USER from an arbitrary account and lock them out of the
- * app, since `app/middleware/auth.global.ts` gates on roles. Needs
- * `await requireRole(event, 'admin')`.
+ * Admin only, like the sibling `add.post.ts`. Stripping USER locks an account
+ * out of the app entirely (`app/middleware/auth.global.ts` gates on roles), so
+ * the `requireRole` call below is load-bearing — there is no global middleware
+ * behind it.
  *
  * Note this hard-deletes the `User_Role` row rather than setting
  * `active: false`, so the grant history is lost; `add.post.ts` recreates it on
  * re-grant.
  */
 export default defineEventHandler(async (event) => {
+  await requireRole(event, 'admin')
+
   const body = await readBody<{ userId?: string; role?: string }>(event)
   const userId = body.userId
   const role = body.role?.toUpperCase()
