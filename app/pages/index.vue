@@ -45,7 +45,7 @@ const oneRowMinHeight = 'min-h-24'
 const skeletonCount = 6
 
 const onSignUpClick = () => navigateTo('/sign-up');
-const onSeeAllEventsClick = () => navigateTo('/events');
+const onSeeAllEventsClick = () => navigateTo('/events/list');
 const onVolunteerApplicationClick = () => navigateTo('/volunteer-application');
 
 const headers = useRequestHeaders(['cookie']);
