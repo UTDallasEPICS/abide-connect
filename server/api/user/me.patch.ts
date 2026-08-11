@@ -23,6 +23,7 @@ export default defineEventHandler(async (event) => {
     phone?: string | null
     pushEnabled?: boolean
     pushScope?: PushScope
+    emailRemindersEnabled?: boolean
   } = {}
 
   if ('name' in body) {
@@ -64,6 +65,13 @@ export default defineEventHandler(async (event) => {
     data.pushScope = body.pushScope as PushScope
   }
 
+  if ('emailRemindersEnabled' in body) {
+    if (typeof body.emailRemindersEnabled !== 'boolean') {
+      throw createError({ statusCode: 400, statusMessage: 'emailRemindersEnabled must be a boolean' })
+    }
+    data.emailRemindersEnabled = body.emailRemindersEnabled
+  }
+
   if (Object.keys(data).length === 0) {
     throw createError({ statusCode: 400, statusMessage: 'No updatable fields provided' })
   }
@@ -79,6 +87,7 @@ export default defineEventHandler(async (event) => {
       imageURL: true,
       pushEnabled: true,
       pushScope: true,
+      emailRemindersEnabled: true,
     },
   })
 })

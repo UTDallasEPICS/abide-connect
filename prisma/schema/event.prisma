@@ -36,6 +36,7 @@ model Event {
   participants   RSVP[]
   volunteerHours Volunteer_Hour_Log[]
   guestRSVPs     GuestRSVP[]
+  reminders      Event_Reminder[]
   timeSlots      Event_Time_Slot[]
 
   createdAt DateTime @default(now())
@@ -151,6 +152,8 @@ model GuestRSVP {
   email       String
   isVolunteer Boolean  @default(false)
   createdAt   DateTime @default(now())
+
+  reminders Guest_Event_Reminder[]
 
   @@map("guest_rsvps")
 }
