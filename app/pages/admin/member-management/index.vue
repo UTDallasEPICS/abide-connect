@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import SectionButton from '~/components/buttons/SectionButton.vue';
-import UserAvatar from '~/components/UserAvatar.vue';
-import type { UserRole, UsersResponse } from '~/types/admin/admin-user-response';
+import SectionButton from '~/components/buttons/SectionButton.vue'
+import UserAvatar from '~/components/UserAvatar.vue'
+import type { UsersResponse } from '~/types/admin/admin-user-response'
 
 definePageMeta({
   layout: 'secondary',
-  backText: 'Management'
+  backText: 'Management',
 })
 
 /**
@@ -32,8 +32,6 @@ const selectedRoleFilter = ref<RoleFilter>('ALL')
 const debouncedSearch = ref('')
 const search = ref('')
 const page = ref(1)
-
-
 
 // ---- Debounced search ----
 let searchDebounceTimer: ReturnType<typeof setTimeout> | undefined
@@ -87,11 +85,12 @@ watch(
       loadingScreenTimer = setTimeout(() => {
         showLoadingScreen.value = true
       }, LOADING_SCREEN_DELAY_MS)
-    } else {
+    }
+    else {
       showLoadingScreen.value = false
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 const users = computed(() => data.value?.users ?? [])
@@ -153,33 +152,57 @@ const roleStyles: Record<string, string> = {
         <div class="w-full max-w-(--ui-container) mx-auto px-4 sm:px-10 pt-5 pb-10 h-full flex flex-col">
           <!-- User list -->
           <div class="w-full flex-1 min-h-0 rounded-lg border border-gray-300 dark:border-gray-700 divide-y divide-gray-300 dark:divide-gray-700 overflow-y-auto bg-white dark:bg-gray-800">
-            
             <!-- Loading -->
-            <div v-if="showLoadingScreen" class="flex items-center justify-center py-16">
-              <UIcon name="i-lucide-loader-2" class="animate-spin text-3xl text-gray-400 dark:text-gray-500" />
+            <div
+              v-if="showLoadingScreen"
+              class="flex items-center justify-center py-16"
+            >
+              <UIcon
+                name="i-lucide-loader-2"
+                class="animate-spin text-3xl text-gray-400 dark:text-gray-500"
+              />
             </div>
 
             <!-- Error -->
-            <div v-else-if="error" class="flex flex-col items-center justify-center text-center py-16 px-6">
-              <p class="text-sm text-red-400 dark:text-red-400">Something went wrong loading members.</p>
-              <UButton class="mt-3" size="sm" variant="solid" @click="refresh()">Retry</UButton>
+            <div
+              v-else-if="error"
+              class="flex flex-col items-center justify-center text-center py-16 px-6"
+            >
+              <p class="text-sm text-red-400 dark:text-red-400">
+                Something went wrong loading members.
+              </p>
+              <UButton
+                class="mt-3"
+                size="sm"
+                variant="solid"
+                @click="refresh()"
+              >
+                Retry
+              </UButton>
             </div>
 
             <!-- User row -->
             <div
-              v-else
               v-for="user in users"
+              v-else
               :key="user.id"
               class="p-3 flex items-center justify-between"
             >
               <div class="flex items-center gap-3 min-w-0 flex-1">
                 <div class="w-10 h-10 shrink-0">
-                  <UserAvatar :name="user.name" :src="user.avatarUrl" />
+                  <UserAvatar
+                    :name="user.name"
+                    :src="user.avatarUrl"
+                  />
                 </div>
 
                 <div class="min-w-0 flex-1">
-                  <p class="font-semibold text-gray-900 dark:text-gray-100 truncate">{{ user.name }}</p>
-                  <p class="font-normal text-gray-400 dark:text-gray-500 text-sm truncate">{{ user.email }}</p>
+                  <p class="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                    {{ user.name }}
+                  </p>
+                  <p class="font-normal text-gray-400 dark:text-gray-500 text-sm truncate">
+                    {{ user.email }}
+                  </p>
                   <!-- Roles -->
                   <div class="flex gap-1 mt-2">
                     <div
@@ -189,7 +212,7 @@ const roleStyles: Record<string, string> = {
                       :class="roleStyles[role]"
                     >
                       {{ role }}
-                    </div>  
+                    </div>
                     <div class="whitespace-nowrap font-normal text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 py-0.5 px-2 sm:py-1 sm:px-3">
                       {{ user.hours }} hours
                     </div>
@@ -212,7 +235,9 @@ const roleStyles: Record<string, string> = {
               v-if="!showLoadingScreen && !error && users.length === 0"
               class="flex flex-col items-center justify-center text-center py-16 px-6"
             >
-              <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">No users found.</p>
+              <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                No users found.
+              </p>
             </div>
           </div>
 
@@ -224,7 +249,7 @@ const roleStyles: Record<string, string> = {
               :total="totalUsers"
               :disabled="showLoadingScreen"
               :sibling-count="1"
-              :activeBgColor="paginationActiveBgColor"
+              :active-bg-color="paginationActiveBgColor"
             />
           </div>
         </div>

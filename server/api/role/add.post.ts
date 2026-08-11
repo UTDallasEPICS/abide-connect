@@ -20,7 +20,7 @@ type AddableRole = (typeof ADDABLE_ROLES)[number]
 export default defineEventHandler(async (event) => {
   await requireRole(event, 'admin')
 
-  const body = await readBody<{ userId?: string; role?: string }>(event)
+  const body = await readBody<{ userId?: string, role?: string }>(event)
   const userId = body.userId
   const role = body.role?.toUpperCase()
 

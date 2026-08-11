@@ -165,7 +165,7 @@ async function main() {
           },
         },
         eventAssets: {
-          create: event.eventAssets.map((imageUrl) => ({ imageUrl })),
+          create: event.eventAssets.map(imageUrl => ({ imageUrl })),
         },
         timeSlots: {
           create: (event.timeSlots ?? []).map(slot => ({
@@ -196,7 +196,7 @@ async function main() {
         phone: user.phone,
         imageURL: user.imageURL,
         RSVPs: {
-          create: user.RSVPs.map((rsvp) => ({
+          create: user.RSVPs.map(rsvp => ({
             isVolunteer: rsvp.isVolunteer ?? false,
             event: { connect: { id: rsvp.id } },
           })),
@@ -249,25 +249,25 @@ async function main() {
           : undefined,
         languages: volunteer.languages
           ? {
-              create: volunteer.languages.map((lang) => ({
+              create: volunteer.languages.map(lang => ({
                 language: lang as Language,
               })),
             }
           : undefined,
         availabilities: volunteer.availabilities
           ? {
-              create: volunteer.availabilities.map((avail) => ({
+              create: volunteer.availabilities.map(avail => ({
                 availability: avail as Availability,
               })),
             }
           : undefined,
         certifications: {
-          create: volunteer.certifications.map((cert) => ({
+          create: volunteer.certifications.map(cert => ({
             certification: cert as Certification,
           })),
         },
         hourLogs: {
-          create: volunteer.hourLogs.map((log) => ({
+          create: volunteer.hourLogs.map(log => ({
             date: new Date(log.date),
             hours: log.hours,
             approvalStatus: log.approvalStatus as ApprovalStatus,

@@ -1,5 +1,5 @@
 import prisma from '#server/utils/prisma'
-import { requireRole } from '~~/server/utils/requireRole';
+import { requireRole } from '~~/server/utils/requireRole'
 
 /**
  * Replaces a donation campaign's fields. Admin only.
@@ -10,7 +10,8 @@ import { requireRole } from '~~/server/utils/requireRole';
  * point the record at a file that isn't there.
  */
 export default defineEventHandler(async (event) => {
-  const session = await requireRole(event, 'admin');
+  await requireRole(event, 'admin')
+
   const id = getRouterParam(event, 'id')
 
   if (!id) {

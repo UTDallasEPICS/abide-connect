@@ -9,34 +9,34 @@
  * toast rather than in the dialog.
  */
 const props = defineProps<{
-  open: boolean;
-  title: string;
-  description: string;
-  roles: string[];
-  confirmLabel?: string;
-}>();
+  open: boolean
+  title: string
+  description: string
+  roles: string[]
+  confirmLabel?: string
+}>()
 
 const emit = defineEmits<{
-  'update:open': [value: boolean];
-  confirm: [role: string];
-}>();
+  'update:open': [value: boolean]
+  'confirm': [role: string]
+}>()
 
-const selectedRole = ref<string | null>(null);
+const selectedRole = ref<string | null>(null)
 
 // Clear the selection each time the dialog opens — the component stays mounted
 // between uses, so without this it would reopen showing the previous choice.
 watch(
   () => props.open,
   (isOpen) => {
-    if (isOpen) selectedRole.value = null;
-  }
-);
+    if (isOpen) selectedRole.value = null
+  },
+)
 
 function handleConfirm() {
-  if (!selectedRole.value) return;
+  if (!selectedRole.value) return
 
-  emit('confirm', selectedRole.value);
-  emit('update:open', false);
+  emit('confirm', selectedRole.value)
+  emit('update:open', false)
 }
 </script>
 

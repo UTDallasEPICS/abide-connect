@@ -21,8 +21,8 @@ export default defineEventHandler(async (event) => {
     const start = new Date(e.startTime)
     const asset = e.eventAssets[0]
     const image = asset
-        ? `/api/events/${e.id}/images/${asset.imageUrl.split('/').pop()}`
-        : '/images/default-event.jpg'
+      ? `/api/events/${e.id}/images/${asset.imageUrl.split('/').pop()}`
+      : '/images/default-event.jpg'
 
     return {
       id: e.id,

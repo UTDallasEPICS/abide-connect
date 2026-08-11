@@ -16,16 +16,16 @@ import type { InputMenuItem, AuthFormField } from '@nuxt/ui'
  * Correcting it means a migration, not just a rename here.
  */
 const volunteerApplicationSchema = z.object({
-  languages: z.array(z.enum(Language), { message: "Please select at least one langauge." }),
+  languages: z.array(z.enum(Language), { message: 'Please select at least one langauge.' }),
 
-  gender: z.enum(Gender, { message: "Please select your gender." }),
+  gender: z.enum(Gender, { message: 'Please select your gender.' }),
 
-  ethinicity: z.enum(Ethinicity, { message: "Please select your ethinicity." }),
+  ethinicity: z.enum(Ethinicity, { message: 'Please select your ethinicity.' }),
 
-  availability: z.array(z.enum(Availability), { message: "Please select your avaliability." })
+  availability: z.array(z.enum(Availability), { message: 'Please select your avaliability.' })
     .min(1),
 
-  volunteerAreas: z.enum(VolunteerArea, { message: "Please select at least one area." })
+  volunteerAreas: z.enum(VolunteerArea, { message: 'Please select at least one area.' })
     .array()
     .min(1)
     .default([]),
@@ -43,9 +43,9 @@ const volunteerApplicationSchema = z.object({
     .nullable()
     .optional(),
 
-  emergencyContactName1: z.string({ message: "Please enter the name of your emergency contact."}),
+  emergencyContactName1: z.string({ message: 'Please enter the name of your emergency contact.' }),
 
-  emergencyContactPhone1: z.string({ message: "Please enter the phone number of your emergency contact."}),
+  emergencyContactPhone1: z.string({ message: 'Please enter the phone number of your emergency contact.' }),
 
   emergencyContactName2: z.string().nullable().optional(),
 
@@ -74,7 +74,6 @@ const volunteerApplicationSchema = z.object({
   volunteerHandbookAcknowledgement: z.string({ message: 'You must acknowledge the Volunteer Handbook' }),
 
 })
-
 
 export type VolunterApplicationSchema = z.output<typeof volunteerApplicationSchema>
 
@@ -113,7 +112,6 @@ export const volunteerApplicationStepSchemas = [
     emergencyContactPhone2: true,
   }),
 
-
   volunteerApplicationSchema.pick({
     ageEligibilityAcknowledgement: true,
     healthSafetyAcknowledgement: true,
@@ -126,7 +124,6 @@ export const volunteerApplicationStepSchemas = [
   }),
 
 ] as const
-
 
 /** `HEALTH_AND_SAFETY` → `Health and Safety` — minor words stay lowercase. */
 function formatEnumLabel(value: string): string {
@@ -303,7 +300,7 @@ export const volunteerApplicationSteps: AuthFormField[][] = [
     },
     {
       name: 'healthSafetyAcknowledgement',
-      label: "Health and Safety Acknowledgement",
+      label: 'Health and Safety Acknowledgement',
       description: 'As a volunteer with Abide Women\u2019s Health Services, I understand that I am expected to uphold all health and safety protocols to protect the well-being of clients, staff, and fellow volunteers. I agree to stay home if I am ill, practice proper hygiene, use personal protective equipment when required, and report any incidents, unsafe conditions, or health concerns promptly. I understand my responsibility to follow emergency procedures, respect client confidentiality, and maintain professional, nonjudgmental conduct at all times. I acknowledge that failure to comply with these guidelines may result in termination of my volunteer service, and I agree to stay informed of any policy updates provided by Abide.',
       type: 'checkbox',
       required: true,
@@ -311,7 +308,7 @@ export const volunteerApplicationSteps: AuthFormField[][] = [
     {
       name: 'missionValuesAcknowledgement',
       label: 'I have read Abide\'s mission, vision, and values and understand that Abide is led and run by BIPOC and will always be centered around BIPOC.',
-      description: "Our mission can be found at www.abidewomen.org/about",
+      description: 'Our mission can be found at www.abidewomen.org/about',
       type: 'checkbox',
       required: true,
     },
