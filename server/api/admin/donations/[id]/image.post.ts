@@ -16,7 +16,6 @@ import { requireRole } from '~~/server/utils/requireRole';
  * escape the directory via `../` or collide with an existing file.
  */
 export default defineEventHandler(async (event) => {
-  const session = await requireRole(event, 'admin');
   const id = getRouterParam(event, 'id')
   const form = await readMultipartFormData(event)
 

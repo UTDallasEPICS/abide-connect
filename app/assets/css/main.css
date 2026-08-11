@@ -6,6 +6,9 @@
     --font-poppins: 'Poppins', sans-serif;
 }
 
+html {
+  scrollbar-gutter: stable
+}
 @layer base {
   /* Default text uses Poppins; */
   html, body {

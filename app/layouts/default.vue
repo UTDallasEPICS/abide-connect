@@ -9,7 +9,7 @@
 </script>
 
 <template>
-  <div class="w-screen h-screen items-center">
+  <div class="min-w-screen min-h-screen items-center">
     <NavTop />
     <slot />
     <NavBottom />
