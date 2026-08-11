@@ -14,13 +14,12 @@ import { getLocalTimeZone, today } from '@internationalized/date'
 const tz = getLocalTimeZone()
 
 // The session data bugs unuless we pass the cookie header to the fetch request
-const headers = useRequestHeaders(['cookie']);
+const headers = useRequestHeaders(['cookie'])
 // Keep the ref useFetch hands back and await the request itself. Reading
 // `.data.value` off the un-awaited call snapshots it while it's still null,
 // which leaves the name blank on any client-side navigation (e.g. the
 // redirect straight after sign-in).
 const { data: user } = await useFetch('/api/user/me', { headers })
-
 
 const value = ref<DateValue>(today(tz))
 const isDateDisabled = (d: DateValue) =>
@@ -131,7 +130,6 @@ interface HourLog {
   approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED'
   comment?: string
 }
-
 
 const { logs } = await $fetch<{ logs: HourLog[] }>('/api/volunteer/logs', { headers })
 const logsRef = ref<HourLog[]>(logs)

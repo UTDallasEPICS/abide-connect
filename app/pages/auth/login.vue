@@ -53,7 +53,8 @@ function startCooldown() {
   cooldownTimer = setInterval(() => {
     if (resendCooldown.value > 0) {
       resendCooldown.value--
-    } else {
+    }
+    else {
       clearInterval(cooldownTimer!)
       cooldownTimer = null
     }
@@ -120,9 +121,11 @@ async function resendOtp() {
       body: { email: pendingEmail.value },
     })
     startCooldown()
-  } catch (err: unknown) {
+  }
+  catch (err: unknown) {
     resendError.value = toErrorMessage(err)
-  } finally {
+  }
+  finally {
     isResending.value = false
   }
 }
@@ -213,7 +216,10 @@ function goBack() {
       <template #footer>
         <div class="flex flex-col items-center gap-2 w-full">
           <div class="text-sm">
-            <span v-if="resendCooldown > 0" class="text-muted">Resend code in {{ resendCooldown }}s</span>
+            <span
+              v-if="resendCooldown > 0"
+              class="text-muted"
+            >Resend code in {{ resendCooldown }}s</span>
             <UButton
               v-else
               variant="link"

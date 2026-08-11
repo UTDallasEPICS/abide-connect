@@ -1,4 +1,4 @@
-import { requireRole } from '~~/server/utils/requireRole';
+import { requireRole } from '~~/server/utils/requireRole'
 
 /**
  * Permanently removes an hour log. Admin only.
@@ -8,14 +8,14 @@ import { requireRole } from '~~/server/utils/requireRole';
  * usually the right action, and this is for genuine mistakes.
  */
 export default defineEventHandler(async (event) => {
-  await requireRole(event, 'Admin');
+  await requireRole(event, 'Admin')
 
-  const id = getRouterParam(event, 'id');
+  const id = getRouterParam(event, 'id')
   if (!id) {
-    throw createError({ statusCode: 400, statusMessage: 'Hour log id is required' });
+    throw createError({ statusCode: 400, statusMessage: 'Hour log id is required' })
   }
 
-  await prisma.volunteer_Hour_Log.delete({ where: { id: Number(id) } });
+  await prisma.volunteer_Hour_Log.delete({ where: { id: Number(id) } })
 
-  return { success: true };
-});
+  return { success: true }
+})

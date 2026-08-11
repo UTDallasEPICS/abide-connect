@@ -46,7 +46,28 @@ if (error.value) {
 }
 
 const isEditMode = ref(false)
-const editForm = ref<any>({})
+type TimeSlotDraft = {
+  id: string | null
+  startTime: string
+  endTime: string
+  capacity: number
+  signupCount?: number
+}
+
+type EditForm = {
+  title?: string
+  shortDesc?: string
+  description?: string
+  location?: { address?: string }
+  startTime?: string
+  endTime?: string
+  eventType?: string
+  timeSlots?: TimeSlotDraft[]
+  mobileClinic?: string
+  [key: string]: unknown
+}
+
+const editForm = ref<EditForm>({})
 const saveError = ref('')
 
 const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
@@ -139,7 +160,7 @@ const acceptsTimeBlocks = computed(() =>
   || editForm.value.eventType === 'VOLUNTEERS_AND_ATTENDEES',
 )
 
-const rsvpStatsRef = ref<any>(null)
+const rsvpStatsRef = ref<{ refresh: () => void } | null>(null)
 const signUpPending = ref(false)
 const signUpError = ref('')
 
@@ -340,7 +361,7 @@ const formattedDate = computed(() => {
 const carouselItems = computed(() => {
   const assets = event.value?.eventAssets || []
   if (assets.length > 0) {
-    return assets.map((a: any) => `/api/events/${a.imageUrl}`)
+    return assets.map((a: { imageUrl: string }) => `/api/events/${a.imageUrl}`)
   }
   return [
     'https://picsum.photos/640/640?random=1',

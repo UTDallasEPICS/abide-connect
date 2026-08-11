@@ -32,55 +32,59 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
-});
+})
 
-const emit = defineEmits(['cancel']);
+const emit = defineEmits(['cancel'])
 
 const formattedDateTime = computed(() => {
-  const date = new Date(props.startTime);
+  const date = new Date(props.startTime)
   const datePart = date.toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'long',
     day: 'numeric',
-  });
+  })
   const timePart = date.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
-  });
-  return `${datePart} • ${timePart}`;
-});
+  })
+  return `${datePart} • ${timePart}`
+})
 
-const menuOpen = ref(false);
-const cardRef = ref(null);
+const menuOpen = ref(false)
+const cardRef = ref(null)
 
-const pressed = ref(false);
+const pressed = ref(false)
 
 function toggleMenu() {
-  menuOpen.value = !menuOpen.value;
+  menuOpen.value = !menuOpen.value
 }
 
 function goToEvent() {
-  navigateTo(props.url);
+  navigateTo(props.url)
 }
 
 function handleCancel() {
-  menuOpen.value = false;
-  emit('cancel', props.id);
+  menuOpen.value = false
+  emit('cancel', props.id)
 }
 
 function handleClickOutside(event) {
   if (cardRef.value && !cardRef.value.contains(event.target)) {
-    menuOpen.value = false;
+    menuOpen.value = false
   }
 }
 
-onMounted(() => document.addEventListener('click', handleClickOutside));
-onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside));
+onMounted(() => document.addEventListener('click', handleClickOutside))
+onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 
-const isLarge = computed(() => props.size === 'lg');
+const isLarge = computed(() => props.size === 'lg')
 </script>
+
 <template>
-  <div ref="cardRef" class="relative">
+  <div
+    ref="cardRef"
+    class="relative"
+  >
     <div
       role="link"
       tabindex="0"
@@ -103,7 +107,7 @@ const isLarge = computed(() => props.size === 'lg');
           :alt="title"
           draggable="false"
           class="h-full w-full select-none object-cover"
-        />
+        >
       </div>
       <div
         class="flex min-w-0 flex-1 flex-col justify-between"
@@ -113,10 +117,15 @@ const isLarge = computed(() => props.size === 'lg');
           <p class="text-xs font-normal text-blue-600">
             {{ formattedDateTime }}
           </p>
-          <h3 class="truncate text-sm font-semibold text-gray-900">{{ title }}</h3>
+          <h3 class="truncate text-sm font-semibold text-gray-900">
+            {{ title }}
+          </h3>
         </div>
         <p class="flex items-center gap-1 pr-9 text-xs font-normal text-gray-500">
-          <Icon name="heroicons:map-pin-20-solid" class="h-3.5 w-3.5 shrink-0" />
+          <Icon
+            name="heroicons:map-pin-20-solid"
+            class="h-3.5 w-3.5 shrink-0"
+          />
           <span class="truncate">{{ location }}</span>
         </p>
       </div>
@@ -129,7 +138,10 @@ const isLarge = computed(() => props.size === 'lg');
         @touchstart.stop
         @click.stop="toggleMenu"
       >
-        <Icon name="heroicons:ellipsis-horizontal-20-solid" class="h-6 w-6" />
+        <Icon
+          name="heroicons:ellipsis-horizontal-20-solid"
+          class="h-6 w-6"
+        />
       </button>
     </div>
 

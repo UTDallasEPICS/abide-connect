@@ -41,17 +41,17 @@ export default defineEventHandler(async (event) => {
   const logs = await prisma.volunteer_Hour_Log.findMany({
     where: { volunteerId: volunteer.id },
     include: { event: true },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
   })
 
   const formattedLogs = logs.map(log => ({
     id: String(log.id),
-    event: log.event.title, 
+    event: log.event.title,
     date: log.date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    }), 
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }),
     hours: log.hours,
     approvalStatus: log.approvalStatus,
     comment: log.comment ?? '',

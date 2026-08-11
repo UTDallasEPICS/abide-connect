@@ -28,20 +28,20 @@ const props = defineProps({
     type: Number,
     required: true,
   },
-});
+})
 
 // Decorative placeholder avatars — random 2-letter initials, no attendee
 // data required. Count tracks "going" (capped at 3).
-const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 function randomInitials() {
-  const a = ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
-  const b = ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
-  return a + b;
+  const a = ALPHABET[Math.floor(Math.random() * ALPHABET.length)]
+  const b = ALPHABET[Math.floor(Math.random() * ALPHABET.length)]
+  return a + b
 }
 const avatarInitials = computed(() => {
-  const count = Math.min(3, props.going);
-  return Array.from({ length: count }, () => randomInitials());
-});
+  const count = Math.min(3, props.going)
+  return Array.from({ length: count }, () => randomInitials())
+})
 </script>
 
 <template>
@@ -53,7 +53,10 @@ const avatarInitials = computed(() => {
     <div
       class="pointer-events-none absolute right-3 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white/95 opacity-0 shadow-sm transition-opacity duration-100 ease-out group-hover:opacity-100"
     >
-      <Icon name="heroicons:arrow-up-right-20-solid" class="h-3.5 w-3.5 text-gray-700" />
+      <Icon
+        name="heroicons:arrow-up-right-20-solid"
+        class="h-3.5 w-3.5 text-gray-700"
+      />
     </div>
 
     <!-- Image with date badge -->
@@ -63,7 +66,7 @@ const avatarInitials = computed(() => {
         :alt="title"
         draggable="false"
         class="h-full w-full select-none object-cover"
-      />
+      >
       <div
         class="absolute left-3 top-3 flex w-12 select-none flex-col items-center rounded-lg border border-gray-100 bg-white/90 py-1 backdrop-blur-lg"
       >
@@ -78,15 +81,24 @@ const avatarInitials = computed(() => {
     <div class="space-y-1 px-3 py-3">
       <h3 class="truncate  text-sm font-semibold text-gray-900">{{ title }}</h3>
       <p class="flex items-center gap-1 text-xs font-normal text-gray-500">
-        <Icon name="heroicons:map-pin-20-solid" class="h-3.5 w-3.5 shrink-0" />
+        <Icon
+          name="heroicons:map-pin-20-solid"
+          class="h-3.5 w-3.5 shrink-0"
+        />
         <span class="truncate">{{ location }}</span>
       </p>
 
       <!-- Edge case: nobody going yet -->
-      <p v-if="going === 0" class="text-xs font-normal text-gray-400 mt-2">
+      <p
+        v-if="going === 0"
+        class="text-xs font-normal text-gray-400 mt-2"
+      >
         <span class="text-xs font-normal text-blue-600">0 Attendees</span>
       </p>
-      <div v-else class="flex items-center gap-2">
+      <div
+        v-else
+        class="flex items-center gap-2"
+      >
         <div class="flex -space-x-2">
           <div
             v-for="(initials, index) in avatarInitials"

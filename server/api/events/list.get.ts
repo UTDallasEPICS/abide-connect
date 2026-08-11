@@ -37,7 +37,8 @@ export default defineEventHandler(async (event) => {
     const isAdmin = (session.user as { role?: string }).role === 'ADMIN'
     if (isAdmin) {
       canSeeTrainings = true
-    } else {
+    }
+    else {
       const volunteer = await prisma.volunteer.findUnique({
         where: { userId: session.user.id },
         select: { approvalStatus: true },

@@ -20,7 +20,7 @@ defineProps({
     type: String,
     default: null,
   },
-});
+})
 </script>
 
 <template>
@@ -34,7 +34,10 @@ defineProps({
     <div
       class="pointer-events-none absolute right-3 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white/95 opacity-0 shadow-sm transition-opacity duration-100 ease-out group-hover:opacity-100"
     >
-      <Icon name="heroicons:arrow-up-right-20-solid" class="h-3.5 w-3.5 text-gray-700" />
+      <Icon
+        name="heroicons:arrow-up-right-20-solid"
+        class="h-3.5 w-3.5 text-gray-700"
+      />
     </div>
 
     <!-- Image -->
@@ -44,7 +47,7 @@ defineProps({
         :alt="title"
         draggable="false"
         class="h-full w-full select-none object-cover"
-      />
+      >
     </div>
 
     <!-- Details -->
@@ -59,7 +62,10 @@ defineProps({
       class="mt-auto flex items-center justify-between border-t border-gray-100 px-3 py-2"
     >
       <span class="truncate text-xs font-medium text-gray-500">{{ footerText }}</span>
-      <Icon name="heroicons:arrow-right-20-solid" class="h-4 w-4 shrink-0 text-gray-400" />
+      <Icon
+        name="heroicons:arrow-right-20-solid"
+        class="h-4 w-4 shrink-0 text-gray-400"
+      />
     </div>
   </NuxtLink>
 </template>

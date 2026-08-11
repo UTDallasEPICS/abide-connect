@@ -42,14 +42,6 @@ const upcomingEvents = computed(() => {
   return nonTrainingEvents.value.filter(event => new Date(event.endTime) >= now)
 })
 
-// Dates that have events — used to highlight calendar
-const eventDates = computed(() => {
-  return (allEvents.value || []).map((event) => {
-    const d = new Date(event.startTime)
-    return new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate())
-  })
-})
-
 // Events on the selected calendar date
 const eventsOnSelectedDate = computed(() => {
   if (!selectedDate.value) return upcomingEvents.value
@@ -66,57 +58,28 @@ const displayedEvents = computed(() => {
   return upcomingEvents.value
 })
 
-type Event = {
+type CalendarEvent = {
   id: string
   title: string
   startTime: string
-  location: {
-    id: string
-    address: string
-    latitude: number
-    longitude: number
+  endTime: string
+  location?: {
+    id?: string
+    address?: string
+    latitude?: number
+    longitude?: number
   }
-  eventAssets: {
-    id: string
+  eventAssets?: {
+    id?: string
     imageUrl: string
   }[]
+  isTraining?: boolean
 }
-
-const { data: eventsData } = await useFetch<Event[]>('/api/events', {
-  default: () => [],
-})
-
-const imageAPI = (url: string | undefined) => {
-  return url ? `/api/events/${url}` : undefined
-}
-
-const events = computed(() =>
-  (eventsData.value || [])
-    .filter(e => new Date(e.startTime).getTime() >= Date.now())
-    .sort(
-      (a, b) =>
-        new Date(a.startTime).getTime()
-          - new Date(b.startTime).getTime(),
-    )
-    .slice(0, 6)
-    .map(e => ({
-      id: e.id,
-      title: e.title,
-      date: new Date(e.startTime).toLocaleDateString('en-US', {
-        month: 'short',
-        day: '2-digit',
-        year: 'numeric',
-      }),
-      location: e.location,
-      image:
-                imageAPI(e.eventAssets?.[0]?.imageUrl) ?? '/images/image1.jpeg',
-    })),
-)
 
 const isDateDisabled = (d: DateValue) =>
   d.toDate(tz) < new Date(new Date().setHours(0, 0, 0, 0))
 
-function getEventImage(event: any) {
+function getEventImage(event: CalendarEvent) {
   if (event.eventAssets && event.eventAssets.length > 0) {
     const imageUrl = event.eventAssets[0].imageUrl
     return `/api/events/${imageUrl}`
@@ -124,7 +87,7 @@ function getEventImage(event: any) {
   return undefined
 }
 
-function getEventSubtitle(event: any) {
+function getEventSubtitle(event: CalendarEvent) {
   const date = new Date(event.startTime).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',

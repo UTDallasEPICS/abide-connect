@@ -1,5 +1,5 @@
 import prisma from '#server/utils/prisma'
-import { requireRole } from '~~/server/utils/requireRole';
+import { requireRole } from '~~/server/utils/requireRole'
 
 /**
  * Every volunteer's hour logs, newest first, for the admin review queue.
@@ -15,7 +15,7 @@ import { requireRole } from '~~/server/utils/requireRole';
  * `Event` row.
  */
 export default eventHandler(async (event) => {
-  const session = await requireRole(event, 'admin');
+  await requireRole(event, 'admin')
 
   try {
     const logs = await prisma.volunteer_Hour_Log.findMany({

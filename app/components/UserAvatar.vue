@@ -4,7 +4,7 @@ interface Props {
   src?: string | null
 }
 const props = withDefaults(defineProps<Props>(), {
-  src: undefined
+  src: undefined,
 })
 const initials = computed(() => {
   return props.name
@@ -18,6 +18,7 @@ const initials = computed(() => {
 // Treat undefined, null, and empty string as "no image"
 const hasImage = computed(() => !!props.src)
 </script>
+
 <template>
   <!--
     Sizing note: this component takes up 100% of whatever box its parent gives it.

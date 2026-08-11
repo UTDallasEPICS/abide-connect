@@ -13,9 +13,9 @@
  *  - dismissing DELETEs the user's join row.
  *
  * `/api/notification/[id]` ignores its route parameter and resolves the
- * recipient from the session, hence the placeholder `self` segment. It also
- * swallows its own errors and returns `undefined` when nobody is signed in,
- * which is why the empty state doubles as the logged-out state.
+ * recipient from the session, hence the placeholder `self` segment. The fetch
+ * only runs client-side and only when a session exists; logged-out visitors
+ * see a "sign in" prompt in the dropdown instead.
  */
 
 type NotificationItem = {
@@ -26,22 +26,32 @@ type NotificationItem = {
   isRead: boolean
 }
 
-const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+const { roles } = useUserRoles()
+const signedIn = computed(() => roles.value.length > 0)
 
-const { data, refresh } = await useFetch<
+const notifications = ref<NotificationItem[]>([])
+
+const { data, refresh } = useFetch<
   { success: boolean, notifications: NotificationItem[] } | undefined
 >('/api/notification/self', {
   key: 'notifications',
-  headers,
+  immediate: false,
   default: () => undefined,
 })
 
-const notifications = ref<NotificationItem[]>([])
 watch(
-  data,
-  value => (notifications.value = value?.notifications ?? []),
+  () => [signedIn.value, data.value] as const,
+  ([isSignedIn, value]) => {
+    notifications.value = isSignedIn ? value?.notifications ?? [] : []
+  },
   { immediate: true },
 )
+
+// Fetch only after hydration and only when signed in — no SSR fetch, so
+// logged-out page renders issue zero notification requests.
+watch(signedIn, (isSignedIn) => {
+  if (isSignedIn && import.meta.client) refresh()
+})
 
 const unreadCount = computed(
   () => notifications.value.filter(n => !n.isRead).length,
@@ -50,7 +60,7 @@ const unreadCount = computed(
 const open = ref(false)
 // Re-check on open so a tab left sitting for an hour isn't showing a stale list.
 watch(open, (isOpen) => {
-  if (isOpen) refresh()
+  if (isOpen && signedIn.value) refresh()
 })
 
 const expandedId = ref<string | null>(null)
@@ -140,8 +150,24 @@ const formatTime = (timestamp: string) => {
       </div>
 
       <div class="max-h-[60vh] overflow-y-auto">
+        <template v-if="!signedIn">
+          <div class="px-4 py-6 text-center">
+            <p class="text-[13px] text-gray-500 dark:text-gray-400">
+              Sign in to receive notifications.
+            </p>
+            <UButton
+              color="primary"
+              size="sm"
+              class="mt-3"
+              icon="i-lucide-log-in"
+              to="/auth/login"
+            >
+              Sign in
+            </UButton>
+          </div>
+        </template>
         <p
-          v-if="!notifications.length"
+          v-else-if="!notifications.length"
           class="px-4 py-6 text-center text-[13px] text-gray-500 dark:text-gray-400"
         >
           You're all caught up.

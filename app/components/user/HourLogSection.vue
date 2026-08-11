@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import DetailSection from '~/components/user/DetailSection.vue';
-import type { UserData } from '~/types/user/user-data';
+import DetailSection from '~/components/user/DetailSection.vue'
+import type { UserData } from '~/types/user/user-data'
 
 /**
  * Hour-log list on the admin member-detail page, with inline editing.
@@ -14,56 +14,64 @@ import type { UserData } from '~/types/user/user-data';
  * the two numbers legitimately disagree for the same person.
  */
 export interface HourLogDraft {
-  hours: number;
-  date: string;
-  approvalStatus: string;
-  comment: string;
+  hours: number
+  date: string
+  approvalStatus: string
+  comment: string
 }
 
 const props = defineProps<{
-  hourLogs: UserData['hourLogs'];
-  isEditMode: boolean;
-}>();
+  hourLogs: UserData['hourLogs']
+  isEditMode: boolean
+}>()
 
 const emit = defineEmits<{
-  delete: [log: UserData['hourLogs'][number]];
-}>();
+  delete: [log: UserData['hourLogs'][number]]
+}>()
 
 // Keyed by hour-log id — parent owns the source of truth,
 // this component reads/writes it directly via v-model.
-const drafts = defineModel<Record<number, HourLogDraft>>({ required: true });
+const drafts = defineModel<Record<number, HourLogDraft>>({ required: true })
 
-const approvalStatusOptions = ['Pending', 'Approved', 'Rejected'];
+const approvalStatusOptions = ['Pending', 'Approved', 'Rejected']
 
 // Single neutral badge style used for hour log status
-const badgeStyle = 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
+const badgeStyle = 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
 
 const totalHours = computed(() =>
-  props.hourLogs.reduce((sum, log) => sum + log.hours, 0)
-);
+  props.hourLogs.reduce((sum, log) => sum + log.hours, 0),
+)
 
 function formatDate(value: Date | string) {
   return new Date(value).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-  });
+  })
 }
 </script>
 
 <template>
   <DetailSection :title="`Hour Log (${totalHours} hrs total)`">
-    <p v-if="hourLogs.length === 0" class="font-normal text-gray-400 dark:text-gray-500">
+    <p
+      v-if="hourLogs.length === 0"
+      class="font-normal text-gray-400 dark:text-gray-500"
+    >
       No hours logged yet.
     </p>
-    <div v-else class="divide-y divide-gray-200 dark:divide-gray-700">
+    <div
+      v-else
+      class="divide-y divide-gray-200 dark:divide-gray-700"
+    >
       <div
         v-for="log in hourLogs"
         :key="log.id"
         class="py-3 flex items-start justify-between gap-3"
       >
         <div class="flex-1 min-w-0">
-          <p class="font-semibold text-gray-900 dark:text-gray-100 truncate">{{ log.eventTitle }}</p>
+          <p class="font-semibold text-gray-900 dark:text-gray-100 truncate">
+            {{ log.eventTitle }}
+          </p>
 
           <template v-if="isEditMode && drafts[log.id]">
             <div class="flex flex-wrap items-center gap-2 mt-2">
@@ -83,7 +91,11 @@ function formatDate(value: Date | string) {
                 v-model="drafts[log.id].approvalStatus"
                 class="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-2 py-1 text-sm"
               >
-                <option v-for="status in approvalStatusOptions" :key="status" :value="status">
+                <option
+                  v-for="status in approvalStatusOptions"
+                  :key="status"
+                  :value="status"
+                >
                   {{ status }}
                 </option>
               </select>
@@ -99,7 +111,10 @@ function formatDate(value: Date | string) {
             <p class="font-normal text-gray-400 dark:text-gray-400 text-sm">
               {{ formatDate(log.date) }} · {{ log.hours }} hrs
             </p>
-            <p v-if="log.comment" class="font-normal text-gray-400 dark:text-gray-400 text-sm italic">
+            <p
+              v-if="log.comment"
+              class="font-normal text-gray-400 dark:text-gray-400 text-sm italic"
+            >
               "{{ log.comment }}"
             </p>
           </template>

@@ -1,9 +1,4 @@
 <script setup lang="ts">
-import { useColorMode } from '#imports'
-
-const colorMode = useColorMode()
-const isDark = computed(() => colorMode.value === 'dark')
-
 /**
  * One person on the list. `phone` is blank for accounts that never filled one
  * in, and always blank for `isGuest` rows — those are legacy sign-ups from
@@ -40,12 +35,19 @@ const props = defineProps<{
   admin: boolean
 }>()
 
+// `refresh` is handed to the parent via `defineExpose` below; the callable is
+// filled in once `useFetch` resolves (it must be declared before the `await`
+// below — `defineExpose` is not allowed after one).
+const refreshFn = ref<() => void>(() => {})
+defineExpose({ refresh: () => refreshFn.value() })
+
 // Admin-only endpoint, so the session cookie has to ride along on SSR.
 const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
 const { data: rsvpData, refresh } = await useFetch<RSVPData>(
   `/api/events/${props.eventId}/rsvp`,
   { headers },
 )
+refreshFn.value = refresh
 
 /** Email, plus the phone number when the account has one on file. */
 function contactLine(person: EventRegistration): string {
@@ -54,8 +56,6 @@ function contactLine(person: EventRegistration): string {
 
 const showVolunteers = ref(false)
 const showAttendees = ref(false)
-
-defineExpose({ refresh })
 </script>
 
 <template>

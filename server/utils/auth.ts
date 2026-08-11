@@ -45,8 +45,7 @@ export const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
-});
-
+})
 
 export const auth = betterAuth({
   socialProviders: {
@@ -110,14 +109,14 @@ export const auth = betterAuth({
     },
     deleteUser: {
       enabled: true,
-    }
+    },
   },
   plugins: [
     emailOTP({
       otpLength: 6,
       expiresIn: 10 * 60, // 10 minutes in seconds
       disableSignUp: true,
-      async sendVerificationOTP({ email, otp, type }) {
+      async sendVerificationOTP({ email, otp }) {
         try {
           const { subject, text, html } = buildOtpEmail(otp)
           await transporter.sendMail({
@@ -127,7 +126,8 @@ export const auth = betterAuth({
             text,
             html,
           })
-        } catch (err) {
+        }
+        catch (err) {
           console.error('[sendVerificationOTP] Failed to send email to', email, err)
           throw err
         }
