@@ -1,5 +1,4 @@
 <script setup lang="ts">
-const onInboxClick = () => navigateTo('/inbox')
 const onSettingsClick = () => navigateTo('/settings')
 
 const isScrolled = ref(false)
@@ -37,14 +36,7 @@ onUnmounted(() => {
     <template #right>
       <div class="flex items-center gap-0.5">
         <slot name="right">
-          <UButton
-            color="neutral"
-            variant="ghost"
-            aria-label="Inbox"
-            @click="onInboxClick"
-          >
-            <UIcon name="i-lucide-bell" class="w-6 h-6 text-gray-900 dark:text-teal-400" />
-          </UButton>
+          <NavNotificationMenu />
           <UButton
             color="neutral"
             variant="ghost"

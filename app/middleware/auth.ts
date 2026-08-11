@@ -5,7 +5,7 @@
  *
  *     definePageMeta({ middleware: 'auth' })
  *
- * (see `settings.vue`, `inbox.vue`). Everything else is reachable logged-out
+ * (see `settings.vue`). Everything else is reachable logged-out
  * unless it matches a prefix in `auth.global.ts`, which is the sibling that
  * *is* global and checks roles rather than mere presence of a session.
  *
