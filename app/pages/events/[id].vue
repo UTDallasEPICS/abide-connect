@@ -13,13 +13,16 @@ import {
 /**
  * Event detail page, doubling as the inline editor for admins.
  *
- * What renders depends on the viewer, assembled from three fetches (roles,
- * volunteer profile, existing RSVP):
+ * What renders depends on the viewer, assembled from four fetches (roles, own
+ * profile, volunteer profile, existing RSVP):
  *   - admins get edit controls, the registration list and, for trainings, the
  *     volunteer approval panel;
  *   - approved volunteers get one-tap volunteer sign-up;
  *   - pending volunteers get sign-up on training events only;
- *   - everyone else gets attendee registration, as a guest if signed out.
+ *   - other signed-in users get one-tap attendee registration, which records
+ *     the name, phone and email on their account;
+ *   - signed-out visitors can read the page but are sent to sign in or create
+ *     an account, and come back here afterwards via `?redirect=`.
  *
  * The `canSignUpAsVolunteer` / `canRegisterAsAttendee` helpers are the same
  * ones the API enforces with, so the buttons shown match what the server will
@@ -55,6 +58,22 @@ const { data: myVolunteer } = await useFetch<{ approvalStatus?: string } | null>
   '/api/volunteer/me',
   { headers, default: () => null },
 )
+// The contact details a registration is made with. Returns null when logged
+// out rather than 401ing, so it's safe to fetch unconditionally.
+const { data: me } = await useFetch<{ name: string | null, email: string, phone: string | null } | null>(
+  '/api/user/me',
+  { headers, default: () => null },
+)
+// Phone is optional at sign-up, so an account can register without one — worth
+// prompting for, since it's how staff reach an attendee on the day.
+const missingPhone = computed(() => !me.value?.phone)
+
+/** The contact line staff will see against this registration. */
+const registeredAs = computed(() => {
+  if (!me.value) return ''
+  const name = me.value.name?.trim() || me.value.email
+  return [name, me.value.email, me.value.phone].filter(Boolean).join(' · ')
+})
 const isAdmin = computed(() => roles.value?.includes('admin') ?? false)
 // `/api/user/roles` returns [] when there's no session, and every signed-in
 // user holds at least `user`.
@@ -120,21 +139,16 @@ const acceptsTimeBlocks = computed(() =>
   || editForm.value.eventType === 'VOLUNTEERS_AND_ATTENDEES',
 )
 
-const showRsvpModal = ref(false)
-const rsvpIsVolunteer = ref(false)
 const rsvpStatsRef = ref<any>(null)
 const signUpPending = ref(false)
 const signUpError = ref('')
 
-function openRsvpModal(isVolunteer: boolean) {
-  rsvpIsVolunteer.value = isVolunteer
-  showRsvpModal.value = true
-}
-
-async function onRsvpSuccess() {
-  showRsvpModal.value = false
-  await Promise.all([refreshMyRsvp(), rsvpStatsRef.value?.refresh()])
-}
+// Where an unregistered visitor is sent to attend, and what brings them back
+// here once they have an account.
+const loginLink = computed(() => ({
+  path: '/auth/login',
+  query: { redirect: route.fullPath },
+}))
 
 function signUpErrorMessage(err: unknown, fallback: string) {
   return (err as { data?: { message?: string } })?.data?.message || fallback
@@ -153,6 +167,29 @@ async function signUpAsVolunteer() {
   }
   catch (err) {
     signUpError.value = signUpErrorMessage(err, 'Could not sign you up. Please try again.')
+  }
+  finally {
+    signUpPending.value = false
+  }
+}
+
+/**
+ * One-tap attendee registration. No form: the sign-up is keyed to the account,
+ * so staff read the name, phone and email straight off the profile — which is
+ * also why there's no way to register without one.
+ */
+async function registerToAttend() {
+  signUpPending.value = true
+  signUpError.value = ''
+  try {
+    await $fetch(`/api/events/${eventId}/rsvp`, {
+      method: 'POST',
+      body: { isVolunteer: false },
+    })
+    await Promise.all([refreshMyRsvp(), rsvpStatsRef.value?.refresh()])
+  }
+  catch (err) {
+    signUpError.value = signUpErrorMessage(err, 'Could not register you. Please try again.')
   }
   finally {
     signUpPending.value = false
@@ -757,17 +794,45 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
               Sign Up as Volunteer
             </UButton>
             <UButton
-              v-if="canAttend && !isRegisteredToAttend"
+              v-if="canAttend && isSignedIn && !isRegisteredToAttend"
               :color="brandColor"
               variant="outline"
               size="xl"
               block
               icon="i-lucide-ticket"
-              @click="openRsvpModal(false)"
+              :loading="signUpPending"
+              @click="registerToAttend"
             >
               Register to Attend
             </UButton>
+            <!-- Attending requires an account: we register people by their
+                 profile, so there's nothing to submit until they have one. -->
+            <UButton
+              v-else-if="canAttend && !isSignedIn"
+              :color="brandColor"
+              variant="outline"
+              size="xl"
+              block
+              icon="i-lucide-log-in"
+              :to="loginLink"
+            >
+              Sign In to Register
+            </UButton>
           </div>
+
+          <p
+            v-if="canAttend && !isSignedIn"
+            class="text-center text-sm text-gray-500 dark:text-gray-400"
+          >
+            You'll need an account to attend.
+            <ULink
+              :to="{ path: '/auth/sign-up', query: { redirect: route.fullPath } }"
+              class="text-primary font-medium"
+            >
+              Create one
+            </ULink>
+            — we'll bring you back here.
+          </p>
 
           <div
             v-if="isRegisteredToAttend"
@@ -789,6 +854,16 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
             >
               Cancel registration
             </UButton>
+            <!-- Staff work the door from these, so show what they'll see. -->
+            <p class="w-full text-sm text-gray-600 dark:text-gray-400">
+              Registered as {{ registeredAs }}.
+              <ULink
+                to="/settings"
+                class="text-primary font-medium"
+              >
+                {{ missingPhone ? 'Add a phone number' : 'Update your details' }}
+              </ULink>
+            </p>
           </div>
 
           <p
@@ -798,24 +873,6 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
             {{ signUpError }}
           </p>
         </div>
-
-        <!-- RSVP Modal -->
-        <Teleport to="body">
-          <div
-            v-if="showRsvpModal"
-            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
-            @click.self="showRsvpModal = false"
-          >
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl dark:shadow-black/30 max-w-md w-full border border-transparent dark:border-gray-700">
-              <EventRSVPModal
-                :event-id="eventId"
-                :is-volunteer="rsvpIsVolunteer"
-                @success="onRsvpSuccess"
-                @close="showRsvpModal = false"
-              />
-            </div>
-          </div>
-        </Teleport>
       </div>
     </div>
   </div>

@@ -142,8 +142,11 @@ export function canSignUpAsVolunteer(type: EventType, viewer: EventViewer): bool
 }
 
 /**
- * Whether the general public can register for this event. Unlike volunteer
- * sign-up this doesn't depend on the viewer — guests RSVP without an account.
+ * Whether this event takes attendee registrations at all. Unlike volunteer
+ * sign-up it doesn't depend on the viewer — any account holder can attend an
+ * event that allows attendees. It is *not* a permission check on its own:
+ * registering still requires a session, which the caller has to establish
+ * separately (see `events/[id]/rsvp.post.ts`).
  */
 export function canRegisterAsAttendee(type: EventType): boolean {
   return type === 'ATTENDEES' || type === 'VOLUNTEERS_AND_ATTENDEES'

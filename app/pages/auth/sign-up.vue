@@ -17,7 +17,18 @@ import { errorMessage as toErrorMessage } from '~/lib/errorMessage'
  * the tab rather than lingering on a shared device. The trade-off is that
  * opening the emailed code in a *new* tab loses the pending details and bounces
  * the user back here.
+ *
+ * A `?redirect=` param rides along the same way, under its own key so it never
+ * ends up in the sign-up request body. It's how someone sent here from an event
+ * they wanted to attend gets returned to that event once the account exists.
  */
+
+const route = useRoute()
+// Bouncing between sign-up and login must not lose where the user was headed.
+const loginLink = computed(() => ({
+  path: '/auth/login',
+  query: route.query.redirect ? { redirect: route.query.redirect } : undefined,
+}))
 
 const errorMessage = ref<string | null>(null)
 
@@ -38,6 +49,12 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
       email: payload.data.email,
       phone: payload.data.phone,
     }))
+    if (typeof route.query.redirect === 'string') {
+      sessionStorage.setItem('pendingSignUpRedirect', route.query.redirect)
+    }
+    else {
+      sessionStorage.removeItem('pendingSignUpRedirect')
+    }
     await navigateTo('/auth/sign-up-verify')
   }
   catch (error: unknown) {
@@ -68,7 +85,7 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
     >
       <template #description>
         Already have an account? <ULink
-          to="/auth/login"
+          :to="loginLink"
           class="text-primary font-medium"
         >Log In</ULink>.
       </template>

@@ -4,19 +4,25 @@ import { useColorMode } from '#imports'
 const colorMode = useColorMode()
 const isDark = computed(() => colorMode.value === 'dark')
 
-interface GuestRSVP {
+/**
+ * One person on the list. `phone` is blank for accounts that never filled one
+ * in, and always blank for `isGuest` rows — those are legacy sign-ups from
+ * before an account was required, and only ever held a name and email.
+ */
+interface EventRegistration {
   id: string
   name: string
   email: string
+  phone: string
   isVolunteer: boolean
-  createdAt: string
+  isGuest: boolean
 }
 
 interface RSVPData {
   volunteerCount: number
   attendeeCount: number
-  volunteers: GuestRSVP[]
-  attendees: GuestRSVP[]
+  volunteers: EventRegistration[]
+  attendees: EventRegistration[]
 }
 
 /**
@@ -40,6 +46,11 @@ const { data: rsvpData, refresh } = await useFetch<RSVPData>(
   `/api/events/${props.eventId}/rsvp`,
   { headers },
 )
+
+/** Email, plus the phone number when the account has one on file. */
+function contactLine(person: EventRegistration): string {
+  return [person.email, person.phone].filter(Boolean).join(' · ')
+}
 
 const showVolunteers = ref(false)
 const showAttendees = ref(false)
@@ -101,9 +112,17 @@ defineExpose({ refresh })
           >
             <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
               {{ volunteer.name }}
+              <UBadge
+                v-if="volunteer.isGuest"
+                color="neutral"
+                variant="subtle"
+                size="sm"
+              >
+                guest
+              </UBadge>
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">
-              {{ volunteer.email }}
+              {{ contactLine(volunteer) }}
             </p>
           </div>
         </div>
@@ -156,9 +175,17 @@ defineExpose({ refresh })
           >
             <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
               {{ attendee.name }}
+              <UBadge
+                v-if="attendee.isGuest"
+                color="neutral"
+                variant="subtle"
+                size="sm"
+              >
+                guest
+              </UBadge>
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">
-              {{ attendee.email }}
+              {{ contactLine(attendee) }}
             </p>
           </div>
         </div>
