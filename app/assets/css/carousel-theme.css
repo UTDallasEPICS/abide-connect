@@ -1,0 +1,13 @@
+.carousel {
+  --vc-nav-color: white;
+  --vc-nav-color-hover: white;
+  --vc-pgn-color: rgba(255, 255, 255, 0.5);
+  --vc-pgn-active-color: white;
+  height: 100%;
+}
+
+.carousel__viewport,
+.carousel__track,
+.carousel__slide {
+  height: 100%;
+}

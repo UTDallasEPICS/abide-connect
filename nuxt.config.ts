@@ -12,6 +12,7 @@ export default defineNuxtConfig({
   },
   css: [
     '~/assets/css/main.css',
+    '~/assets/css/carousel-theme.css',
   ],
   cron: {
     runOnInit: true,

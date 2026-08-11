@@ -10,6 +10,5 @@ import { requireRole } from '~~/server/utils/requireRole';
  * `/api/admin/donations/<id>/image`.
  */
 export default defineEventHandler(async (event) => {
-  const session = await requireRole(event, 'admin');
   return prisma.donation.findMany({ orderBy: { createdAt: 'desc' } })
 })

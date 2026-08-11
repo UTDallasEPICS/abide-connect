@@ -1,5 +1,6 @@
 import prisma from '#server/utils/prisma'
 import { getEventViewer } from '#server/utils/eventViewer'
+import { sendSignupConfirmation } from '#server/utils/eventMailer'
 import {
   canRegisterAsAttendee,
   canSignUpAsVolunteer,
@@ -88,6 +89,20 @@ export default defineEventHandler(async (event) => {
       volunteerId: volunteer?.id ?? null,
     },
   })
+
+  // Confirmation is a courtesy, not part of the sign-up: SMTP can take
+  // seconds and a bounced address must not fail the RSVP, so it's dispatched
+  // without blocking the response and swallows its own errors.
+  const sessionUser = event.context.session?.user
+  if (sessionUser?.email) {
+    void sendSignupConfirmation({
+      eventId: id,
+      email: sessionUser.email,
+      name: sessionUser.name ?? null,
+      isVolunteer,
+      claim: { type: 'user', userId: viewer.userId, eventId: id },
+    }).catch(error => console.error('[rsvp] confirmation email failed', error))
+  }
 
   setResponseStatus(event, 201)
   return rsvp

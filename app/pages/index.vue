@@ -1,439 +1,445 @@
 <script setup lang="ts">
-import 'vue3-carousel/dist/carousel.css'
-import { Carousel, Slide, Pagination } from 'vue3-carousel'
+import ServiceComponent from '~/components/homepage/ServiceComponent.vue';
+import EventCard from '~/components/event/EventCard.vue';
+import SecondaryEventCard from '~/components/event/SecondaryEventCard.vue';
+import EventCardSkeleton from '~/components/homepage/EventCardSkeleton.vue';
+import SecondaryEventCardSkeleton from '~/components/event/SecondaryEventCardSkeleton.vue';
+import ConfirmModal from '~/components/modals/ConfirmModal.vue';
 
-/**
- * Public home page: donation campaign carousel plus upcoming events.
- *
- * Unauthenticated — `/api/events` audience-filters its response, so a
- * logged-out visitor simply sees fewer events rather than being redirected.
- */
+const items = [
+  '/images/image2.jpg',
+  '/images/image1.png',
+  '/images/image3.JPG',
+]
 
-// NOTE: `/api/admin/donations` is admin-gated (`requireRole(event, 'admin')`),
-// but this is the public home page — so for anonymous and non-admin visitors
-// the request 403s, `donationsError` is set, and the carousel renders empty.
-// The campaigns it's meant to show are public content; this wants a public
-// read endpoint (or the existing one split) rather than the admin route.
-const {
-  data: donations,
-  pending: donationsPending,
-  error: donationsError,
-} = await useFetch<
-  {
-    id: string
-    name: string
-    link: string
-    startDate: string
-    endDate: string
-    imageUrl: string
-  }[]
->('/api/admin/donations')
-
-const carouselConfig = {
-  itemsToShow: 1,
-  wrapAround: true,
-  mouseDrag: true,
-  touchDrag: true,
-  autoplay: 6000,
+interface UpcomingEvent {
+  id: string
+  title: string
+  url: string
+  image: string
+  day: string
+  month: string
+  location: string
+  going: number
+  startTime: string
 }
 
-type Event = {
+interface UserUpcomingEvent {
   id: string
   title: string
   startTime: string
-  isTraining?: boolean
-  location: {
-    id: string
-    address: string
-    latitude: number
-    longitude: number
-  }
-  eventAssets: {
-    id: string
-    imageUrl: string
-  }[]
+  endTime: string
+  address: string | null
+  isTraining: boolean
+  isVolunteer: boolean
+  imageUrl: string | null
 }
 
-const { data: eventsData } = await useFetch<Event[]>('/api/events', {
+interface VolunteerMe {
+  id: string
+  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED'
+}
+
+const oneRowMinHeight = 'min-h-24'
+
+const skeletonCount = 6
+
+const onSignUpClick = () => navigateTo('/sign-up');
+const onSeeAllEventsClick = () => navigateTo('/events/list');
+const onVolunteerApplicationClick = () => navigateTo('/volunteer-application');
+
+const headers = useRequestHeaders(['cookie']);
+const { data: user } = await useFetch('/api/user/me', { headers })
+const { data: volunteer } = await useFetch<VolunteerMe | null>('/api/volunteer/me', { headers })
+
+const showYourEventsSection = computed(() => !!user.value)
+
+const yourEventsPending = ref(true)
+const yourEventsError = ref(false)
+
+const {
+  data: yourEventsRaw,
+  error: yourEventsFetchError,
+  status: yourEventsStatus,
+} = useLazyFetch<UserUpcomingEvent[]>('/api/user/upcoming-events', {
   default: () => [],
+  server: false,
+  immediate: showYourEventsSection.value,
 })
 
-// `/api/events` already hides volunteer-only and training events from anyone
-// who shouldn't see them, so whatever arrives here is safe to display.
+watch(yourEventsStatus, (newStatus) => {
+  if (newStatus === 'success' || newStatus === 'error') {
+    yourEventsPending.value = false
+    yourEventsError.value = newStatus === 'error'
+    if (newStatus === 'error') {
+      console.error('Failed to load your events:', yourEventsFetchError.value)
+    }
+  }
+})
 
-const slides = ref([
-  { id: 1, src: '/images/image1.jpeg', alt: 'Slide 1' },
-  { id: 2, src: '/images/image1.jpeg', alt: 'Slide 2' },
-  { id: 3, src: '/images/image1.jpeg', alt: 'Slide 3' },
-  { id: 4, src: '/images/image1.jpeg', alt: 'Slide 4' },
-])
+watch(showYourEventsSection, (shouldShow) => {
+  if (shouldShow && yourEventsStatus.value === 'idle') {
+    yourEventsPending.value = true
+    void refreshNuxtData('/api/user/upcoming-events')
+  }
+}, { immediate: true })
 
-const handleSignUp = () => {
-  navigateTo('/auth/sign-up')
-}
-
-const services = ref([
-  {
-    id: 1,
-    name: 'Prenatal Care',
-    image: '/images/image1.jpeg',
-    href: 'https://www.abidewomen.org/prenatalcare',
-  },
-  {
-    id: 2,
-    name: 'Postpatrum Care',
-    image: '/images/image1.jpeg',
-    href: 'https://www.abidewomen.org/postpartumcare',
-  },
-  {
-    id: 3,
-    name: 'Childbirth Education',
-    image: '/images/image1.jpeg',
-    href: 'https://www.abidewomen.org/childbirthed',
-  },
-  {
-    id: 4,
-    name: 'Mobile Clinic',
-    image: '/images/image1.jpeg',
-    href: 'https://www.abidewomen.org/mobile-clinic',
-  },
-])
-
-const imageAPI = (url: string | undefined) => {
-  return url ? `/api/events/${url}` : undefined
-}
-
-const toTile = (e: Event) => ({
+const yourEvents = computed(() => yourEventsRaw.value.map((e) => ({
   id: e.id,
   title: e.title,
-  date: new Date(e.startTime).toLocaleDateString('en-US', {
-    month: 'short',
-    day: '2-digit',
-    year: 'numeric',
-  }),
-  location: e.location,
-  image: imageAPI(e.eventAssets?.[0]?.imageUrl) ?? '/images/image1.jpeg',
+  url: `/events/${e.id}`,
+  image: e.imageUrl
+    ? `/api/events/${e.id}/images/${e.imageUrl.split('/').pop()}`
+    : '/images/default-event.jpg',
+  startTime: e.startTime,
+  location: e.address ?? '',
+})))
+
+// Whether the "Your Events" section (header included) should render at all:
+// signed in, and either still loading (don't know yet) or loaded with items.
+// Once loaded with zero items, the whole section disappears — no header,
+// no empty-state text.
+const showYourEventsBlock = computed(() =>
+  showYourEventsSection.value && (yourEventsPending.value || yourEventsError.value || yourEvents.value.length > 0)
+)
+
+// --- Cancel RSVP confirmation modal ---
+const cancelModalOpen = ref(false)
+const cancelLoading = ref(false)
+const cancelError = ref<string | null>(null)
+const pendingCancelId = ref<string | null>(null)
+const pendingCancelTitle = computed(() => {
+  const match = yourEvents.value.find(e => e.id === pendingCancelId.value)
+  return match?.title ?? 'this event'
 })
 
-const upcoming = computed(() =>
-  (eventsData.value || [])
-    .filter(e => new Date(e.startTime).getTime() >= Date.now())
-    .sort(
-      (a, b) =>
-        new Date(a.startTime).getTime()
-          - new Date(b.startTime).getTime(),
-    ),
-)
-
-// Regular events exclude the training class.
-const events = computed(() =>
-  upcoming.value.filter(e => !e.isTraining).slice(0, 6).map(toTile),
-)
-
-// Training events, only surfaced to pending volunteers.
-const trainingEvents = computed(() =>
-  upcoming.value.filter(e => e.isTraining).map(toTile),
-)
-
-// The `Event` annotation is wrong: callers pass a `toTile` result (id, title,
-// date, image), not the raw API `Event` (startTime, eventAssets), which is why
-// this reports a type error. Only `id` is actually read, so it works at
-// runtime; the fix is to type the parameter as the tile shape.
-const handleEventClick = (event: Event) => {
-  navigateTo(`/events/${event.id}`)
+function handleCancelRsvp(eventId: string) {
+  pendingCancelId.value = eventId
+  cancelError.value = null
+  cancelModalOpen.value = true
 }
+
+function handleCancelModalOpenUpdate(value: boolean) {
+  cancelModalOpen.value = value
+  if (!value) {
+    pendingCancelId.value = null
+    cancelError.value = null
+  }
+}
+
+async function confirmCancelRsvp() {
+  if (!pendingCancelId.value) return
+  cancelLoading.value = true
+  cancelError.value = null
+  try {
+    await $fetch(`/api/events/${pendingCancelId.value}/rsvp`, { method: 'DELETE', body: {} })
+    cancelModalOpen.value = false
+    pendingCancelId.value = null
+    await refreshNuxtData('/api/user/upcoming-events')
+  } catch (err) {
+    console.error('Failed to cancel RSVP:', err)
+    cancelError.value = 'Something went wrong. Please try again.'
+  } finally {
+    cancelLoading.value = false
+  }
+}
+
+// --- Upcoming Events ---
+const pending = ref(true)
+const error = ref(false)
+
+const { data: upcomingEvents, error: fetchError, status } = useLazyFetch<UpcomingEvent[]>('/api/events/upcoming', {
+  query: { limit: 9 },
+  default: () => [],
+  server: false,
+})
+
+watch(status, (newStatus) => {
+  if (newStatus === 'success' || newStatus === 'error') {
+    pending.value = false
+    error.value = newStatus === 'error'
+    if (newStatus === 'error') {
+      console.error('Failed to load events:', fetchError.value)
+    }
+  }
+})
+
+// --- Training Events (volunteers who aren't approved yet) ---
+const showTrainingSection = computed(() => !!volunteer.value && volunteer.value.approvalStatus !== 'APPROVED')
+
+const trainingPending = ref(true)
+const trainingError = ref(false)
+
+const {
+  data: trainingEvents,
+  error: trainingFetchError,
+  status: trainingStatus,
+} = useLazyFetch<UpcomingEvent[]>('/api/events/training', {
+  query: { limit: 9 },
+  default: () => [],
+  server: false,
+  immediate: showTrainingSection.value,
+})
+
+watch(trainingStatus, (newStatus) => {
+  if (newStatus === 'success' || newStatus === 'error') {
+    trainingPending.value = false
+    trainingError.value = newStatus === 'error'
+    if (newStatus === 'error') {
+      console.error('Failed to load training events:', trainingFetchError.value)
+    }
+  }
+})
+
+watch(showTrainingSection, (shouldShow) => {
+  if (shouldShow && trainingStatus.value === 'idle') {
+    trainingPending.value = true
+    void refreshNuxtData('/api/events/training')
+  }
+}, { immediate: true })
 </script>
-
 <template>
-  <div class="min-h-screen flex flex-col bg-white dark:bg-gray-900">
-    <div class="flex-1 mt-12 mb-12 pt-4 w-full h-full overflow-y-auto">
-      <!-- Hero / Carousel Section -->
-      <div class="w-full max-h-[600px] overflow-y-auto">
-        <Carousel
-          v-bind="carouselConfig"
-          class="flex-1 max-h-full overflow-y-auto rounded-3xl"
+  <div class="mt-20 min-h-screen pb-20">
+    <div class="w-full max-w-(--ui-container) mx-auto">
+      <div class="lg:px-10 px-5">
+        <!-- Carousel -->
+        <UCarousel
+            loop
+            dots
+            class="rounded-2xl shadow-xl overflow-hidden mb-8"
+            :autoplay="{ delay: 6000 }"
+            v-slot="{ item }"
+            :items="items"
+            :ui="{
+                dots: 'bottom-3 gap-1.5',
+                dot: 'w-2 h-2 bg-black/30 data-[state=active]:bg-white transition-colors shadow-lg',
+            }"
         >
-          <Slide
-            v-for="slide in slides"
-            :key="slide.id"
-            class="max-h-full px-4 overflow-y-hidden rounded-3xl"
-          >
-            <img
-              :src="slide.src"
-              :alt="slide.alt"
-              class="max-h-full object-cover rounded-3xl px-1"
-            >
-          </Slide>
+            <img :src="item" class="w-full aspect-video object-cover rounded-2xl" alt="">
+        </UCarousel>
 
-          <template #addons>
-            <!-- <Navigation /> -->
-            <Pagination />
-          </template>
-        </Carousel>
-      </div>
-
-      <!-- Upcoming Events -->
-      <div class="px-2 pb-4 pl-4 pt-4 w-full relative">
-        <h3 class="text-2xl font-semibold text-brand4 mb-4">
-          UPCOMING EVENTS
-        </h3>
-        <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-          <div
-            v-for="event in events"
-            :key="event.id"
-            class="shrink-0 w-40 rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer"
-            @click="handleEventClick(event)"
-          >
-            <!-- Event Image Placeholder -->
-            <div class="h-35 relative overflow-hidden">
-              <img
-                :src="event.image"
-                class="w-full h-full object-cover"
-              >
-            </div>
-
-            <!-- Event Content -->
-            <div class="p-2">
-              <h4
-                class="text-sm font_semibold text-brand4 mb-1.5"
-              >
-                {{ event.title }}
-              </h4>
-              <div class="space-y-2">
-                <!-- Date -->
-                <div
-                  class="flex items-center text-gray-600 text-[12px]"
-                >
-                  <svg
-                    class="w-4 h-4 mr-2 text-teal-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <rect
-                      x="3"
-                      y="4"
-                      width="18"
-                      height="18"
-                      rx="2"
-                      ry="2"
-                    />
-                    <line
-                      x1="16"
-                      y1="2"
-                      x2="16"
-                      y2="6"
-                    />
-                    <line
-                      x1="8"
-                      y1="2"
-                      x2="8"
-                      y2="6"
-                    />
-                    <line
-                      x1="3"
-                      y1="10"
-                      x2="21"
-                      y2="10"
-                    />
-                  </svg>
-                  <span>{{ event.date }}</span>
-                </div>
-
-                <!-- Location -->
-                <div
-                  class="flex items-start text-gray-600 text-[10px]"
-                >
-                  <svg
-                    class="w-3 h-3 mr-2 ml-0.5 mt-0.5 text-teal-600 shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"
-                    />
-                    <circle
-                      cx="12"
-                      cy="10"
-                      r="3"
-                    />
-                  </svg>
-                  <span class="leading-tight">
-                    {{ event.location.address }}</span>
-                </div>
-              </div>
-            </div>
+        <!-- Your Events — hidden entirely once loaded with zero events -->
+        <section v-if="showYourEventsBlock" class="mb-8">
+          <div class="flex items-center justify-between mb-2">
+            <div v-if="yourEventsPending" class="h-5 w-32 animate-pulse rounded bg-gray-200" />
+            <h3 v-else class="uppercase font-gray-900">Your Events</h3>
           </div>
-        </div>
-      </div>
-      <!-- Volunteer Training (pending volunteers only) -->
-      <div
-        v-if="trainingEvents.length > 0"
-        class="px-2 pb-4 pl-4 pt-4 w-full relative"
-      >
-        <h3 class="text-2xl font-semibold text-brand7 mb-1">
-          VOLUNTEER TRAINING
-        </h3>
-        <p class="text-xs text-gray-500 mb-4">
-          Attend a training session to become an approved volunteer.
-        </p>
-        <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-          <div
-            v-for="event in trainingEvents"
-            :key="event.id"
-            class="shrink-0 w-40 rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer border border-brand7/30"
-            @click="navigateTo(`/events/${event.id}`)"
-          >
-            <div class="h-35 relative overflow-hidden">
-              <img
-                :src="event.image"
-                class="w-full h-full object-cover"
-              >
-              <span class="absolute top-2 left-2 text-[10px] font-semibold bg-brand7 text-white px-2 py-0.5 rounded-full">
-                Training
-              </span>
+
+          <div :class="oneRowMinHeight">
+            <div v-if="yourEventsPending" class="flex flex-col gap-3">
+              <SecondaryEventCardSkeleton v-for="n in 1" :key="n" />
             </div>
-            <div class="p-2">
-              <h4 class="text-sm font-semibold text-brand7 mb-1.5">
-                {{ event.title }}
-              </h4>
-              <div class="flex items-center text-gray-600 text-[12px]">
-                <UIcon
-                  name="i-lucide-calendar"
-                  class="w-4 h-4 mr-2 text-brand7"
+            <p v-if="yourEventsError" class="text-red-600 text-sm">
+              Failed to load your events. Please try again later.
+            </p>
+
+            <template v-if="!yourEventsPending && !yourEventsError">
+              <div class="flex flex-col gap-3">
+                <SecondaryEventCard
+                  v-for="item in yourEvents"
+                  :key="item.id"
+                  :id="item.id"
+                  :url="item.url"
+                  :title="item.title"
+                  :image="item.image"
+                  :start-time="item.startTime"
+                  :location="item.location"
+                  @cancel="handleCancelRsvp"
                 />
-                <span>{{ event.date }}</span>
               </div>
-              <div class="flex items-start text-gray-600 text-[10px] mt-1">
-                <UIcon
-                  name="i-lucide-map-pin"
-                  class="w-3 h-3 mr-2 ml-0.5 mt-0.5 text-brand7 shrink-0"
-                />
-                <span class="leading-tight">{{ event.location.address }}</span>
-              </div>
-            </div>
+            </template>
           </div>
-        </div>
-      </div>
+        </section>
 
-      <!-- Volunteer Sign Up -->
-      <div
-        class="bg-rose-800 text-center py-4 px-4 relative overflow-hidden items-center justify-center min-h-[100px]"
-      >
-        <p class="text-white font-bold text-lg mb-1">
-          Become A Volunteer
-        </p>
-        <!-- Sign up Button -->
-        <button
-          class="group relative bg-white text-rose-700 font-bold px-7 py-2 mb-1 rounded-full shadow-lg hover:shadow-2xl transition-transform hover:scale-105 active:scale-100 duration-300 overflow-hidden"
-          @click="handleSignUp"
-        >
-          <span
-            class="absolute inset-0 z-0 opacity-0 scale-95 rounded-full group-hover:opacity-100 group-hover:scale-100 transition-transform duration-300 bg-rose"
-          />
-          <span
-            class="relative z-10 flex items-center justify-center gap-1 text-lg"
-          >
-            <span>Sign Up</span>
-            <svg
-              class="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              stroke-width="3"
+        <!-- Upcoming Events -->
+        <section class="mb-8">
+          <div class="flex items-center justify-between mb-2">
+            <div v-if="pending" class="h-5 w-40 animate-pulse rounded bg-gray-200" />
+            <h3 v-else class="uppercase font-gray-900">Upcomming Events</h3>
+            <UButton
+              color="neutral"
+              variant="outline"
+              size="sm"
+              class="flex items-center gap-1.5 rounded-full bg-transparent px-3.5 py-1.5 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+              @click="onSeeAllEventsClick"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M13 7l5 5m0 0l-5 5m5-5H5"
-              />
-            </svg>
-          </span>
-        </button>
-      </div>
+              <UIcon name="i-lucide-search" class="w-4 h-4" />
+              <span>See All</span>
+            </UButton>
+          </div>
 
-      <!-- Services -->
-      <div class="px-2 pb-4 pt-4 pl-4">
-        <h3 class="text-2xl font-semibold text-brand4 mb-4">
-          SERVICES
-        </h3>
-        <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-          <a
-            v-for="service in services"
-            :key="service.id"
-            :href="service.href"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="shrink-0 w-[190px] rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer"
-          >
-            <div class="h-35 relative overflow-hidden">
-              <img
-                :src="service.image"
-                :alt="service.name"
-                class="w-full h-full object-cover transition-transform duration-300"
-              >
-              <div
-                class="absolute inset-x-0 bottom-0 w-full bg-linear-to-t from-black/60 to-transparent p-2"
-              >
-                <p
-                  class="text-white text-sm font-semibold truncate"
-                >
-                  {{ service.name }}
-                </p>
-              </div>
+          <div :class="oneRowMinHeight">
+            <div v-if="pending" class="flex gap-4 overflow-x-hidden">
+              <EventCardSkeleton v-for="n in skeletonCount" :key="n" />
             </div>
-          </a>
-        </div>
-      </div>
-      <!-- Donations -->
-      <div class="px-2 pb-4 pt-4 pl-4">
-        <h3 class="text-2xl font-semibold text-brand4 mb-4">
-          DONATIONS
-        </h3>
-        <div
-          v-if="donationsPending"
-          class="text-gray-400 text-sm"
-        >
-          Loading...
-        </div>
-        <div
-          v-else-if="donationsError"
-          class="text-red-500 text-sm"
-        >
-          Failed to load donations.
-        </div>
-        <div
-          v-else
-          class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide"
-        >
-          <a
-            v-for="donation in donations"
-            :key="donation.id"
-            :href="donation.link"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="shrink-0 w-[190px] rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer"
-          >
-            <div class="h-35 relative overflow-hidden">
-              <img
-                :src="`/api/admin/donations/${donation.id}/image`"
-                :alt="donation.name"
-                class="w-full h-full object-cover transition-transform duration-300"
+            <p v-if="error" class="text-red-600 text-sm">
+              Failed to load events. Please try again later.
+            </p>
+
+            <template v-if="!pending && !error">
+              <UCarousel
+                v-if="upcomingEvents.length"
+                drag-free
+                :items="upcomingEvents"
+                :ui="{
+                  viewport: 'overflow-visible lg:overflow-x-hidden',
+                  container: 'gap-1',
+                  item: 'basis-auto',
+                }"
+                v-slot="{ item }"
               >
-              <div
-                class="absolute inset-x-0 bottom-0 w-full bg-linear-to-t from-black/60 to-transparent p-2"
-              >
-                <p
-                  class="text-white text-sm font-semibold truncate"
-                >
-                  {{ donation.name }}
-                </p>
-              </div>
+                <EventCard
+                  :url="item.url"
+                  :title="item.title"
+                  :image="item.image"
+                  :day="item.day"
+                  :month="item.month"
+                  :location="item.location"
+                  :going="item.going"
+                />
+              </UCarousel>
+              <p v-else class="text-gray-400 font-normal">
+                No events found
+              </p>
+            </template>
+          </div>
+        </section>
+
+        <!-- Training Events -->
+        <section v-if="showTrainingSection" class="mb-8">
+          <div class="flex items-center justify-between mb-2">
+            <div v-if="trainingPending" class="h-5 w-36 animate-pulse rounded bg-gray-200" />
+            <h3 v-else class="uppercase font-gray-900">Training Events</h3>
+            <UButton
+              color="neutral"
+              variant="outline"
+              size="sm"
+              class="flex items-center gap-1.5 rounded-full bg-transparent px-3.5 py-1.5 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+              @click="onSeeAllEventsClick"
+            >
+              <UIcon name="i-lucide-search" class="w-4 h-4" />
+              <span>See All</span>
+            </UButton>
+          </div>
+
+          <div :class="oneRowMinHeight">
+            <div v-if="trainingPending" class="flex gap-4 overflow-x-hidden">
+              <EventCardSkeleton v-for="n in skeletonCount" :key="n" />
             </div>
-          </a>
-        </div>
+            <p v-if="trainingError" class="text-red-600 text-sm">
+              Failed to load training events. Please try again later.
+            </p>
+
+            <template v-if="!trainingPending && !trainingError">
+              <UCarousel
+                v-if="trainingEvents.length"
+                drag-free
+                :items="trainingEvents"
+                :ui="{
+                  viewport: 'overflow-visible lg:overflow-x-hidden',
+                  container: 'gap-1',
+                  item: 'basis-auto',
+                }"
+                v-slot="{ item }"
+              >
+                <EventCard
+                  :url="item.url"
+                  :title="item.title"
+                  :image="item.image"
+                  :day="item.day"
+                  :month="item.month"
+                  :location="item.location"
+                  :going="item.going"
+                />
+              </UCarousel>
+              <p v-else class="text-gray-400 font-normal">
+                No events found
+              </p>
+            </template>
+          </div>
+        </section>
       </div>
     </div>
+
+    <!-- Sign Up -->
+    <div
+      v-if="!user"
+      class="w-full h-30 font-normal text-white bg-rose-900 flex flex-col items-center justify-center gap-2 px-4 text-center mb-8"
+    >
+        <span>Sign up to be a volunteer.</span>
+        <UButton
+          label="Sign Up"
+          color="white"
+          trailing-icon="i-heroicons-arrow-right-20-solid"
+          class="bg-white text-rose-900 hover:bg-white/90 font-bold rounded-full"
+          @click="onSignUpClick"
+        />
+    </div>
+
+    <!-- Volunteer Application -->
+    <div
+      v-if="user && !volunteer"
+      class="w-full h-30 font-normal text-white bg-rose-900 flex flex-col items-center justify-center gap-2 px-4 text-center mb-8"
+    >
+        <span>Want to volunteer? Submit the volunteer form.</span>
+        <UButton
+          label="Submit Now"
+          color="white"
+          trailing-icon="i-heroicons-arrow-right-20-solid"
+          class="bg-white text-rose-900 hover:bg-white/90 font-bold rounded-full"
+          @click="onVolunteerApplicationClick"
+        />
+    </div>
+
+    <div class="w-full max-w-(--ui-container) mx-auto">
+      <div class="lg:px-10 px-5">
+        <section>
+          <h3 class="uppercase font-gray-900 mb-4">Services</h3>
+          <div class="flex flex-col gap-4 sm:flex-row sm:gap-5">
+              <ServiceComponent
+                  title="Prenatal Care"
+                  description="Experience comprehensive prenatal care tailored to your unique needs at our clinic, where you'll be supported by a bilingual team of women of color."
+                  footer-text="Learn more about prental care"
+                  image="/images/PrenatalCare.png"
+                  url="https://www.abidewomen.org/prenatalcare"
+              />
+              <ServiceComponent
+                  title="Postpartum Care and Doula Support"
+                  description="Experience compassionate postpartum care designed to support your recovery and well-being after childbirth."
+                  footer-text="Explore postpartum care"
+                  image="/images/PostpartumCare.png"
+                  url="https://www.abidewomen.org/postpartumcare"
+              />
+              <ServiceComponent
+                  title="Childbirth Education"
+                  description="Empower yourself with essential knowledge and skills for a healthy pregnancy, labor, and postpartum experience in our supportive, culturally-sensitive classes."
+                  footer-text="View upcoming class times"
+                  image="/images/ChildbirthEducation.png"
+                  url="https://www.abidewomen.org/childbirthed"
+              />
+              <ServiceComponent
+                  title="Donate"
+                  description="Every contribution to Abide Women's Health Services fuels our mission to enhance maternal and infant health outcomes in communities that face the lowest quality of care."
+                  footer-text="Give now"
+                  image="/images/Donate.png"
+                  url="https://www.abidewomen.org/donate"
+              />
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- Unregister confirmation -->
+    <ConfirmModal
+      :open="cancelModalOpen"
+      title="Unregister"
+      :description="`Are you sure you want to unregister from ${pendingCancelTitle}?`"
+      confirm-label="Unregister"
+      confirm-color="error"
+      :loading="cancelLoading"
+      :error="cancelError"
+      @update:open="handleCancelModalOpenUpdate"
+      @confirm="confirmCancelRsvp"
+    />
   </div>
 </template>

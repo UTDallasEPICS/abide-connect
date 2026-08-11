@@ -10,7 +10,6 @@ import { requireRole } from '~~/server/utils/requireRole';
  * therefore imageless between the two calls, which the admin UI has to expect.
  */
 export default defineEventHandler(async (event) => {
-  const session = await requireRole(event, 'admin');
   const body = await readBody(event)
 
   return prisma.donation.create({

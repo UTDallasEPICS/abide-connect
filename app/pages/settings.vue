@@ -42,6 +42,7 @@ type Me = {
   phone: string | null
   pushEnabled: boolean
   pushScope: 'GENERAL' | 'VOLUNTEER' | 'BOTH'
+  emailRemindersEnabled: boolean
 }
 
 type VolunteerProfile = {
@@ -155,6 +156,37 @@ async function savePushPreferences(patch: Partial<Pick<Me, 'pushEnabled' | 'push
   user.value = updated
   pushEnabled.value = updated.pushEnabled
   pushScope.value = updated.pushScope
+}
+
+/* -------------------------------------------------------- email reminders */
+
+// Independent of push: this one needs no browser permission and no device, so
+// it stays available even where push isn't supported. Off unless asked for.
+const emailReminders = ref(user.value?.emailRemindersEnabled ?? false)
+
+async function onEmailReminderToggle(value: boolean) {
+  try {
+    const updated = await $fetch<Me>('/api/user/me', {
+      method: 'PATCH',
+      body: { emailRemindersEnabled: value },
+    })
+    user.value = updated
+    emailReminders.value = updated.emailRemindersEnabled
+    toast.add({
+      title: value ? 'Email reminders on' : 'Email reminders off',
+      color: value ? 'success' : 'neutral',
+      icon: value ? 'i-lucide-mail' : 'i-lucide-mail-x',
+    })
+  }
+  catch (error) {
+    emailReminders.value = !value
+    toast.add({
+      title: 'Could not update email reminders',
+      description: errorMessage(error),
+      color: 'error',
+      icon: 'i-lucide-alert-circle',
+    })
+  }
 }
 
 async function onPushToggle(value: boolean) {
@@ -424,6 +456,21 @@ async function signOut() {
             @click="sendTestNotification"
           />
         </template>
+      </SettingsSection>
+
+      <!-- Email reminders ----------------------------------------------- -->
+      <SettingsSection
+        title="Email reminders"
+        description="A reminder email the day before an event you've signed up for, sent to your account address."
+      >
+        <div class="flex items-center justify-between gap-4">
+          <span class="text-sm font-semibold">Email me 24 hours before</span>
+          <USwitch
+            v-model="emailReminders"
+            color="brand4"
+            @update:model-value="onEmailReminderToggle"
+          />
+        </div>
       </SettingsSection>
 
       <!-- Volunteer application ----------------------------------------- -->

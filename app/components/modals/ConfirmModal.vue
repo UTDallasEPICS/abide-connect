@@ -23,22 +23,18 @@ const props = withDefaults(defineProps<{
   loading: false,
   error: null,
 });
-
 const emit = defineEmits<{
   (e: 'update:open', value: boolean): void;
   (e: 'confirm'): void;
 }>();
-
 function handleConfirm() {
   emit('confirm');
 }
-
 function handleOpenUpdate(v: boolean) {
   if (props.loading) return;
   emit('update:open', v);
 }
 </script>
-
 <template>
   <UModal
     :open="open"
@@ -47,12 +43,12 @@ function handleOpenUpdate(v: boolean) {
   >
     <template #body>
       <div class="flex items-start gap-3">
-        <UIcon :name="icon" class="text-red-500 text-2xl mt-0.5" />
+        <UIcon :name="icon" class="text-red-700 text-2xl mt-0.5" />
         <div class="flex flex-col gap-1">
           <p class="font-normal text-sm text-gray-400">
             {{ description }}
           </p>
-          <p v-if="error" class="text-sm text-red-500 font-medium">
+          <p v-if="error" class="text-sm text-red-700 font-medium">
             {{ error }}
           </p>
         </div>
@@ -65,6 +61,7 @@ function handleOpenUpdate(v: boolean) {
           :color="confirmColor"
           :loading="loading"
           :disabled="loading"
+          :ui="{ base: 'bg-red-700 hover:bg-red-800 active:bg-red-900 focus-visible:outline-red-700' }"
           @click="handleConfirm"
         />
         <UButton
