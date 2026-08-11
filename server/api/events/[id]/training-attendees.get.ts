@@ -5,6 +5,15 @@ import { requireRole } from '#server/utils/requireRole'
  * Lists the attendees of a training event who have a volunteer profile,
  * along with their current approval status, so staff can approve/deny them.
  * Admin only.
+ *
+ * Attendees without a volunteer profile are excluded — approval acts on the
+ * `Volunteer` record, so there is nothing to approve for a plain guest. The
+ * `volunteerId: { not: null }` filter and the `.filter(r => r.volunteer)` below
+ * are the same condition applied twice: the second is what narrows the type for
+ * the non-null assertions that follow.
+ *
+ * This is the per-event view of the queue that `admin/training-events.get.ts`
+ * summarises across all trainings.
  */
 export default defineEventHandler(async (event) => {
   await requireRole(event, 'admin')

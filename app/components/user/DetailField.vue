@@ -1,6 +1,20 @@
 <script setup lang="ts">
 import type { InputMenuItem } from '@nuxt/ui';
 import { computed } from 'vue';
+
+/**
+ * One labelled field on the admin member-detail page, rendering either as
+ * read-only text or as an input depending on `editable`.
+ *
+ * The two modes read different props on purpose: display mode shows `value`,
+ * edit mode binds `modelValue`. That keeps the parent's saved state and its
+ * in-progress edits separate, so cancelling an edit needs no rollback — the
+ * parent simply flips `editable` back and the untouched `value` reappears.
+ *
+ * `options` carries raw enum values as ids with prettified labels, so display
+ * mode maps the stored value through `toLabel` while edit mode keeps binding
+ * the raw value the API expects.
+ */
 type FieldType = 'text' | 'tel' | 'date' | 'number' | 'select' | 'checkbox';
 interface FieldOption {
   label: string;

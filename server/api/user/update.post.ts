@@ -40,6 +40,23 @@ function enumField<T extends string>(key: T, value: string | null | undefined) {
   return { [key]: value }
 }
 
+/**
+ * Updates a user and their linked volunteer profile from the admin
+ * member-management screen.
+ *
+ * SECURITY: unauthenticated. The target is whatever `userId` the body names and
+ * nothing checks the caller, so any request can rewrite any account's profile —
+ * including `adminNote` and `isActive`. Needs
+ * `await requireRole(event, 'admin')`. Compare `user/me.patch.ts`, which
+ * correctly scopes the update to the session's own user.
+ *
+ * The `field`/`enumField` helpers above encode a three-way distinction the
+ * endpoint depends on: an absent key means "leave alone", `''` means "clear it"
+ * for nullable strings, and `''` means "leave alone" for enums (which have no
+ * empty member). Sending `null` explicitly clears.
+ *
+ * Volunteer fields are silently skipped when the user has no volunteer record.
+ */
 export default defineEventHandler(async (event) => {
   const body = await readBody<UpdateUserBody>(event)
   const userId = body.userId
@@ -86,9 +103,11 @@ export default defineEventHandler(async (event) => {
         },
       })
 
-      // Multi-select relations: replace the full set on every save.
-      // Rename these model/field names to match your actual schema
-      // (VolunteerLanguage/language, VolunteerAvailability/availability, etc.)
+      // Multi-select relations are delete-then-recreate rather than diffed:
+      // the join rows carry no data beyond the pair itself, so replacing the
+      // set wholesale is equivalent and much simpler. Each block is guarded on
+      // the key being present, so omitting it leaves the existing set intact —
+      // sending `[]` is what clears one.
       if (body.languages) {
         await tx.volunteer_Language.deleteMany({ where: { volunteerId } })
         if (body.languages.length) {

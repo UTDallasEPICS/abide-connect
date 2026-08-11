@@ -1,3 +1,10 @@
+/// A broadcast message. The message body is stored once here and fanned out to
+/// recipients through `User_Notification`, which carries the per-user read
+/// state.
+///
+/// Unrelated to Web Push: this is the in-app inbox. `PushSubscription` below is
+/// the device-delivery side, and the two are not wired together — creating a
+/// Notification does not send a push.
 model Notification {
   id        String              @id @default(uuid())
   title     String

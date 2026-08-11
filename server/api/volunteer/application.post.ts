@@ -3,6 +3,25 @@ import prisma from '#server/utils/prisma'
 import type { Gender, Ethinicity, Language, Availability, VolunteerArea, Certification } from '#server/utils/generated/prisma/client'
 import { Prisma } from '#server/utils/generated/prisma/client'
 
+/**
+ * Submits a volunteer application for the signed-in user, creating the
+ * `Volunteer` record and granting the VOLUNTEER role.
+ *
+ * The role grant and the profile creation share a transaction because they must
+ * not diverge: a role without a profile breaks every `findUnique({ userId })`
+ * lookup downstream, and a profile without the role leaves the volunteer unable
+ * to reach the pages it unlocks.
+ *
+ * `approvalStatus` is left at its schema default (PENDING) — applying does not
+ * grant access. Volunteers become APPROVED by attending a training event and
+ * being approved by staff (`volunteer/[id]/approval.patch.ts`).
+ *
+ * A second application from the same account hits the unique constraint on
+ * `userId` and is reported as a 409 rather than a 500.
+ *
+ * Unlike `me.patch.ts`, the enum values here are cast rather than validated, so
+ * a malformed payload fails at the database instead of as a 400.
+ */
 export default defineEventHandler(async (event) => {
   try {
     const session = await auth.api.getSession({ headers: event.headers })

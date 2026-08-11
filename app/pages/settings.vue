@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { authClient } from '#server/utils/auth-client'
+import { errorMessage } from '~/lib/errorMessage'
 import {
   languageItems,
   genderItems,
@@ -16,6 +17,16 @@ definePageMeta({
   // app/middleware/auth.ts); auth.global.ts only guards role-prefixed routes.
   middleware: 'auth',
 })
+
+/**
+ * Account settings: profile, appearance, push notifications, volunteer
+ * application details, and account deletion.
+ *
+ * Reads from two endpoints because the app has two records per person:
+ * `/api/user/me` for the account itself, `/api/volunteer/me` for the volunteer
+ * profile — the latter returns null for users who never applied, which is what
+ * hides the volunteer sections rather than an error.
+ */
 
 const toast = useToast()
 const colorMode = useColorMode()
@@ -316,14 +327,6 @@ async function deleteAccount() {
 async function signOut() {
   await authClient.signOut().catch(() => {})
   await navigateTo('/auth/login', { external: true })
-}
-
-/** Pulls the human-readable message out of an $fetch error. */
-function errorMessage(error: unknown): string {
-  return (error as { statusMessage?: string }).statusMessage
-    ?? (error as { data?: { statusMessage?: string } }).data?.statusMessage
-    ?? (error as { message?: string }).message
-    ?? 'Please try again.'
 }
 </script>
 

@@ -4,6 +4,18 @@ import DetailField from '~/components/user/DetailField.vue';
 import type { UserData } from '~/types/user/user-data';
 import { genderItems, ethinicityItems, languageItems, availabilityItems, volunteerAreaItems, certificationItems } from '~/types/volunteer/volunteer-application.type';
 
+/**
+ * Profile and volunteer-details block on the admin member-detail page.
+ *
+ * One of three sibling sections (with `HourLogSection` and `RsvpsSection`) that
+ * share a pattern: the page owns both the saved `userData` and a separate
+ * mutable `draft`, and each section renders saved values when `isEditMode` is
+ * false and binds the draft when it's true. Keeping the two apart is what lets
+ * the page discard edits on cancel without refetching.
+ *
+ * The `*Items` option lists are the same ones the volunteer application form
+ * uses, so admin edits and volunteer self-service can't drift apart.
+ */
 export interface GeneralDraft {
   phoneNumber: string;
   adminNote: string;

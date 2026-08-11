@@ -25,6 +25,11 @@ export interface CalendarEventRef {
   htmlLink: string | null
 }
 
+/**
+ * The shared calendar every event is mirrored to. Returns null (rather than
+ * throwing) when unconfigured, which is what makes sync opt-in: a dev machine
+ * without `GOOGLE_CALENDAR_ID` runs the whole event flow with sync skipped.
+ */
 function getCalendarId(): string | null {
   const id = process.env.GOOGLE_CALENDAR_ID
   if (!id) {
@@ -75,6 +80,7 @@ function toCalendarDateTime(date: Date): string {
   return `${get('year')}-${get('month')}-${get('day')}T${hour}:${get('minute')}:${get('second')}`
 }
 
+/** Maps an Abide event onto the Google Calendar `events` resource shape. */
 function toCalendarResource(input: CalendarEventInput) {
   return {
     summary: input.title,

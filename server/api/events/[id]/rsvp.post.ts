@@ -8,6 +8,25 @@ import {
   eventTypeFromFlags,
 } from '#shared/utils/eventType'
 
+/**
+ * Signs someone up for an event, as either an attendee or a volunteer.
+ *
+ * Deliberately open to anonymous callers — the public can RSVP to public events
+ * without an account. Which of the two storage paths is taken depends on
+ * whether there's a session, and they are genuinely different records:
+ *
+ *   - Signed in  → `RSVP`, keyed on (userId, eventId) and upserted, so
+ *                  re-submitting switches attendee↔volunteer rather than
+ *                  erroring. Links to the `Volunteer` row when one exists,
+ *                  which is what lets staff approve pending volunteers who
+ *                  turned up to a training event.
+ *   - Anonymous  → `GuestRSVP`, name + email only, with a manual duplicate
+ *                  check standing in for the unique constraint the table
+ *                  doesn't have. That check is racy under concurrent submits.
+ *
+ * A viewer who can't see the event gets a 404 rather than a 403, so this can't
+ * be used to probe for the existence of volunteer-only or training events.
+ */
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   const body = await readBody(event)

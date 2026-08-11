@@ -3,6 +3,18 @@ import type { DateValue } from '@internationalized/date'
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
 import { eventTypeFromFlags } from '#shared/utils/eventType'
 
+/**
+ * Event browser: a calendar picker over upcoming events, with training
+ * sessions split into their own section.
+ *
+ * Training events are separated because they're a different kind of thing —
+ * only volunteers awaiting approval can attend one, so mixing them into the
+ * general list would offer most viewers something they can't sign up for.
+ *
+ * All filtering here is presentational. Visibility is already enforced by
+ * `/api/events`, so nothing sensitive depends on these computeds.
+ */
+
 const tz = getLocalTimeZone()
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const selectedDate = ref<any>(today(tz))

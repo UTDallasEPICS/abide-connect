@@ -1,5 +1,15 @@
 import { requireRole } from '~~/server/utils/requireRole';
 
+/**
+ * Switches an existing sign-up between attendee and volunteer, from the admin
+ * member-detail page. Admin only.
+ *
+ * Only covers account-holder `RSVP` rows — guest sign-ups live in `GuestRSVP`
+ * and aren't reachable here. Unlike `events/[id]/rsvp.post.ts`, this does not
+ * re-check that the person is an approved volunteer: staff are trusted to
+ * override, so it can mark someone a volunteer who couldn't have signed up as
+ * one themselves.
+ */
 export default defineEventHandler(async (event) => {
   await requireRole(event, 'Admin');
 

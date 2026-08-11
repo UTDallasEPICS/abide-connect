@@ -1,3 +1,16 @@
+/// The authenticated principal. `session.user.id` is always a `User.id`, and
+/// better-auth's Session/Account rows hang off this model.
+///
+/// Note the two distinct "person" concepts in this schema:
+///   - `User`    — has an account and can sign in. May or may not volunteer.
+///   - `Volunteer` — the volunteering profile, optionally linked to a `User`.
+///
+/// A `Volunteer` is *not* the thing that logs in. Reach one from a session with
+/// `prisma.volunteer.findUnique({ where: { userId: session.user.id } })`, never
+/// by passing a user id as a `Volunteer.id`.
+///
+/// Separately, a `GuestRSVP` records someone who signed up for an event with
+/// just a name and email and has no `User` row at all.
 model User {
   id            String              @id @default(uuid())
   name          String?
@@ -30,6 +43,13 @@ model User {
   @@map("users")
 }
 
+/// A role grant. The composite primary key means a user holds each role at most
+/// once, so grants are upserted rather than inserted.
+///
+/// `active` allows a role to be revoked without losing the row — but note the
+/// two paths disagree: `/api/role/remove` hard-deletes, while `/api/role/add`
+/// upserts back to `active: true`. Every read filters on `active: true`, so
+/// treat a false row and a missing row as equivalent.
 model User_Role {
   role   UserRole
   user   User     @relation(fields: [userId], references: [id])
@@ -40,6 +60,8 @@ model User_Role {
   @@map("user_roles")
 }
 
+/// Join row carrying per-user read state for a broadcast `Notification`.
+/// One `Notification` fans out to many users; this is where `isRead` lives.
 model User_Notification {
   user           User         @relation(fields: [userId], references: [id])
   userId         String
@@ -51,6 +73,13 @@ model User_Notification {
   @@map("user_notifications")
 }
 
+/// USER      — baseline, granted to every account; required to reach the app.
+/// VOLUNTEER — has applied to volunteer. Granted alongside a `Volunteer` row.
+///             Distinct from being *approved*: see `Volunteer.approvalStatus`.
+/// ADMIN     — staff.
+///
+/// Mirrored as a literal union in `app/types/admin/admin-user-response.ts`,
+/// since the generated client is server-only. Keep the two in step.
 enum UserRole {
   USER
   ADMIN

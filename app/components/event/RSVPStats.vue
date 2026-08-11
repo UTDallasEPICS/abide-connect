@@ -19,6 +19,16 @@ interface RSVPData {
   attendees: GuestRSVP[]
 }
 
+/**
+ * Registration counts for an event, with expandable name/email lists.
+ *
+ * `admin` controls only whether the lists can be expanded — the counts show to
+ * anyone. Note the endpoint behind this is admin-only regardless, so for a
+ * non-admin the fetch fails and the counts render empty rather than zero.
+ *
+ * `refresh` is exposed so the parent event page can refetch after an RSVP
+ * without re-rendering the whole panel.
+ */
 const props = defineProps<{
   eventId: string
   admin: boolean
