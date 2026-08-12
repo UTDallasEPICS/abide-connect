@@ -17,12 +17,11 @@ const route = useRoute()
   <UHeader
     :ui="{
       toggle: 'hidden',
-      root: 'border-b-0 shadow-none'
+      root: 'border-b-0 shadow-none',
     }"
-    class="text-teal-700 fixed top-0 z-50 h-19 w-full bg-white dark:bg-gray-900"
+    class="text-teal-700 dark:text-teal-400 fixed top-0 z-50 h-19 w-full bg-white dark:bg-gray-900"
   >
     <template #left>
-      
       <UButton
         color="neutral"
         variant="ghost"
@@ -38,7 +37,6 @@ const route = useRoute()
       >
         {{ route.meta.backText }}
       </span>
-
     </template>
 
     <template #toggle />

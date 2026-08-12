@@ -1,4 +1,5 @@
-import { requireRole } from '~~/server/utils/requireRole';
+import { requireRole } from '~~/server/utils/requireRole'
+import type { ApprovalStatus } from '#server/utils/generated/prisma/client'
 
 /**
  * `Prefer Not To Say` → `PREFER_NOT_TO_SAY`. Inverse of the `humanize` in
@@ -6,8 +7,8 @@ import { requireRole } from '~~/server/utils/requireRole';
  * so an edit form round-trips the display value back here and it has to be
  * converted to the enum again.
  */
-function dehumanize(value: string): string {
-  return value.toUpperCase().split(' ').join('_');
+function dehumanize(value: string): ApprovalStatus {
+  return value.toUpperCase().split(' ').join('_') as ApprovalStatus
 }
 
 /**
@@ -22,21 +23,21 @@ function dehumanize(value: string): string {
  * while route params always arrive as strings.
  */
 export default defineEventHandler(async (event) => {
-  await requireRole(event, 'Admin');
-  const id = getRouterParam(event, 'id');
+  await requireRole(event, 'Admin')
+  const id = getRouterParam(event, 'id')
 
   if (!id) {
-    throw createError({ statusCode: 400, statusMessage: 'Hour log id is required' });
+    throw createError({ statusCode: 400, statusMessage: 'Hour log id is required' })
   }
 
   const body = await readBody<{
-    eventId?: string | null;
-    eventName?: string;
-    hours?: number;
-    date?: string;
-    approvalStatus?: string;
-    comment?: string;
-  }>(event);
+    eventId?: string | null
+    eventName?: string
+    hours?: number
+    date?: string
+    approvalStatus?: string
+    comment?: string
+  }>(event)
 
   const updated = await prisma.volunteer_Hour_Log.update({
     where: { id: Number(id) },
@@ -45,10 +46,10 @@ export default defineEventHandler(async (event) => {
       ...(body.eventName !== undefined && { eventName: body.eventName || null }),
       ...(body.hours !== undefined && { hours: body.hours }),
       ...(body.date !== undefined && { date: new Date(body.date) }),
-      ...(body.approvalStatus !== undefined && { approvalStatus: dehumanize(body.approvalStatus) as any }),
+      ...(body.approvalStatus !== undefined && { approvalStatus: dehumanize(body.approvalStatus) }),
       ...(body.comment !== undefined && { comment: body.comment || null }),
     },
-  });
+  })
 
-  return updated;
-});
+  return updated
+})

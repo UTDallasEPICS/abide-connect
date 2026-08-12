@@ -40,7 +40,7 @@ const fetchlogs = async () => {
   loading.value = true
   error.value = null
   try {
-    const data = await $fetch<{ logs: VolunteerLog[] }>('/api/volunteer-logs', { headers: useRequestHeaders(['cookie']) });
+    const data = await $fetch<{ logs: VolunteerLog[] }>('/api/volunteer-logs', { headers: useRequestHeaders(['cookie']) })
     console.log('API response:', data)
     logs.value = data?.logs ?? []
   }
@@ -115,10 +115,11 @@ async function confirmAction(id: string) {
       method: 'PATCH',
       body: {
         status: actionType.value === 'approve' ? 'APPROVED' : 'REJECTED',
-        comment: (commentDraft.value[id] ?? '').trim() || null
-      }
+        comment: (commentDraft.value[id] ?? '').trim() || null,
+      },
     })
-  } catch (err) {
+  }
+  catch (err) {
     console.error('Failed to update log:', err)
     error.value = 'Failed to update volunteer log'
     return
@@ -201,7 +202,7 @@ async function confirmAction(id: string) {
         >
           <!-- Header (matches inbox pattern) -->
           <template #default="{ item, open }">
-            <div 
+            <div
               class="bg-white dark:bg-gray-800 rounded-xl p-5 border border-transparent dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
             >
               <div

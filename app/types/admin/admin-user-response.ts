@@ -11,7 +11,7 @@
 
 // Mirrors the UserRole enum in prisma/schema/user.prisma — kept as a literal
 // union rather than imported, since the generated Prisma client is server-only.
-export type UserRole = 'USER' | 'ADMIN' | 'VOLUNTEER';
+export type UserRole = 'USER' | 'ADMIN' | 'VOLUNTEER'
 
 export interface ApiUser {
   id: string
@@ -28,5 +28,5 @@ export interface UsersResponse {
   page: number
   pageSize: number
   totalPages: number
-  counts: { all: number; volunteer: number; admin: number }
+  counts: { all: number, volunteer: number, admin: number }
 }

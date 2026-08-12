@@ -17,7 +17,7 @@ onUnmounted(() => {
 
 <template>
   <UHeader
-    :ui="{ 
+    :ui="{
       root: 'border-none',
     }"
     :toggle="false"
@@ -25,12 +25,15 @@ onUnmounted(() => {
     :class="isScrolled ? 'shadow-sm' : 'shadow-none'"
   >
     <template #left>
-      <NuxtLink to="/" aria-label="Go to home page">
+      <NuxtLink
+        to="/"
+        aria-label="Go to home page"
+      >
         <img
           src="/images/abide_logo.svg"
           alt="Abide logo"
           class="h-9 w-auto cursor-pointer"
-        />
+        >
       </NuxtLink>
     </template>
     <template #right>
@@ -43,7 +46,10 @@ onUnmounted(() => {
             aria-label="Settings"
             @click="onSettingsClick"
           >
-            <UIcon name="i-lucide-settings" class="w-6 h-6 text-gray-900 dark:text-teal-400" />
+            <UIcon
+              name="i-lucide-settings"
+              class="w-6 h-6 text-gray-900 dark:text-teal-400"
+            />
           </UButton>
         </slot>
       </div>

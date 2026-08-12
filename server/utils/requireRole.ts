@@ -1,6 +1,7 @@
 import { auth } from '#server/utils/auth'
 import prisma from '#server/utils/prisma'
- 
+import type { H3Event } from 'h3'
+
 /**
  * Enforces that the current request comes from a logged-in user with the
  * given role. Throws a 401 if there's no session, or a 403 if the user is
@@ -13,22 +14,22 @@ import prisma from '#server/utils/prisma'
  *   // session.user.id is safe to use here
  * })
  */
-export async function requireRole(event: any, role: string) {
+export async function requireRole(event: H3Event, role: string) {
   const session = await auth.api.getSession({ headers: event.headers })
   event.context.session = session
- 
+
   if (!session?.session) {
     throw createError({ statusCode: 401, message: 'Unauthorized' })
   }
- 
+
   const userRoles = await prisma.user_Role.findMany({
     where: { userId: session.user.id, active: true },
   })
   const roles = userRoles.map(r => r.role.toLowerCase())
- 
+
   if (!roles.includes(role.toLowerCase())) {
     throw createError({ statusCode: 403, message: 'Forbidden' })
   }
- 
+
   return session
 }

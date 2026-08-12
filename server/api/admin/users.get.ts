@@ -29,11 +29,11 @@ function removeUndefined<T>(value: T | undefined): value is T {
 function parsePagination(query: Record<string, unknown>) {
   const page = Math.max(
     DEFAULT_PAGE,
-    Number.parseInt(String(query.page ?? DEFAULT_PAGE), 10)
+    Number.parseInt(String(query.page ?? DEFAULT_PAGE), 10),
   )
   const pageSize = Math.min(
     MAX_PAGE_SIZE,
-    Math.max(1, Number.parseInt(String(query.pageSize ?? DEFAULT_PAGE_SIZE), 10))
+    Math.max(1, Number.parseInt(String(query.pageSize ?? DEFAULT_PAGE_SIZE), 10)),
   )
   return { page, pageSize }
 }
@@ -55,7 +55,7 @@ function buildSearchClause(search: string): UserWhereInput | undefined {
  * assignment of the given role. Returns undefined for the "ALL" sentinel
  * (or an empty role), meaning "don't filter by role".
  */
-function buildRoleClause(role: typeof ALL_ROLES): UserWhereInput | undefined {
+function buildRoleClause(role: string): UserWhereInput | undefined {
   if (!role || role === ALL_ROLES) {
     return undefined
   }
@@ -67,7 +67,7 @@ function buildRoleClause(role: typeof ALL_ROLES): UserWhereInput | undefined {
 }
 
 /** Counts users matching the current search, further filtered by a single role. */
-function countUsersByRole(searchClause: UserWhereInput | undefined, role: typeof ALL_ROLES) {
+function countUsersByRole(searchClause: UserWhereInput | undefined, role: string) {
   return prisma.user.count({
     where: {
       AND: [searchClause, buildRoleClause(role)].filter(removeUndefined),
@@ -90,7 +90,7 @@ function toUserSummary(user: {
   name: string | null
   email: string
   imageURL: string | null
-  roles: { role: string; active: boolean }[]
+  roles: { role: string, active: boolean }[]
   volunteer: { hourLogs: { hours: number }[] } | null
 }) {
   return {
@@ -98,8 +98,8 @@ function toUserSummary(user: {
     name: user.name ?? 'Unnamed User',
     email: user.email,
     roles: user.roles
-      .filter((r) => r.active)
-      .map((r) => r.role)
+      .filter(r => r.active)
+      .map(r => r.role)
       .sort((a, b) => a.localeCompare(b)),
     hours: calculateApprovedHours(user.volunteer?.hourLogs ?? []),
     avatarUrl: user.imageURL,
@@ -134,7 +134,7 @@ export default defineEventHandler(async (event) => {
   const { page, pageSize } = parsePagination(query)
 
   const searchClause = buildSearchClause(search)
-  const roleClause = buildRoleClause(role as any)
+  const roleClause = buildRoleClause(role)
   const where: UserWhereInput = {
     AND: [searchClause, roleClause].filter(removeUndefined),
   }
@@ -143,7 +143,7 @@ export default defineEventHandler(async (event) => {
     // Total users matching the current search + role filter
     prisma.user.count({ where }),
     // Per-role counts (search filter only, ignoring the active role filter)
-    Promise.all(COUNTABLE_ROLES.map((role) => countUsersByRole(searchClause, role as any))),
+    Promise.all(COUNTABLE_ROLES.map(role => countUsersByRole(searchClause, role))),
     // The actual page of users, with their roles and approved hour logs
     prisma.user.findMany({
       where,
@@ -170,7 +170,7 @@ export default defineEventHandler(async (event) => {
   const counts = {
     all: allCount,
     ...Object.fromEntries(
-      COUNTABLE_ROLES.map((role, index) => [role.toLowerCase(), roleCounts[index]])
+      COUNTABLE_ROLES.map((role, index) => [role.toLowerCase(), roleCounts[index]]),
     ),
   }
 

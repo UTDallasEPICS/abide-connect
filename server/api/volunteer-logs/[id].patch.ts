@@ -1,5 +1,5 @@
 import prisma from '#server/utils/prisma'
-import { requireRole } from '~~/server/utils/requireRole';
+import { requireRole } from '~~/server/utils/requireRole'
 
 /**
  * Approves or denies a submitted hour log, with an optional reviewer comment.
@@ -15,7 +15,7 @@ import { requireRole } from '~~/server/utils/requireRole';
  * reviewer note rather than leaving it in place.
  */
 export default eventHandler(async (event) => {
-  const session = await requireRole(event, 'admin');
+  await requireRole(event, 'admin')
 
   try {
     const id = getRouterParam(event, 'id')

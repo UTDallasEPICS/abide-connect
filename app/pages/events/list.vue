@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import SectionButton from '~/components/buttons/SectionButton.vue';
-import SecondaryEventCard from '~/components/event/SecondaryEventCard.vue';
+import SectionButton from '~/components/buttons/SectionButton.vue'
+import SecondaryEventCard from '~/components/event/SecondaryEventCard.vue'
 
 definePageMeta({
   layout: 'secondary',
-  backText: 'All Upcomming Events'
+  backText: 'All Upcomming Events',
 })
 
 type EventFilter = 'ALL' | 'PAST'
@@ -85,11 +85,12 @@ watch(
       loadingScreenTimer = setTimeout(() => {
         showLoadingScreen.value = true
       }, LOADING_SCREEN_DELAY_MS)
-    } else {
+    }
+    else {
       showLoadingScreen.value = false
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 const events = computed(() => data.value?.events ?? [])
@@ -139,36 +140,58 @@ const filters = computed(() => [
       <div class="w-screen relative left-1/2 right-1/2 -mx-[50vw] bg-gray-50 dark:bg-gray-900 flex-1 min-h-0 mt-7 rounded-4xl">
         <div class="w-full max-w-(--ui-container) mx-auto px-4 sm:px-10 pt-5 pb-10 h-full flex flex-col">
           <div class="w-full flex-1 min-h-0 overflow-y-auto">
-
-            <div v-if="showLoadingScreen" class="flex items-center justify-center py-16">
-              <UIcon name="i-lucide-loader-2" class="animate-spin text-3xl text-gray-400 dark:text-gray-500" />
+            <div
+              v-if="showLoadingScreen"
+              class="flex items-center justify-center py-16"
+            >
+              <UIcon
+                name="i-lucide-loader-2"
+                class="animate-spin text-3xl text-gray-400 dark:text-gray-500"
+              />
             </div>
 
-            <div v-else-if="error" class="flex flex-col items-center justify-center text-center py-16 px-6">
-              <p class="text-sm text-red-400 dark:text-red-400">Something went wrong loading events.</p>
-              <UButton class="mt-3" size="sm" variant="solid" @click="refresh()">Retry</UButton>
+            <div
+              v-else-if="error"
+              class="flex flex-col items-center justify-center text-center py-16 px-6"
+            >
+              <p class="text-sm text-red-400 dark:text-red-400">
+                Something went wrong loading events.
+              </p>
+              <UButton
+                class="mt-3"
+                size="sm"
+                variant="solid"
+                @click="refresh()"
+              >
+                Retry
+              </UButton>
             </div>
 
-            <div v-else class="flex flex-col gap-3">
-                <SecondaryEventCard
-                    v-for="item in events"
-                    key="item.id"
-                    :id="item.id"
-                    :url="item.url"
-                    :title="item.title"
-                    :image="item.image"
-                    :start-time="item.startTime"
-                    :location="item.location"
-                    size="lg"
-                    :show-actions="false"
-                />
+            <div
+              v-else
+              class="flex flex-col gap-3"
+            >
+              <SecondaryEventCard
+                v-for="item in events"
+                :id="item.id"
+                :key="item.id"
+                :url="item.url"
+                :title="item.title"
+                :image="item.image"
+                :start-time="item.startTime"
+                :location="item.location"
+                size="lg"
+                :show-actions="false"
+              />
             </div>
 
             <div
               v-if="!showLoadingScreen && !error && events.length === 0"
               class="flex flex-col items-center justify-center text-center py-16 px-6"
             >
-              <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">No events found.</p>
+              <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                No events found.
+              </p>
             </div>
           </div>
 
@@ -179,7 +202,7 @@ const filters = computed(() => [
               :total="totalEvents"
               :disabled="showLoadingScreen"
               :sibling-count="1"
-              :activeBgColor="paginationActiveBgColor"
+              :active-bg-color="paginationActiveBgColor"
             />
           </div>
         </div>

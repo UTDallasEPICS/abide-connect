@@ -21,7 +21,7 @@ type RemovableRole = (typeof REMOVABLE_ROLES)[number]
 export default defineEventHandler(async (event) => {
   await requireRole(event, 'admin')
 
-  const body = await readBody<{ userId?: string; role?: string }>(event)
+  const body = await readBody<{ userId?: string, role?: string }>(event)
   const userId = body.userId
   const role = body.role?.toUpperCase()
 
@@ -40,7 +40,8 @@ export default defineEventHandler(async (event) => {
     await prisma.user_Role.delete({
       where: { userId_role: { userId, role: role as RemovableRole } },
     })
-  } catch {
+  }
+  catch {
     // Prisma throws if the row doesn't exist (P2025) — surface as 404
     throw createError({
       statusCode: 404,

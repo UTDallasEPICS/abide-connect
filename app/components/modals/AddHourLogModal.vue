@@ -10,23 +10,23 @@
  * Posts to `/api/hour-log`, which resolves the `userId` to its `Volunteer`
  * record and 404s if the member never applied to volunteer.
  */
-type ApprovalStatusOption = 'PENDING' | 'APPROVED' | 'REJECTED';
+type ApprovalStatusOption = 'PENDING' | 'APPROVED' | 'REJECTED'
 
 const props = defineProps<{
-  open: boolean;
-  userId: string;
-}>();
+  open: boolean
+  userId: string
+}>()
 
 const emit = defineEmits<{
-  (e: 'update:open', value: boolean): void;
-  (e: 'created'): void;
-}>();
+  (e: 'update:open', value: boolean): void
+  (e: 'created'): void
+}>()
 
-const approvalStatusItems: { label: string; value: ApprovalStatusOption }[] = [
+const approvalStatusItems: { label: string, value: ApprovalStatusOption }[] = [
   { label: 'Pending', value: 'PENDING' },
   { label: 'Approved', value: 'APPROVED' },
   { label: 'Rejected', value: 'REJECTED' },
-];
+]
 
 const form = reactive({
   eventName: '',
@@ -34,47 +34,47 @@ const form = reactive({
   hours: null as number | null,
   approvalStatus: 'PENDING' as ApprovalStatusOption,
   comment: '',
-});
+})
 
-const isSubmitting = ref(false);
-const formError = ref<string | null>(null);
+const isSubmitting = ref(false)
+const formError = ref<string | null>(null)
 
 function resetForm() {
-  form.eventName = '';
-  form.date = '';
-  form.hours = null;
-  form.approvalStatus = 'PENDING';
-  form.comment = '';
-  formError.value = null;
+  form.eventName = ''
+  form.date = ''
+  form.hours = null
+  form.approvalStatus = 'PENDING'
+  form.comment = ''
+  formError.value = null
 }
 
 watch(
   () => props.open,
   (isOpen) => {
     if (isOpen) {
-      resetForm();
+      resetForm()
     }
-  }
-);
+  },
+)
 
 function handleOpenUpdate(v: boolean) {
-  if (isSubmitting.value) return;
-  emit('update:open', v);
+  if (isSubmitting.value) return
+  emit('update:open', v)
 }
 
 async function handleSubmit() {
-  formError.value = null;
+  formError.value = null
 
   if (!form.date) {
-    formError.value = 'Please select a date.';
-    return;
+    formError.value = 'Please select a date.'
+    return
   }
   if (form.hours === null || form.hours <= 0) {
-    formError.value = 'Please enter a valid number of hours.';
-    return;
+    formError.value = 'Please enter a valid number of hours.'
+    return
   }
 
-  isSubmitting.value = true;
+  isSubmitting.value = true
   try {
     await $fetch('/api/hour-log/create', {
       method: 'POST',
@@ -86,14 +86,17 @@ async function handleSubmit() {
         approvalStatus: form.approvalStatus,
         comment: form.comment || undefined,
       },
-    });
+    })
 
-    emit('created');
-    emit('update:open', false);
-  } catch (err: any) {
-    formError.value = err?.data?.message ?? err?.message ?? 'Failed to add hour log. Please try again.';
-  } finally {
-    isSubmitting.value = false;
+    emit('created')
+    emit('update:open', false)
+  }
+  catch (err) {
+    const errorBody = err as { data?: { message?: string }, message?: string }
+    formError.value = errorBody.data?.message ?? errorBody.message ?? 'Failed to add hour log. Please try again.'
+  }
+  finally {
+    isSubmitting.value = false
   }
 }
 </script>
@@ -107,7 +110,7 @@ async function handleSubmit() {
     <template #body>
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-gray-600">Name</label>
+          <label class="text-sm font-medium text-gray-600 dark:text-gray-300">Name</label>
           <UInput
             v-model="form.eventName"
             placeholder="Hour log title (optional)"
@@ -116,12 +119,16 @@ async function handleSubmit() {
         </div>
 
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-gray-600">Date</label>
-          <UInput v-model="form.date" type="date" class="w-full" />
+          <label class="text-sm font-medium text-gray-600 dark:text-gray-300">Date</label>
+          <UInput
+            v-model="form.date"
+            type="date"
+            class="w-full"
+          />
         </div>
 
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-gray-600">Hours</label>
+          <label class="text-sm font-medium text-gray-600 dark:text-gray-300">Hours</label>
           <UInput
             v-model.number="form.hours"
             type="number"
@@ -133,7 +140,7 @@ async function handleSubmit() {
         </div>
 
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-gray-600">Approval Status</label>
+          <label class="text-sm font-medium text-gray-600 dark:text-gray-300">Approval Status</label>
           <USelect
             v-model="form.approvalStatus"
             :items="approvalStatusItems"
@@ -142,7 +149,7 @@ async function handleSubmit() {
         </div>
 
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-gray-600">Comment</label>
+          <label class="text-sm font-medium text-gray-600 dark:text-gray-300">Comment</label>
           <UTextarea
             v-model="form.comment"
             placeholder="Optional comment"
@@ -150,7 +157,12 @@ async function handleSubmit() {
           />
         </div>
 
-        <p v-if="formError" class="text-sm text-red-500 font-medium">{{ formError }}</p>
+        <p
+          v-if="formError"
+          class="text-sm text-red-500 dark:text-red-400 font-medium"
+        >
+          {{ formError }}
+        </p>
       </div>
     </template>
     <template #footer>

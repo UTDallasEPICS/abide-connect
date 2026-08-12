@@ -29,7 +29,10 @@
 
       <p class="text-base font-normal text-gray-601 dark:text-gray-300">
         Go to home
-        <a href="/" class="text-teal-501 dark:text-teal-400 hover:underline">
+        <a
+          href="/"
+          class="text-teal-501 dark:text-teal-400 hover:underline"
+        >
           page
         </a>
         .
