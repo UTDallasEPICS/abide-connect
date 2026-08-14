@@ -1,5 +1,5 @@
 import { requireRole } from '~~/server/utils/requireRole'
-import type { ApprovalStatus } from '#server/utils/generated/prisma/client'
+import type { ApprovalStatus, VolunteerArea } from '#server/utils/generated/prisma/client'
 
 /**
  * `Prefer Not To Say` → `PREFER_NOT_TO_SAY`. Inverse of the `humanize` in
@@ -21,6 +21,11 @@ function dehumanize(value: string): ApprovalStatus {
  *
  * `id` is `Number`-cast because `Volunteer_Hour_Log.id` is an autoincrement int
  * while route params always arrive as strings.
+ *
+ * `program` is the grant-reporting dimension read by `/admin/reports/impact`;
+ * setting it here is what turns an inferred attribution into a stated one.
+ * `approvedAt` follows the same rule as the review queue — stamped once, on the
+ * first decision, and cleared if the log goes back to PENDING.
  */
 export default defineEventHandler(async (event) => {
   await requireRole(event, 'Admin')
@@ -36,8 +41,20 @@ export default defineEventHandler(async (event) => {
     hours?: number
     date?: string
     approvalStatus?: string
+    program?: string | null
     comment?: string
   }>(event)
+
+  const nextStatus = body.approvalStatus !== undefined
+    ? dehumanize(body.approvalStatus)
+    : undefined
+
+  const existing = nextStatus === undefined
+    ? null
+    : await prisma.volunteer_Hour_Log.findUnique({
+        where: { id: Number(id) },
+        select: { approvedAt: true },
+      })
 
   const updated = await prisma.volunteer_Hour_Log.update({
     where: { id: Number(id) },
@@ -46,7 +63,11 @@ export default defineEventHandler(async (event) => {
       ...(body.eventName !== undefined && { eventName: body.eventName || null }),
       ...(body.hours !== undefined && { hours: body.hours }),
       ...(body.date !== undefined && { date: new Date(body.date) }),
-      ...(body.approvalStatus !== undefined && { approvalStatus: dehumanize(body.approvalStatus) }),
+      ...(body.program !== undefined && { program: body.program as VolunteerArea || null }),
+      ...(nextStatus !== undefined && {
+        approvalStatus: nextStatus,
+        approvedAt: nextStatus === 'PENDING' ? null : existing?.approvedAt ?? new Date(),
+      }),
       ...(body.comment !== undefined && { comment: body.comment || null }),
     },
   })

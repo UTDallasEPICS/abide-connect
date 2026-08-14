@@ -1,5 +1,5 @@
 import { requireRole } from '~~/server/utils/requireRole'
-import type { ApprovalStatus } from '#server/utils/generated/prisma/client'
+import type { ApprovalStatus, VolunteerArea } from '#server/utils/generated/prisma/client'
 
 /**
  * Records volunteer hours on someone's behalf, from the admin member-detail
@@ -24,6 +24,7 @@ export default defineEventHandler(async (event) => {
     date?: string
     hours?: number
     approvalStatus?: ApprovalStatus
+    program?: VolunteerArea | null
     comment?: string
   }>(event)
 
@@ -56,6 +57,9 @@ export default defineEventHandler(async (event) => {
       date: new Date(body.date),
       hours: body.hours,
       approvalStatus: body.approvalStatus ?? 'PENDING',
+      // Optional: left null, the reports attribute these hours by falling back
+      // to the volunteer's declared area (see `server/utils/reporting.ts`).
+      program: body.program || null,
       comment: body.comment || null,
     },
   })

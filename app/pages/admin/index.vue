@@ -50,6 +50,24 @@ const features: AdminFeature[] = [
     iconBg: 'bg-[#a4123f]',
     bg: 'bg-gradient-to-br from-[#f4d3e0] to-white',
   },
+  {
+    id: 'reports',
+    to: '/admin/reports',
+    label: 'Hours Reporting',
+    description: 'Totals, trends and lapse risk',
+    icon: 'i-heroicons-chart-bar',
+    iconBg: 'bg-[#5FA18B]',
+    bg: 'bg-gradient-to-br from-[#dcebe4] to-white',
+  },
+  {
+    id: 'impact',
+    to: '/admin/reports/impact',
+    label: 'Impact Report',
+    description: 'In-kind value for leadership and funders',
+    icon: 'i-heroicons-presentation-chart-line',
+    iconBg: 'bg-[#6C5846]',
+    bg: 'bg-gradient-to-br from-[#e6d6c3] to-white',
+  },
 ]
 
 interface AdminStats {
