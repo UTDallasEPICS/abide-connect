@@ -5,11 +5,16 @@ import { RANGE_PRESETS, dayKey, resolvePreset } from '#shared/utils/reportRange'
 /**
  * The one filter row, sitting above everything it scopes.
  *
- * Choosing a preset fills the custom date boxes with the dates it resolved to,
- * rather than blanking or hiding them. That is the whole trick to "shortcuts
- * plus a custom range": the admin clicks QTD, sees the two dates it means, and
- * can nudge one — at which point the selection becomes Custom on its own. They
- * never have to work out where the quarter started to adjust it by a week.
+ * The presets are a dropdown rather than a row of chips: nine of them spelled
+ * out took two lines and read as the loudest thing on a page whose point is the
+ * numbers below it. The resolved range is still stated underneath ("Showing
+ * Jan 1 – Aug 13, 2026"), so nothing is lost by collapsing them.
+ *
+ * The two date boxes only appear on Custom, and choosing it seeds them with
+ * whatever the previous preset resolved to. That keeps the original trick —
+ * the admin picks QTD, switches to Custom, and finds the quarter's dates
+ * already filled in to nudge — without the boxes sitting there restating a
+ * range they can't edit the rest of the time.
  *
  * `granularity` and `status` live here too, since both change what every panel
  * on the page is counting and neither belongs inside a single card.
@@ -30,22 +35,32 @@ function update(patch: Partial<ReportFilterState>) {
   emit('update:modelValue', { ...props.modelValue, ...patch })
 }
 
-function selectPreset(preset: ReportFilterState['preset']) {
-  if (preset === 'CUSTOM') {
-    update({ preset })
-    return
-  }
-
+/** A preset's own dates, as `YYYY-MM-DD` for the two date inputs. */
+function presetDates(preset: Exclude<ReportFilterState['preset'], 'CUSTOM'>) {
   // Resolved in the browser purely to populate the two date boxes; the server
   // resolves the preset again for the actual query, so a stale clock here shows
   // a slightly-off placeholder rather than reporting on the wrong period.
   const range = resolvePreset(preset)
-  update({
-    preset,
+  return {
     from: dayKey(range.start),
     // `end` is exclusive, so step back a day to show the last day covered.
     to: dayKey(new Date(range.end.getTime() - 86_400_000)),
-  })
+  }
+}
+
+function selectPreset(preset: ReportFilterState['preset']) {
+  if (preset === 'CUSTOM') {
+    // The boxes are about to become visible and editable, so they must hold
+    // something. They normally already do, but a `?preset=CUSTOM` URL with no
+    // dates on it arrives here empty — fall back to a month to date.
+    const seeded = props.modelValue.from && props.modelValue.to
+      ? { from: props.modelValue.from, to: props.modelValue.to }
+      : presetDates('MTD')
+    update({ preset, ...seeded })
+    return
+  }
+
+  update({ preset, ...presetDates(preset) })
 }
 
 /** Editing either date box means the admin is no longer on a preset. */
@@ -70,43 +85,45 @@ const granularityOptions = [
   <div
     class="bg-white dark:bg-gray-800 rounded-2xl border border-slate-200 dark:border-gray-700 p-4 shadow-sm"
   >
-    <div class="flex flex-wrap items-center gap-2">
-      <button
-        v-for="preset in RANGE_PRESETS"
-        :key="preset.id"
-        type="button"
-        class="px-3 py-1.5 rounded-full border text-xs sm:text-sm font-semibold transition-colors"
-        :class="modelValue.preset === preset.id
-          ? 'bg-teal-600 text-white border-teal-600'
-          : 'bg-white dark:bg-gray-900 text-slate-700 dark:text-gray-300 border-slate-300 dark:border-gray-700 hover:bg-slate-100 dark:hover:bg-gray-700'"
-        :aria-pressed="modelValue.preset === preset.id"
-        @click="selectPreset(preset.id)"
-      >
-        <span class="hidden sm:inline">{{ preset.label }}</span>
-        <span class="sm:hidden">{{ preset.short }}</span>
-      </button>
-    </div>
-
-    <div class="flex flex-wrap items-end gap-3 mt-4">
+    <div class="flex flex-wrap items-end gap-3">
       <label class="flex flex-col gap-1">
-        <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400">From</span>
-        <input
-          :value="modelValue.from"
-          type="date"
+        <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400">Date range</span>
+        <select
+          :value="modelValue.preset"
           class="rounded-lg border border-slate-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm font-medium text-slate-900 dark:text-white px-3 py-1.5"
-          @change="editDate('from', ($event.target as HTMLInputElement).value)"
+          @change="selectPreset(($event.target as HTMLSelectElement).value as ReportFilterState['preset'])"
         >
+          <option
+            v-for="preset in RANGE_PRESETS"
+            :key="preset.id"
+            :value="preset.id"
+          >
+            {{ preset.label }}
+          </option>
+        </select>
       </label>
 
-      <label class="flex flex-col gap-1">
-        <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400">To</span>
-        <input
-          :value="modelValue.to"
-          type="date"
-          class="rounded-lg border border-slate-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm font-medium text-slate-900 dark:text-white px-3 py-1.5"
-          @change="editDate('to', ($event.target as HTMLInputElement).value)"
-        >
-      </label>
+      <template v-if="modelValue.preset === 'CUSTOM'">
+        <label class="flex flex-col gap-1">
+          <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400">From</span>
+          <input
+            :value="modelValue.from"
+            type="date"
+            class="rounded-lg border border-slate-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm font-medium text-slate-900 dark:text-white px-3 py-1.5"
+            @change="editDate('from', ($event.target as HTMLInputElement).value)"
+          >
+        </label>
+
+        <label class="flex flex-col gap-1">
+          <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400">To</span>
+          <input
+            :value="modelValue.to"
+            type="date"
+            class="rounded-lg border border-slate-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm font-medium text-slate-900 dark:text-white px-3 py-1.5"
+            @change="editDate('to', ($event.target as HTMLInputElement).value)"
+          >
+        </label>
+      </template>
 
       <label
         v-if="!hideStatus"

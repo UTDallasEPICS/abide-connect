@@ -36,8 +36,6 @@ export type RangePresetId
 export interface RangePreset {
   id: RangePresetId
   label: string
-  /** Short form for the chip row on narrow screens. */
-  short: string
 }
 
 /**
@@ -45,15 +43,15 @@ export interface RangePreset {
  * windows, then the fixed prior year a grant report usually wants.
  */
 export const RANGE_PRESETS: RangePreset[] = [
-  { id: 'YTD', label: 'Year to date', short: 'YTD' },
-  { id: 'QTD', label: 'Quarter to date', short: 'QTD' },
-  { id: 'MTD', label: 'Month to date', short: 'MTD' },
-  { id: 'LAST_30', label: 'Last 30 days', short: '30d' },
-  { id: 'LAST_90', label: 'Last 90 days', short: '90d' },
-  { id: 'LAST_12_MONTHS', label: 'Last 12 months', short: '12mo' },
-  { id: 'PREVIOUS_YEAR', label: 'Previous calendar year', short: 'Last yr' },
-  { id: 'ALL_TIME', label: 'All time', short: 'All' },
-  { id: 'CUSTOM', label: 'Custom range', short: 'Custom' },
+  { id: 'YTD', label: 'Year to date' },
+  { id: 'QTD', label: 'Quarter to date' },
+  { id: 'MTD', label: 'Month to date' },
+  { id: 'LAST_30', label: 'Last 30 days' },
+  { id: 'LAST_90', label: 'Last 90 days' },
+  { id: 'LAST_12_MONTHS', label: 'Last 12 months' },
+  { id: 'PREVIOUS_YEAR', label: 'Previous calendar year' },
+  { id: 'ALL_TIME', label: 'All time' },
+  { id: 'CUSTOM', label: 'Custom range' },
 ]
 
 export type Granularity = 'day' | 'week' | 'month'
