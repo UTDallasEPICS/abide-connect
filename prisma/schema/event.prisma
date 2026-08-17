@@ -94,7 +94,7 @@ model Event_Time_Slot {
   endTime   DateTime
   capacity  Int      @default(1)
   /// What the volunteer will actually be doing on this shift — "Front desk
-  /// check-in", "Childcare", "Setup crew". Requested by the clinic so a
+  /// check-in", "Childcare", etc. Requested by the clinic so a
   /// volunteer knows which shift to claim, rather than picking a time blind.
   ///
   /// Free text on purpose: staff name shifts differently per event, and a
