@@ -25,6 +25,9 @@ interface TimeSlotRow {
   startTime: string
   endTime: string
   capacity: number
+  role?: string | null
+  note?: string | null
+  color?: string | null
 }
 
 const emptyEvent = () => ({
@@ -80,6 +83,7 @@ async function saveEvent() {
       startTime: fromDateTimeLocal(slot.startTime),
       endTime: fromDateTimeLocal(slot.endTime),
       capacity: Number(slot.capacity),
+      role: slot.role,
     })),
     {
       startTime: fromDateTimeLocal(newEvent.value.startTime),
@@ -112,6 +116,9 @@ async function saveEvent() {
           startTime: fromDateTimeLocal(slot.startTime).toISOString(),
           endTime: fromDateTimeLocal(slot.endTime).toISOString(),
           capacity: Number(slot.capacity),
+          role: slot.role ?? null,
+          note: slot.note ?? null,
+          color: slot.color ?? null,
         })),
       },
     })
@@ -243,7 +250,7 @@ function cancel() {
       <EventTypeSelector
         v-model="newEvent.eventType"
         class="mt-4"
-        :color="isDark ? 'brand5' : 'primary'"
+        :color="isDark ? 'brand8' : 'primary'"
       />
 
       <EventTimeSlotEditor
@@ -251,7 +258,7 @@ function cancel() {
         v-model="newEvent.timeSlots"
         :event-start="newEvent.startTime"
         :event-end="newEvent.endTime"
-        :color="isDark ? 'brand5' : 'primary'"
+        :color="isDark ? 'brand8' : 'primary'"
         seed-when-empty
         class="mt-4"
       />
@@ -273,7 +280,7 @@ function cancel() {
           Cancel
         </UButton>
         <UButton
-          :color="isDark ? 'brand5' : 'primary'"
+          :color="isDark ? 'brand8' : 'primary'"
           :loading="isSaving"
           @click="saveEvent"
         >

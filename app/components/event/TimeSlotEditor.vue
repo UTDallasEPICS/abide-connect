@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import {
+  DEFAULT_SLOT_COLOR_TOKEN,
+  SLOT_COLORS,
+  SLOT_ROLE_MAX_LENGTH,
   formatSlotRange,
   fromDateTimeLocal,
   validateTimeSlot,
@@ -22,6 +25,12 @@ interface TimeSlotRow {
   startTime: string
   endTime: string
   capacity: number
+  /** What the volunteer will be doing. Absent on blocks made before this. */
+  role?: string | null
+  /** Extra detail hanging off the role. */
+  note?: string | null
+  /** A `SLOT_COLORS` token. Null renders as the default swatch. */
+  color?: string | null
   /** Confirmed signups, from the API. Drives the removal warning. */
   signupCount?: number
 }
@@ -126,6 +135,7 @@ function rowProblem(row: TimeSlotRow): string | null {
       startTime: fromDateTimeLocal(row.startTime),
       endTime: fromDateTimeLocal(row.endTime),
       capacity: Number(row.capacity),
+      role: row.role,
     },
     slotWindow.value,
   )
@@ -133,6 +143,15 @@ function rowProblem(row: TimeSlotRow): string | null {
   // The shared rules return a sentence fragment so each caller can name the
   // block its own way; here the row itself is the subject.
   return problem ? `This block ${problem}.` : null
+}
+
+/**
+ * Which swatch shows as chosen. An unpainted block isn't drawn colourless —
+ * it's drawn in the default — so the picker says so rather than showing
+ * nothing selected.
+ */
+function selectedColor(row: TimeSlotRow): string {
+  return row.color ?? DEFAULT_SLOT_COLOR_TOKEN
 }
 
 function rowRange(row: TimeSlotRow): string {
@@ -166,7 +185,6 @@ const totalSpots = computed(() =>
       <UButton
         icon="i-lucide-plus"
         size="sm"
-        variant="soft"
         :color="color"
         :disabled="!hasWindow"
         @click="addRow"
@@ -189,6 +207,15 @@ const totalSpots = computed(() =>
       No time blocks. Volunteers sign up for the whole event, and their logged
       hours cover its full length.
     </p>
+
+    <!-- The same blocks, drawn against the event's window. Read-only: it
+         mirrors the rows below rather than offering a second way to edit
+         them. -->
+    <EventTimeSlotTimeline
+      :slots="modelValue"
+      :event-start="eventStart"
+      :event-end="eventEnd"
+    />
 
     <div
       v-for="(row, index) in modelValue"
@@ -262,6 +289,58 @@ const totalSpots = computed(() =>
             :aria-label="`Remove the ${rowRange(row)} block`"
             @click="requestRemoval(index)"
           />
+        </div>
+
+        <div class="mt-2 space-y-2">
+          <div>
+            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+              Role / Task
+            </label>
+            <UInput
+              :model-value="row.role ?? ''"
+              :maxlength="SLOT_ROLE_MAX_LENGTH"
+              placeholder="e.g. Front desk check-in"
+              class="w-full"
+              @update:model-value="value => updateRow(index, { role: String(value) })"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+              Note <span class="text-gray-400 dark:text-gray-500">(optional)</span>
+            </label>
+            <UInput
+              :model-value="row.note ?? ''"
+              placeholder="Anything else the volunteer should know"
+              class="w-full"
+              @update:model-value="value => updateRow(index, { note: String(value) })"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+              Colour <span class="text-gray-400 dark:text-gray-500">(on the timeline above)</span>
+            </label>
+            <div class="flex flex-wrap items-center gap-2">
+              <!-- `type="button"`: these sit inside the event form, where a
+                   bare button defaults to submit and would save the event on
+                   every swatch click. -->
+              <button
+                v-for="swatch in SLOT_COLORS"
+                :key="swatch.token"
+                type="button"
+                class="w-6 h-6 rounded-full ring-offset-2 ring-offset-white dark:ring-offset-gray-800"
+                :class="selectedColor(row) === swatch.token
+                  ? 'ring-2 ring-gray-900 dark:ring-white'
+                  : 'ring-1 ring-black/15 dark:ring-white/25'"
+                :style="{ backgroundColor: swatch.hex }"
+                :aria-label="swatch.label"
+                :aria-pressed="selectedColor(row) === swatch.token"
+                :title="swatch.label"
+                @click="updateRow(index, { color: swatch.token })"
+              />
+            </div>
+          </div>
         </div>
 
         <p

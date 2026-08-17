@@ -245,7 +245,9 @@ export default defineEventHandler(async (event) => {
             startTime: slot.startTime,
             endTime: slot.endTime,
             capacity: slot.capacity,
+            role: slot.role,
             note: slot.note,
+            color: slot.color,
           }
 
           if (slot.id) {
