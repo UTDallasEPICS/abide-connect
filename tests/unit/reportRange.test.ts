@@ -292,25 +292,33 @@ describe('previousYearRange', () => {
     expect(rangeDays(prior)).toBe(28)
   })
 
-  it('has no prior-year twin for a range that STARTS on 29 February', () => {
-    // Known limitation. `zonedTime(2023, 2, 29)` normalises to 1 March, so a
-    // start on a leap day lands a day late in the comparison year.
-    //
-    // Over a single leap day the shifted start meets the shifted end and the
-    // window has zero length: prior hours come back 0 and the year-over-year
-    // delta renders as null. That is a missing comparison rather than a wrong
-    // one — nothing fabricated reaches the page.
+  it('anniversaries 29 February onto the 28th, the date that exists', () => {
+    // A leap day has no counterpart in the comparison year. Normalising it
+    // forward to 1 March would start the prior window a day late — and over a
+    // single leap day it would push the start past the end and collapse the
+    // comparison to nothing.
     const leapDayOnly = resolveCustomRange('2024-02-29', '2024-02-29')!
-    const collapsed = previousYearRange(leapDayOnly)
-    expect(rangeDays(collapsed)).toBe(0)
-    expect(collapsed.start.getTime()).toBe(collapsed.end.getTime())
+    const prior = previousYearRange(leapDayOnly)
+    expect(dayKey(prior.start)).toBe('2023-02-28')
+    expect(rangeDays(prior)).toBe(1)
 
-    // Over a longer range it is a one-day skew instead: 32 days compared
-    // against 31, understating the prior period by a day.
+    // And a longer range keeps its length, so the two periods are comparable.
     const throughMarch = resolveCustomRange('2024-02-29', '2024-03-31')!
     expect(rangeDays(throughMarch)).toBe(32)
-    expect(rangeDays(previousYearRange(throughMarch))).toBe(31)
-    expect(dayKey(previousYearRange(throughMarch).start)).toBe('2023-03-01')
+    expect(rangeDays(previousYearRange(throughMarch))).toBe(32)
+    expect(dayKey(previousYearRange(throughMarch).start)).toBe('2023-02-28')
+  })
+
+  it('still rolls the exclusive end forward, which is where 1 March is correct', () => {
+    // A range ending 28 Feb 2024 has an exclusive end of the 29th. The prior
+    // year's answer is 1 March — clamping it to 28 Feb would silently drop the
+    // last day of the period being compared against.
+    const february = resolveCustomRange('2024-02-01', '2024-02-28')!
+    const prior = previousYearRange(february)
+    expect(dayKey(prior.start)).toBe('2023-02-01')
+    expect(formatRangeLabel(prior)).toBe('Feb 1 – Feb 28, 2023')
+    expect(rangeDays(february)).toBe(28)
+    expect(rangeDays(prior)).toBe(28)
   })
 
   it('keeps midnight when the same calendar date sat in the other offset a year earlier', () => {

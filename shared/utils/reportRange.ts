@@ -259,13 +259,34 @@ export function resolveCustomRange(
   return { start, end }
 }
 
-/** The same span shifted back a year, for the year-over-year comparison. */
+/** Days in a 1-12 month, so a shifted date can be clamped to a real one. */
+function daysInMonth(year: number, month: number): number {
+  // Day 0 of the following month is the last day of this one.
+  return new Date(Date.UTC(year, month, 0)).getUTCDate()
+}
+
+/**
+ * The same span shifted back a year, for the year-over-year comparison.
+ *
+ * The two ends are shifted differently, because they mean different things.
+ *
+ * `start` is a real included date, so it is clamped to a date that exists: 29
+ * February has no counterpart in a non-leap year, and letting it normalise
+ * forward to 1 March would shorten the comparison window by a day — or, over a
+ * single leap day, push the start past the end and collapse it to nothing.
+ *
+ * `end` is exclusive — always the midnight after the last day covered — so
+ * rolling it forward is already right. A range ending 28 February 2024 has an
+ * end of the 29th, and the answer for 2023 is 1 March, not 28 February, which
+ * would drop the last day of the prior period.
+ */
 export function previousYearRange(range: DateRange, timeZone = REPORT_TIME_ZONE): DateRange {
-  const shift = (d: Date) => {
+  const shift = (d: Date, clamp: boolean) => {
     const p = zonedParts(d, timeZone)
-    return zonedTime(p.year - 1, p.month, p.day, p.hour, timeZone)
+    const day = clamp ? Math.min(p.day, daysInMonth(p.year - 1, p.month)) : p.day
+    return zonedTime(p.year - 1, p.month, day, p.hour, timeZone)
   }
-  return { start: shift(range.start), end: shift(range.end) }
+  return { start: shift(range.start, true), end: shift(range.end, false) }
 }
 
 export function rangeDays(range: DateRange): number {
