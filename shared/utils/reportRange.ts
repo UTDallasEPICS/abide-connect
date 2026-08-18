@@ -125,9 +125,14 @@ function zoneOffsetMs(date: Date, timeZone: string): number {
  *
  * Solved by guessing UTC and correcting by the offset, twice: the first offset
  * is measured at the wrong instant, which only matters within a few hours of a
- * DST switch, and the second pass settles it. On the spring-forward hour, which
- * doesn't exist locally, this lands on the instant just after the jump — fine
- * for a report boundary, since no hour is skipped or double-counted.
+ * DST switch, and the second pass settles it.
+ *
+ * The spring-forward hour doesn't exist locally, and asking for it (2am on the
+ * changeover day) returns the instant *before* the jump — the same one 1am
+ * resolves to. Every boundary this file produces is a midnight, so that case is
+ * unreachable in practice; it is documented rather than special-cased because
+ * collapsing onto a real instant of the same day still puts a report boundary
+ * on the correct side of every day, week and month.
  */
 export function zonedTime(
   year: number,

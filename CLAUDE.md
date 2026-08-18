@@ -19,7 +19,20 @@ pnpm lint:fix              # eslint . --fix
 pnpm db:generate          # prisma generate (regenerate client after schema changes)
 ```
 
-There is no test suite configured in this repo currently.
+### Tests
+
+```bash
+pnpm test                 # vitest run
+pnpm test:watch           # vitest
+```
+
+Vitest, configured in `vitest.config.ts`. Coverage is the volunteer-hours
+reporting stack only; the rest of the app is untested.
+
+- `tests/unit/` — pure logic: `shared/utils/reportRange.ts`, `server/utils/reporting.ts`, `app/lib/chart.ts`.
+- `tests/integration/` — the report endpoints, run for real against a throwaway SQLite database. `tests/setup/global-setup.ts` builds it by replaying `prisma/migrations/*` (so a column that only exists in `prisma/schema/` fails here the way it would fail on deploy), and `tests/setup/h3-globals.ts` supplies the h3 helpers Nitro normally auto-imports so a route file can be imported and called directly. Only `requireRole` is stubbed.
+- `test.env.TZ` is `UTC` on purpose — production runs in UTC while the org is Central, so a helper that falls back to the host timezone fails the suite.
+- Expected figures in the integration tests are hand-computed literals with the arithmetic in a comment. Don't "fix" a failure by recomputing the expectation the way the handler does; that makes a wrong definition agree with itself.
 
 ### Database (Prisma + SQLite)
 
