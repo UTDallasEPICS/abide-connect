@@ -2,7 +2,6 @@
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { SignUpSchema } from '~/types/auth/sign-up.type'
 import { signUpFields, signUpSchema } from '~/types/auth/sign-up.type'
-import { authProviders } from '~/types/auth/providers.type'
 import { errorMessage as toErrorMessage } from '~/lib/errorMessage'
 
 /**
@@ -68,11 +67,10 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center p-8 my-8 ">
+  <div class="flex flex-col items-center justify-center min-h-screen">
     <UAuthForm
       class="w-full max-w-md"
       :fields="signUpFields"
-      :providers="authProviders"
       :schema="signUpSchema"
       title="Let's get you started to be a Volunteer!"
       icon="i-lucide-user"
