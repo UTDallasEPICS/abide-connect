@@ -10,6 +10,8 @@
     "prepare": "nuxt prepare",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "postinstall": "nuxt prepare",
     "db:generate": "prisma generate",
     "push:keys": "web-push generate-vapid-keys"
@@ -45,6 +47,7 @@
     "eslint": "^9.34.0",
     "prisma": "7.3.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.7"
   }
 }
