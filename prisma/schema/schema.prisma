@@ -1,5 +1,15 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
+//
+// The schema is split across several files in this directory (see
+// `prisma.config.ts`); this one holds the generator/datasource plus
+// better-auth's own models. Domain models live alongside in user.prisma,
+// volunteer.prisma, event.prisma, and so on.
+//
+// After editing anything here, run `pnpm prisma generate` — the client is
+// emitted to `server/utils/generated/prisma` rather than node_modules, and the
+// app imports types directly from that output, so stale generation shows up as
+// confusing type errors rather than a clear failure.
 
 generator client {
   provider               = "prisma-client"
@@ -12,12 +22,21 @@ generator client {
   previewFeatures        = []
 }
 
+// No `url` here — the connection is supplied at runtime by the
+// better-sqlite3 driver adapter in `server/utils/prisma.ts`, which reads
+// DATABASE_URL itself.
 datasource db {
   provider = "sqlite"
 }
 
 // Better Auth Models
+//
+// Owned by the better-auth library — their shape is dictated by its Prisma
+// adapter, so don't rename fields or add required columns here without checking
+// the adapter's expectations. All three FK to `User`, which is the
+// authenticated principal (not `Volunteer`).
 
+/// Active sign-in sessions. Cascades on user delete.
 model Session {
   id        String   @id
   expiresAt DateTime
@@ -33,6 +52,15 @@ model Session {
   @@map("session")
 }
 
+/// A linked identity provider for a user (currently only Google).
+///
+/// This is where the Google OAuth tokens live. `refreshToken` is the important
+/// one: `auth.api.getAccessToken()` uses it to mint fresh access tokens for
+/// Google Calendar writes long after sign-in, which is why the provider is
+/// configured with `accessType: 'offline'` and `prompt: 'consent'`. Users who
+/// signed in by email OTP have no Account row and therefore no calendar access.
+///
+/// `password` is unused — the app has no password auth.
 model Account {
   id                    String    @id
   accountId             String
@@ -52,6 +80,16 @@ model Account {
   @@map("account")
 }
 
+/// Short-lived tokens, in practice the email sign-in OTPs.
+///
+/// Written by both better-auth and the app's own `/api/auth/request-otp`, so
+/// the format is a contract between them: `identifier` is
+/// `sign-in-otp-<email>` and `value` is `<otp>:<attemptCount>`. The custom
+/// route hand-writes rows in that shape so `signInEmailOTP` can validate and
+/// consume them. Changing either format breaks the sign-up flow.
+///
+/// Rows are not FK'd to a user — sign-up issues a code before any account
+/// exists — and expired rows are not swept, so this table grows.
 model Verification {
   id         String   @id
   identifier String

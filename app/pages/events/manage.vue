@@ -1,4 +1,17 @@
 <script setup>
+/**
+ * Staff event management: create events and edit existing ones, split into
+ * upcoming and past.
+ *
+ * Admin-gated by `app/middleware/auth.global.ts` via the `/events/manage`
+ * prefix; the write endpoints enforce it again server-side.
+ *
+ * Events load in `onMounted` rather than via `useFetch`, so this page renders
+ * empty on the server and fills in on the client. Every mutation calls
+ * `loadEvents()` again instead of patching the local arrays, which keeps the
+ * two lists correctly partitioned when an edit moves an event across the
+ * past/upcoming boundary.
+ */
 import { ref, onMounted } from 'vue'
 
 const showAddModal = ref(false)

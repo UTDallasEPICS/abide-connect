@@ -10,8 +10,11 @@
     "prepare": "nuxt prepare",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "postinstall": "nuxt prepare",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "push:keys": "web-push generate-vapid-keys"
   },
   "dependencies": {
     "@internationalized/date": "^3.10.0",
@@ -28,6 +31,7 @@
     "vue": "^3.5.20",
     "vue-router": "^4.5.1",
     "vue3-carousel": "^0.16.0",
+    "web-push": "^3.6.7",
     "zod": "^4.1.12"
   },
   "devDependencies": {
@@ -37,11 +41,13 @@
     "@types/node": "^24.3.1",
     "@types/nodemailer": "^8.0.0",
     "@types/parse-path": "^7.1.0",
+    "@types/web-push": "^3.6.4",
     "@vite-pwa/nuxt": "^1.1.1",
     "dotenv": "^17.2.3",
     "eslint": "^9.34.0",
     "prisma": "7.3.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.7"
   }
 }

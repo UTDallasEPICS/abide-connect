@@ -53,6 +53,7 @@ export const EVENT_TYPE_OPTIONS: {
   },
 ]
 
+/** The one authoritative mapping from type to stored columns. */
 const EVENT_TYPE_FLAGS: Record<EventType, EventAudienceFlags> = {
   VOLUNTEERS_AND_ATTENDEES: { allowVolunteers: true, allowAttendees: true, isTraining: false },
   VOLUNTEERS: { allowVolunteers: true, allowAttendees: false, isTraining: false },
@@ -61,6 +62,7 @@ const EVENT_TYPE_FLAGS: Record<EventType, EventAudienceFlags> = {
   TRAINING: { allowVolunteers: true, allowAttendees: false, isTraining: true },
 }
 
+/** Narrows untrusted input (request bodies, query strings) to an `EventType`. */
 export function isEventType(value: unknown): value is EventType {
   return typeof value === 'string' && (EVENT_TYPES as readonly string[]).includes(value)
 }
@@ -82,6 +84,7 @@ export function eventTypeFromFlags(flags: Partial<EventAudienceFlags> | null | u
   return 'ATTENDEES'
 }
 
+/** Human-readable name for a type; falls back to the raw value if unknown. */
 export function eventTypeLabel(type: EventType): string {
   return EVENT_TYPE_OPTIONS.find(o => o.value === type)?.label ?? type
 }
@@ -94,6 +97,7 @@ export interface EventViewer {
   volunteerStatus: VolunteerStatus
 }
 
+/** The viewer to assume for logged-out requests — sees public events only. */
 export const ANONYMOUS_VIEWER: EventViewer = { isAdmin: false, volunteerStatus: 'NONE' }
 
 /**
@@ -115,6 +119,10 @@ export function canViewEventType(type: EventType, viewer: EventViewer): boolean 
   }
 }
 
+/**
+ * `canViewEventType` for a raw DB row — takes the stored boolean columns
+ * instead of a resolved type. This is the form server routes usually want.
+ */
 export function canViewEvent(flags: Partial<EventAudienceFlags>, viewer: EventViewer): boolean {
   return canViewEventType(eventTypeFromFlags(flags), viewer)
 }
@@ -133,6 +141,13 @@ export function canSignUpAsVolunteer(type: EventType, viewer: EventViewer): bool
   return false
 }
 
+/**
+ * Whether this event takes attendee registrations at all. Unlike volunteer
+ * sign-up it doesn't depend on the viewer — any account holder can attend an
+ * event that allows attendees. It is *not* a permission check on its own:
+ * registering still requires a session, which the caller has to establish
+ * separately (see `events/[id]/rsvp.post.ts`).
+ */
 export function canRegisterAsAttendee(type: EventType): boolean {
   return type === 'ATTENDEES' || type === 'VOLUNTEERS_AND_ATTENDEES'
 }

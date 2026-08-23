@@ -6,10 +6,18 @@
  * - Handles multiple image selection with drag & drop
  * - Shows existing server images alongside new uploads
  * - Supports deleting existing images from the server
+ *
+ * The two halves behave differently and it matters: newly selected files are
+ * only emitted to the parent (which uploads them on save), whereas deleting an
+ * existing image calls the API immediately and cannot be undone by cancelling
+ * the form.
  */
 
 interface ServerAsset {
-  imageUrl: string // just the fileName as stored in DB
+  // As stored on Event_Asset: `<eventId>/images/<fileName>`, not a bare
+  // filename. That prefix is what makes `getAssetUrl` below produce a valid
+  // `/api/events/<eventId>/images/<fileName>` route.
+  imageUrl: string
 }
 
 const props = defineProps<{
@@ -66,14 +74,14 @@ async function deleteExistingAsset(asset: ServerAsset) {
   <div class="space-y-4">
     <!-- Existing server images -->
     <div v-if="remainingAssets.length > 0">
-      <p class="text-sm text-gray-500 mb-2">
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
         Current Images
       </p>
       <div class="grid grid-cols-3 gap-2">
         <div
           v-for="asset in remainingAssets"
           :key="asset.imageUrl"
-          class="relative group aspect-square rounded-lg overflow-hidden bg-gray-100"
+          class="relative group aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700"
         >
           <img
             :src="getAssetUrl(asset)"

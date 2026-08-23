@@ -1,10 +1,27 @@
 <script setup lang="ts">
+import type { FormSubmitEvent } from '@nuxt/ui'
+import { volunteerApplicationStepSchemas, volunteerApplicationSteps, type VolunterApplicationSchema } from '~/types/volunteer/volunteer-application.type'
+
 definePageMeta({
   layout: 'secondary',
 })
 
-import type { FormSubmitEvent } from '@nuxt/ui'
-import { volunteerApplicationStepSchemas, volunteerApplicationSteps, type VolunterApplicationSchema } from '~/types/volunteer/volunteer-application.type';
+/**
+ * Multi-step volunteer application form.
+ *
+ * Each step validates against its own slice of the schema
+ * (`volunteerApplicationStepSchemas`), so users only see errors for fields
+ * they've reached. Answers accumulate in `stepData` keyed by step index and are
+ * merged into one payload on the final submit — nothing is sent until then, so
+ * abandoning the form leaves no partial record.
+ *
+ * That also means a refresh loses everything: `stepData` is component state,
+ * not persisted.
+ *
+ * Submitting creates the `Volunteer` record as PENDING and grants the VOLUNTEER
+ * role. It does not grant access to volunteer events — approval happens after
+ * attending a training session.
+ */
 
 const stepDescriptions = [
   'Thank you for your interest in volunteering with Abide Women\'s Health Services! Please fill out the form below to apply and register for our upcoming volunteer training.',
@@ -42,11 +59,12 @@ async function onSubmit(payload: FormSubmitEvent<Record<string, unknown>>) {
       method: 'POST',
       body: fullApplication,
     })
-    await navigateTo('/volunteer-application/completed');
-    
-  } catch {
+    await navigateTo('/volunteer-application/completed')
+  }
+  catch {
     errorMessage.value = 'Something went wrong submitting your application. Please try again.'
-  } finally {
+  }
+  finally {
     isLoading.value = false
   }
 }
@@ -79,15 +97,29 @@ function goToPreviousStep() {
 
       <template #codeOfConductNdaAcknowledgement-description>
         I acknowledge that I have read, understand, and agree to abide by and comply with the terms of the
-        <a href="https://drive.google.com/file/d/13p7OBlJl7BNxoKseP9-83i6S7m55-YBO/view?usp=sharing" target="_blank" rel="noopener noreferrer" class="underline text-primary">Code of Conduct</a>
+        <a
+          href="https://drive.google.com/file/d/13p7OBlJl7BNxoKseP9-83i6S7m55-YBO/view?usp=sharing"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="underline text-primary"
+        >Code of Conduct</a>
         and the
-        <a href="https://drive.google.com/file/d/1dKLmm6qOAR751_duccfkMfIBvcChcFWl/view?usp=sharing" target="_blank" rel="noopener noreferrer" class="underline text-primary">Confidentiality/Non-Disclosure Agreement (NDA)</a>.
+        <a
+          href="https://drive.google.com/file/d/1dKLmm6qOAR751_duccfkMfIBvcChcFWl/view?usp=sharing"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="underline text-primary"
+        >Confidentiality/Non-Disclosure Agreement (NDA)</a>.
       </template>
       <template #volunteerHandbookAcknowledgement-description>
         I acknowledge that I have read, understand, and agree to abide by and comply with the terms of the
-        <a href="https://drive.google.com/file/d/1W3Vom6kw8vuOuiOBjWtakHZC6Q0yRtCx/view?usp=sharing" target="_blank" rel="noopener noreferrer" class="underline text-primary">Volunteer Handbook</a>.
+        <a
+          href="https://drive.google.com/file/d/1W3Vom6kw8vuOuiOBjWtakHZC6Q0yRtCx/view?usp=sharing"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="underline text-primary"
+        >Volunteer Handbook</a>.
       </template>
-
 
       <template #submit>
         <div class="grid grid-cols-2 gap-3 w-full">

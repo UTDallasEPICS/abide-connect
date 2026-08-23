@@ -1,84 +1,57 @@
 <script setup lang="ts">
-import { authClient } from '#server/utils/auth-client'
+const onSettingsClick = () => navigateTo('/settings')
 
-const colorMode = useColorMode()
+const isScrolled = ref(false)
+const handleScroll = () => {
+  isScrolled.value = window.scrollY > 0
+}
 
-const onInboxClick = async (_e?: MouseEvent) => {
-  await navigateTo('/inbox')
-}
-const onSettingsClick = async (_e?: MouseEvent) => {
-  await navigateTo('/settings')
-}
-const onLogout = async () => {
-  await authClient.signOut()
-  window.location.href = '/auth/login'
-}
-const toggleDarkMode = () => {
-  colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
-}
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll, { passive: true })
+  handleScroll()
+})
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
 </script>
 
 <template>
   <UHeader
-    :ui="{ toggle: 'hidden' }"
-    class="fixed top-0 z-50 h-12 w-full bg-white dark:bg-gray-900"
+    :ui="{
+      root: 'border-none',
+    }"
+    :toggle="false"
+    class="fixed top-0 z-50 py-5 h-auto w-full dark:bg-gray-900 transition-shadow duration-200 bg-white/90 backdrop-blur-lg"
+    :class="isScrolled ? 'shadow-sm' : 'shadow-none'"
   >
     <template #left>
-      <div class="">
-        <UButton
-          color="neutral"
-          variant="ghost"
-          aria-label="Settings"
-          @click="onSettingsClick"
+      <NuxtLink
+        to="/"
+        aria-label="Go to home page"
+      >
+        <img
+          src="/images/abide_logo.svg"
+          alt="Abide logo"
+          class="h-9 w-auto cursor-pointer"
         >
-          <UIcon
-            name="i-lucide-settings"
-            class="w-7 h-7 text-teal-900 dark:text-teal-400"
-          />
-        </UButton>
-      </div>
+      </NuxtLink>
     </template>
-
     <template #right>
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-0.5">
         <slot name="right">
+          <NavNotificationMenu />
           <UButton
             color="neutral"
             variant="ghost"
-            aria-label="Inbox"
-            @click="onInboxClick"
+            aria-label="Settings"
+            @click="onSettingsClick"
           >
             <UIcon
-              name="i-lucide-bell"
-              class="w-7 h-7 text-teal-900 dark:text-teal-400"
+              name="i-lucide-settings"
+              class="w-6 h-6 text-gray-900 dark:text-teal-400"
             />
           </UButton>
         </slot>
-
-        <!-- ← new dark mode toggle button -->
-        <UButton
-          color="neutral"
-          variant="ghost"
-          aria-label="Toggle dark mode"
-          @click="toggleDarkMode"
-        >
-          <UIcon
-            :name="colorMode.value === 'dark' ? 'i-lucide-sun' : 'i-lucide-moon'"
-            class="w-7 h-7 text-teal-900 dark:text-teal-400"
-          />
-        </UButton>
-
-        <UButton
-          color="neutral"
-          variant="ghost"
-          aria-label="Logout"
-          @click="onLogout"
-        >
-          <UIcon
-            name="i-lucide-log-out"
-            class="w-7 h-7 text-teal-900 dark:text-teal-400"
-          />
-        </UButton>
       </div>
     </template>
     <template #toggle />

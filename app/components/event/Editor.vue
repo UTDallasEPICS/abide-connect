@@ -2,16 +2,43 @@
 import { ref, watch } from 'vue'
 import { eventTypeFromFlags } from '#shared/utils/eventType'
 
-const props = defineProps({
-  event: {
-    type: Object,
-    default: null,
-  },
-})
+/**
+ * Event edit form. Owns a local copy of the event and emits `save`/`delete` —
+ * the parent performs the actual writes.
+ *
+ * Edits are made against `editedEvent`, a clone rebuilt whenever the `event`
+ * prop changes, so abandoning the form leaves the original untouched.
+ *
+ * Note images do not follow that pattern: `saveEvent` uploads pending files
+ * immediately, before emitting, so a user who uploads and then cancels has
+ * still changed the event's images.
+ */
+
+interface EventAsset {
+  id: string
+  imageUrl: string
+}
+
+interface EditableEvent {
+  id?: string
+  title?: string
+  shortDesc?: string
+  description?: string
+  location?: { address: string }
+  startTime?: string
+  endTime?: string
+  eventAssets?: EventAsset[]
+  eventType?: string
+  [key: string]: unknown
+}
+
+const props = defineProps<{
+  event: EditableEvent | null
+}>()
 
 const emit = defineEmits(['save', 'delete'])
 
-const editedEvent = ref<any>({})
+const editedEvent = ref<EditableEvent>({})
 const filesToUpload = ref<File[]>([])
 // Build asset list for the uploader from the real event assets
 const eventAssets = ref<{ imageUrl: string, isPreview?: boolean, fileName?: string }[]>([])
@@ -22,7 +49,7 @@ watch(() => props.event, (newEvent) => {
     editedEvent.value = { ...newEvent, eventType: eventTypeFromFlags(newEvent) }
     // Map existing server assets to uploader format
     // imageUrl in DB is just the fileName (after the upload fix)
-    eventAssets.value = (newEvent.eventAssets || []).map((a: any) => ({
+    eventAssets.value = (newEvent.eventAssets || []).map((a: EventAsset) => ({
       imageUrl: `/api/events/${newEvent.id}/images/${a.imageUrl}`,
       fileName: a.imageUrl,
       isPreview: false,
@@ -47,6 +74,9 @@ async function saveEvent() {
         })
       }
       catch (err) {
+        // Swallowed deliberately so one bad image doesn't lose the user's text
+        // edits — but nothing surfaces the failure, so the save appears to
+        // succeed with the image missing. Worth a toast.
         console.error(`Failed to upload ${file.name}:`, err)
       }
     }
@@ -63,7 +93,7 @@ function deleteEvent() {
 
 <template>
   <div class="space-y-4">
-    <h3 class="text-xl font-semibold">
+    <h3 class="text-xl font-semibold dark:text-gray-100">
       Edit Event
     </h3>
 

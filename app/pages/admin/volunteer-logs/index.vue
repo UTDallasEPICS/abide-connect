@@ -1,4 +1,15 @@
 <script setup lang="ts">
+/**
+ * Volunteer hour-log review queue, tabbed by approval status.
+ *
+ * Defaults to PENDING because that's the actionable tab — the other two are
+ * history. Approving here is what makes hours count toward the totals shown on
+ * the member list, which sums approved logs only.
+ *
+ * All three tabs come from one `/api/volunteer-logs` fetch and are filtered
+ * client-side, so switching tabs costs nothing.
+ */
+
 const activeTab = ref('PENDING')
 
 const tabs = [
@@ -29,7 +40,7 @@ const fetchlogs = async () => {
   loading.value = true
   error.value = null
   try {
-    const data = await $fetch<{ logs: VolunteerLog[] }>('/api/volunteer-logs', { headers: useRequestHeaders(['cookie']) });
+    const data = await $fetch<{ logs: VolunteerLog[] }>('/api/volunteer-logs', { headers: useRequestHeaders(['cookie']) })
     console.log('API response:', data)
     logs.value = data?.logs ?? []
   }
@@ -104,10 +115,11 @@ async function confirmAction(id: string) {
       method: 'PATCH',
       body: {
         status: actionType.value === 'approve' ? 'APPROVED' : 'REJECTED',
-        comment: (commentDraft.value[id] ?? '').trim() || null
-      }
+        comment: (commentDraft.value[id] ?? '').trim() || null,
+      },
     })
-  } catch (err) {
+  }
+  catch (err) {
     console.error('Failed to update log:', err)
     error.value = 'Failed to update volunteer log'
     return
@@ -190,7 +202,7 @@ async function confirmAction(id: string) {
         >
           <!-- Header (matches inbox pattern) -->
           <template #default="{ item, open }">
-            <div 
+            <div
               class="bg-white dark:bg-gray-800 rounded-xl p-5 border border-transparent dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
             >
               <div

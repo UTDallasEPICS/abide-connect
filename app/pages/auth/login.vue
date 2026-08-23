@@ -8,6 +8,34 @@ import {
   verifyOtpSchema,
   type VerifyOtpSchema,
 } from '~/types/auth/login.type'
+import { errorMessage as toErrorMessage } from '~/lib/errorMessage'
+import { safeRedirect } from '~/lib/safeRedirect'
+
+/**
+ * Email-OTP login, as a two-step form on one route: request a code, then enter
+ * it. `step` drives which schema and fields render.
+ *
+ * Only for existing accounts — the OTP plugin runs with `disableSignUp: true`,
+ * so requesting a code for an unknown address fails rather than registering.
+ * New users go through /auth/sign-up.
+ *
+ * A `?redirect=` query param survives the whole flow, including the hop to
+ * sign-up: pages that turn a signed-out visitor away (an event's "Sign in to
+ * register", say) set it so the user lands back where they were instead of on
+ * the home page. It's run through `safeRedirect`, so an off-site value is
+ * discarded rather than followed.
+ *
+ * The 30s resend cooldown is client-side only — it keeps the button from being
+ * hammered, but `/api/auth/request-otp` has no throttle of its own, so it isn't
+ * enforcement.
+ */
+
+const route = useRoute()
+const redirectTo = computed(() => safeRedirect(route.query.redirect))
+const signUpLink = computed(() => ({
+  path: '/auth/sign-up',
+  query: route.query.redirect ? { redirect: route.query.redirect } : undefined,
+}))
 
 const isLoading = ref(false)
 const errorMessage = ref<string | null>(null)
@@ -25,7 +53,8 @@ function startCooldown() {
   cooldownTimer = setInterval(() => {
     if (resendCooldown.value > 0) {
       resendCooldown.value--
-    } else {
+    }
+    else {
       clearInterval(cooldownTimer!)
       cooldownTimer = null
     }
@@ -37,6 +66,7 @@ onUnmounted(() => {
 })
 
 async function onRequestOtp(event: FormSubmitEvent<RequestOtpSchema>) {
+  if (isLoading.value) return
   isLoading.value = true
   errorMessage.value = null
 
@@ -50,7 +80,7 @@ async function onRequestOtp(event: FormSubmitEvent<RequestOtpSchema>) {
     startCooldown()
   }
   catch (error: unknown) {
-    errorMessage.value = (error as { message: string }).message
+    errorMessage.value = toErrorMessage(error)
   }
   finally {
     isLoading.value = false
@@ -58,6 +88,7 @@ async function onRequestOtp(event: FormSubmitEvent<RequestOtpSchema>) {
 }
 
 async function onVerifyOtp(event: FormSubmitEvent<VerifyOtpSchema>) {
+  if (isLoading.value) return
   isLoading.value = true
   errorMessage.value = null
 
@@ -70,10 +101,10 @@ async function onVerifyOtp(event: FormSubmitEvent<VerifyOtpSchema>) {
       },
     })
     await nextTick()
-    await navigateTo('/')
+    await navigateTo(redirectTo.value)
   }
   catch (error: unknown) {
-    errorMessage.value = (error as { message: string }).message
+    errorMessage.value = toErrorMessage(error)
   }
   finally {
     isLoading.value = false
@@ -81,7 +112,7 @@ async function onVerifyOtp(event: FormSubmitEvent<VerifyOtpSchema>) {
 }
 
 async function resendOtp() {
-  if (!pendingEmail.value || resendCooldown.value > 0) return
+  if (!pendingEmail.value || resendCooldown.value > 0 || isResending.value) return
   isResending.value = true
   resendError.value = null
   try {
@@ -90,9 +121,11 @@ async function resendOtp() {
       body: { email: pendingEmail.value },
     })
     startCooldown()
-  } catch (err: unknown) {
-    resendError.value = (err as { message: string }).message
-  } finally {
+  }
+  catch (err: unknown) {
+    resendError.value = toErrorMessage(err)
+  }
+  finally {
     isResending.value = false
   }
 }
@@ -114,13 +147,13 @@ function goBack() {
       :fields="requestOtpFields"
       title="Welcome back!"
       icon="i-lucide-mail"
-      :submit="{ label: 'Send code', block: true, color: 'neutral' }"
+      :submit="{ label: 'Send code', block: true, color: 'neutral', loading: isLoading, disabled: isLoading }"
       @submit="onRequestOtp"
     >
       <template #description>
         Don't have an account?
         <ULink
-          to="/auth/sign-up"
+          :to="signUpLink"
           class="text-primary font-medium"
         >
           Sign up
@@ -160,7 +193,7 @@ function goBack() {
       :fields="verifyOtpFields"
       title="Check your email"
       icon="i-lucide-shield-check"
-      :submit="{ label: 'Verify code', block: true, color: 'neutral' }"
+      :submit="{ label: 'Verify code', block: true, color: 'neutral', loading: isLoading, disabled: isLoading }"
       @submit="onVerifyOtp"
     >
       <template #description>
@@ -183,7 +216,10 @@ function goBack() {
       <template #footer>
         <div class="flex flex-col items-center gap-2 w-full">
           <div class="text-sm">
-            <span v-if="resendCooldown > 0" class="text-muted">Resend code in {{ resendCooldown }}s</span>
+            <span
+              v-if="resendCooldown > 0"
+              class="text-muted"
+            >Resend code in {{ resendCooldown }}s</span>
             <UButton
               v-else
               variant="link"

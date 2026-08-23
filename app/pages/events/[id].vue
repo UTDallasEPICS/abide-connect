@@ -10,6 +10,26 @@ import {
   type VolunteerStatus,
 } from '#shared/utils/eventType'
 
+/**
+ * Event detail page, doubling as the inline editor for admins.
+ *
+ * What renders depends on the viewer, assembled from four fetches (roles, own
+ * profile, volunteer profile, existing RSVP):
+ *   - admins get edit controls, the registration list and, for trainings, the
+ *     volunteer approval panel;
+ *   - approved volunteers get one-tap volunteer sign-up;
+ *   - pending volunteers get sign-up on training events only;
+ *   - other signed-in users get one-tap attendee registration, which records
+ *     the name, phone and email on their account;
+ *   - signed-out visitors can read the page but are sent to sign in or create
+ *     an account, and come back here afterwards via `?redirect=`.
+ *
+ * The `canSignUpAsVolunteer` / `canRegisterAsAttendee` helpers are the same
+ * ones the API enforces with, so the buttons shown match what the server will
+ * accept. A viewer who shouldn't see the event at all gets a 404 from
+ * `/api/events/[id]` rather than a 403, so `notFound` covers both cases.
+ */
+
 const colorMode = useColorMode()
 const isDark = computed(() => colorMode.value === 'dark')
 
@@ -26,7 +46,29 @@ if (error.value) {
 }
 
 const isEditMode = ref(false)
-const editForm = ref<any>({})
+type TimeSlotDraft = {
+  id: string | null
+  startTime: string
+  endTime: string
+  capacity: number
+  signupCount?: number
+}
+
+type EditForm = {
+  title?: string
+  shortDesc?: string
+  description?: string
+  location?: { address?: string }
+  startTime?: string
+  endTime?: string
+  eventType?: string
+  timeSlots?: TimeSlotDraft[]
+  mobileClinic?: string
+  [key: string]: unknown
+}
+
+const editForm = ref<EditForm>({})
+const saveError = ref('')
 
 const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
 const { data: roles } = await useFetch<string[]>('/api/user/roles', {
@@ -37,7 +79,26 @@ const { data: myVolunteer } = await useFetch<{ approvalStatus?: string } | null>
   '/api/volunteer/me',
   { headers, default: () => null },
 )
+// The contact details a registration is made with. Returns null when logged
+// out rather than 401ing, so it's safe to fetch unconditionally.
+const { data: me } = await useFetch<{ name: string | null, email: string, phone: string | null } | null>(
+  '/api/user/me',
+  { headers, default: () => null },
+)
+// Phone is optional at sign-up, so an account can register without one — worth
+// prompting for, since it's how staff reach an attendee on the day.
+const missingPhone = computed(() => !me.value?.phone)
+
+/** The contact line staff will see against this registration. */
+const registeredAs = computed(() => {
+  if (!me.value) return ''
+  const name = me.value.name?.trim() || me.value.email
+  return [name, me.value.email, me.value.phone].filter(Boolean).join(' · ')
+})
 const isAdmin = computed(() => roles.value?.includes('admin') ?? false)
+// `/api/user/roles` returns [] when there's no session, and every signed-in
+// user holds at least `user`.
+const isSignedIn = computed(() => (roles.value?.length ?? 0) > 0)
 
 const viewer = computed<EventViewer>(() => ({
   isAdmin: isAdmin.value,
@@ -62,21 +123,53 @@ const { data: myRsvp, refresh: refreshMyRsvp } = await useFetch<{ isVolunteer: b
 const isSignedUpToVolunteer = computed(() => myRsvp.value?.isVolunteer === true)
 const isRegisteredToAttend = computed(() => myRsvp.value?.isVolunteer === false)
 
-const showRsvpModal = ref(false)
-const rsvpIsVolunteer = ref(false)
-const rsvpStatsRef = ref<any>(null)
+interface EventTimeSlot {
+  id: string
+  startTime: string
+  endTime: string
+  capacity: number
+  note: string | null
+  signupCount: number
+  spotsRemaining: number
+  isFull: boolean
+  viewerSignedUp: boolean
+  /** Staff only. */
+  signups?: { volunteerId: string, name: string, email: string }[]
+}
+
+const {
+  data: timeSlotData,
+  error: timeSlotError,
+  refresh: refreshTimeSlots,
+} = await useFetch<{ slots: EventTimeSlot[] }>(
+  `/api/events/${eventId}/time-slots`,
+  { headers, default: () => ({ slots: [] }) },
+)
+
+const timeSlots = computed(() => timeSlotData.value?.slots ?? [])
+
+// Once an event has blocks, claiming a shift *is* how you volunteer for it —
+// the one-tap sign-up is hidden so the two can't disagree.
+const hasTimeSlots = computed(() => timeSlots.value.length > 0)
+
+// Blocks are volunteer shifts, so they only belong on events volunteers sign
+// up for. Kept visible while blocks still exist even if the admin switches the
+// type, so they can be removed deliberately rather than silently discarded.
+const acceptsTimeBlocks = computed(() =>
+  editForm.value.eventType === 'VOLUNTEERS'
+  || editForm.value.eventType === 'VOLUNTEERS_AND_ATTENDEES',
+)
+
+const rsvpStatsRef = ref<{ refresh: () => void } | null>(null)
 const signUpPending = ref(false)
 const signUpError = ref('')
 
-function openRsvpModal(isVolunteer: boolean) {
-  rsvpIsVolunteer.value = isVolunteer
-  showRsvpModal.value = true
-}
-
-async function onRsvpSuccess() {
-  showRsvpModal.value = false
-  await Promise.all([refreshMyRsvp(), rsvpStatsRef.value?.refresh()])
-}
+// Where an unregistered visitor is sent to attend, and what brings them back
+// here once they have an account.
+const loginLink = computed(() => ({
+  path: '/auth/login',
+  query: { redirect: route.fullPath },
+}))
 
 function signUpErrorMessage(err: unknown, fallback: string) {
   return (err as { data?: { message?: string } })?.data?.message || fallback
@@ -101,6 +194,29 @@ async function signUpAsVolunteer() {
   }
 }
 
+/**
+ * One-tap attendee registration. No form: the sign-up is keyed to the account,
+ * so staff read the name, phone and email straight off the profile — which is
+ * also why there's no way to register without one.
+ */
+async function registerToAttend() {
+  signUpPending.value = true
+  signUpError.value = ''
+  try {
+    await $fetch(`/api/events/${eventId}/rsvp`, {
+      method: 'POST',
+      body: { isVolunteer: false },
+    })
+    await Promise.all([refreshMyRsvp(), rsvpStatsRef.value?.refresh()])
+  }
+  catch (err) {
+    signUpError.value = signUpErrorMessage(err, 'Could not register you. Please try again.')
+  }
+  finally {
+    signUpPending.value = false
+  }
+}
+
 async function cancelSignUp() {
   signUpPending.value = true
   signUpError.value = ''
@@ -116,6 +232,19 @@ async function cancelSignUp() {
   }
 }
 
+/**
+ * After a block is claimed, dropped, or a volunteer is removed: the counts
+ * change, and so does the RSVP (claiming a first block adds one, dropping the
+ * last removes it), so the stats panel has to be refreshed too.
+ */
+async function onTimeSlotsChanged() {
+  await Promise.all([
+    refreshTimeSlots(),
+    refreshMyRsvp(),
+    rsvpStatsRef.value?.refresh(),
+  ])
+}
+
 const filesToUpload = ref<File[]>([])
 
 function enterEditMode() {
@@ -124,6 +253,16 @@ function enterEditMode() {
     eventType: eventType.value,
     startTime: event.value?.startTime ? formatForInput(event.value.startTime) : '',
     endTime: event.value?.endTime ? formatForInput(event.value.endTime) : '',
+    // Each existing block keeps its id so the save updates it in place. A
+    // block that lost its id would be treated as new, and the row it replaced
+    // would be deleted — taking every sign-up on it.
+    timeSlots: timeSlots.value.map(slot => ({
+      id: slot.id,
+      startTime: formatForInput(slot.startTime),
+      endTime: formatForInput(slot.endTime),
+      capacity: slot.capacity,
+      signupCount: slot.signupCount,
+    })),
   }
   isEditMode.value = true
 }
@@ -147,6 +286,25 @@ function onFilesChanged(files: File[]) {
 
 async function saveChanges() {
   try {
+    // Omitted entirely rather than sent empty when the block list didn't load:
+    // an empty array means "delete them all", so a failed fetch would wipe
+    // every shift the moment someone saved an unrelated change.
+    const timeSlotPayload = timeSlotError.value
+      ? {}
+      : {
+          timeSlots: (editForm.value.timeSlots ?? []).map((slot: {
+            id: string | null
+            startTime: string
+            endTime: string
+            capacity: number
+          }) => ({
+            id: slot.id,
+            startTime: new Date(slot.startTime).toISOString(),
+            endTime: new Date(slot.endTime).toISOString(),
+            capacity: Number(slot.capacity),
+          })),
+        }
+
     await $fetch(`/api/events/${eventId}`, {
       method: 'PATCH',
       body: {
@@ -157,6 +315,7 @@ async function saveChanges() {
         startTime: new Date(editForm.value.startTime).toISOString(),
         endTime: new Date(editForm.value.endTime).toISOString(),
         eventType: editForm.value.eventType,
+        ...timeSlotPayload,
       },
     })
 
@@ -176,10 +335,16 @@ async function saveChanges() {
 
     filesToUpload.value = []
     isEditMode.value = false
-    await refresh()
+    saveError.value = ''
+    await Promise.all([refresh(), refreshTimeSlots()])
   }
   catch (error) {
     console.error('Error updating event:', error)
+    // Stay in edit mode and say what happened. The server rejects a save that
+    // would strand a block outside the event window, and that rejection is
+    // useless if the form closes as though it succeeded.
+    saveError.value = (error as { data?: { message?: string } })?.data?.message
+      || 'Could not save your changes. Please try again.'
   }
 }
 
@@ -196,7 +361,7 @@ const formattedDate = computed(() => {
 const carouselItems = computed(() => {
   const assets = event.value?.eventAssets || []
   if (assets.length > 0) {
-    return assets.map((a: any) => `/api/events/${a.imageUrl}`)
+    return assets.map((a: { imageUrl: string }) => `/api/events/${a.imageUrl}`)
   }
   return [
     'https://picsum.photos/640/640?random=1',
@@ -302,6 +467,13 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
             </template>
           </div>
         </div>
+
+        <p
+          v-if="saveError"
+          class="max-w-4xl mx-auto px-4 pb-3 text-sm text-red-600 dark:text-red-400"
+        >
+          {{ saveError }}
+        </p>
       </div>
 
       <div class="max-w-4xl mx-auto px-4 py-8">
@@ -494,6 +666,23 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
               :color="brandColor"
             />
 
+            <EventTimeSlotEditor
+              v-if="acceptsTimeBlocks || (editForm.timeSlots?.length ?? 0) > 0"
+              v-model="editForm.timeSlots"
+              :event-start="editForm.startTime"
+              :event-end="editForm.endTime"
+              :color="brandColor"
+            />
+
+            <p
+              v-if="!acceptsTimeBlocks && (editForm.timeSlots?.length ?? 0) > 0"
+              class="text-xs text-amber-700 dark:text-amber-400"
+            >
+              This event type doesn't use time blocks. Remove the blocks above
+              before saving, or switch back to an event type that volunteers
+              sign up for.
+            </p>
+
             <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
               <div class="flex items-center gap-3">
                 <UIcon
@@ -559,6 +748,19 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
           :admin="isAdmin"
         />
 
+        <!-- Time blocks: replaces one-tap volunteering on events that have them -->
+        <EventTimeSlotList
+          v-if="!isEditMode && hasTimeSlots"
+          :event-id="eventId"
+          :slots="timeSlots"
+          :can-volunteer="canVolunteer"
+          :is-admin="isAdmin"
+          :volunteer-status="viewer.volunteerStatus"
+          :is-signed-in="isSignedIn"
+          :color="brandColor"
+          @changed="onTimeSlotsChanged"
+        />
+
         <!-- Action Buttons -->
         <div
           v-if="!isEditMode"
@@ -575,9 +777,11 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
             {{ eventTypeLabel(eventType) }} — only visible to volunteers
           </p>
 
-          <!-- Already signed up: no approval step, so just confirm it -->
+          <!-- Already signed up: no approval step, so just confirm it.
+               Hidden on events with blocks — the block list is the source of
+               truth there, and cancelling here would leave shifts claimed. -->
           <div
-            v-if="isSignedUpToVolunteer"
+            v-if="isSignedUpToVolunteer && !hasTimeSlots"
             class="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-brand6 dark:bg-gray-800 px-4 py-3"
           >
             <span class="flex items-center gap-2 text-sm font-medium text-brand4 dark:text-brand8">
@@ -600,7 +804,7 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
 
           <div class="flex gap-4">
             <UButton
-              v-if="canVolunteer && !isSignedUpToVolunteer"
+              v-if="canVolunteer && !isSignedUpToVolunteer && !hasTimeSlots"
               :color="brandColor"
               size="xl"
               block
@@ -611,17 +815,45 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
               Sign Up as Volunteer
             </UButton>
             <UButton
-              v-if="canAttend && !isRegisteredToAttend"
+              v-if="canAttend && isSignedIn && !isRegisteredToAttend"
               :color="brandColor"
               variant="outline"
               size="xl"
               block
               icon="i-lucide-ticket"
-              @click="openRsvpModal(false)"
+              :loading="signUpPending"
+              @click="registerToAttend"
             >
               Register to Attend
             </UButton>
+            <!-- Attending requires an account: we register people by their
+                 profile, so there's nothing to submit until they have one. -->
+            <UButton
+              v-else-if="canAttend && !isSignedIn"
+              :color="brandColor"
+              variant="outline"
+              size="xl"
+              block
+              icon="i-lucide-log-in"
+              :to="loginLink"
+            >
+              Sign In to Register
+            </UButton>
           </div>
+
+          <p
+            v-if="canAttend && !isSignedIn"
+            class="text-center text-sm text-gray-500 dark:text-gray-400"
+          >
+            You'll need an account to attend.
+            <ULink
+              :to="{ path: '/auth/sign-up', query: { redirect: route.fullPath } }"
+              class="text-primary font-medium"
+            >
+              Create one
+            </ULink>
+            — we'll bring you back here.
+          </p>
 
           <div
             v-if="isRegisteredToAttend"
@@ -643,6 +875,16 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
             >
               Cancel registration
             </UButton>
+            <!-- Staff work the door from these, so show what they'll see. -->
+            <p class="w-full text-sm text-gray-600 dark:text-gray-400">
+              Registered as {{ registeredAs }}.
+              <ULink
+                to="/settings"
+                class="text-primary font-medium"
+              >
+                {{ missingPhone ? 'Add a phone number' : 'Update your details' }}
+              </ULink>
+            </p>
           </div>
 
           <p
@@ -652,24 +894,6 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
             {{ signUpError }}
           </p>
         </div>
-
-        <!-- RSVP Modal -->
-        <Teleport to="body">
-          <div
-            v-if="showRsvpModal"
-            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
-            @click.self="showRsvpModal = false"
-          >
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl dark:shadow-black/30 max-w-md w-full border border-transparent dark:border-gray-700">
-              <EventRSVPModal
-                :event-id="eventId"
-                :is-volunteer="rsvpIsVolunteer"
-                @success="onRsvpSuccess"
-                @close="showRsvpModal = false"
-              />
-            </div>
-          </div>
-        </Teleport>
       </div>
     </div>
   </div>

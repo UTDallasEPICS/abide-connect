@@ -1,3 +1,16 @@
+/// An event on the calendar.
+///
+/// Audience is stored as three booleans but behaves as one exclusive choice —
+/// see `shared/utils/eventType.ts`, which owns the mapping. Don't set
+/// `allowVolunteers` / `allowAttendees` / `isTraining` by hand; go through
+/// `eventTypeToFlags()` so an event can't end up as both a training and a
+/// public event. Those flags are also what `canViewEvent` filters on, so a bad
+/// combination changes who can see the event.
+///
+/// `calendarEventId` / `calendarURL` link to the mirrored entry on the shared
+/// Google Calendar. Both are null when sync was skipped (no
+/// `GOOGLE_CALENDAR_ID`, or the creator signed in via OTP and has no Google
+/// token) — editing the event later backfills them.
 model Event {
   id              String   @id @default(uuid())
   title           String
@@ -12,6 +25,8 @@ model Event {
   allowVolunteers Boolean
   allowAttendees  Boolean
   isTraining      Boolean @default(false)
+  /// Marks that volunteer hour logs have been auto-created for this event, so
+  /// the job can't double-log. Nothing writes it yet.
   logsGenerated   Boolean @default(false)
 
   mobileClinic   MobileClinic? @relation(fields: [mobileClinicId], references: [id])
@@ -21,6 +36,8 @@ model Event {
   participants   RSVP[]
   volunteerHours Volunteer_Hour_Log[]
   guestRSVPs     GuestRSVP[]
+  reminders      Event_Reminder[]
+  timeSlots      Event_Time_Slot[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -28,6 +45,12 @@ model Event {
   @@map("events")
 }
 
+/// An image attached to an event. `imageUrl` is a relative storage path of the
+/// form `<eventId>/images/<fileName>` — not a URL and not a path on disk (the
+/// file is written without the `images` segment). Serve it via
+/// `/api/events/<eventId>/images/<fileName>`.
+///
+/// Keyed on (event, imageUrl), so the same filename can't be attached twice.
 model Event_Asset {
   event    Event  @relation(fields: [eventId], references: [id])
   eventId  String
@@ -37,6 +60,16 @@ model Event_Asset {
   @@map("event_assets")
 }
 
+/// A sign-up by someone with an account. Guests use `GuestRSVP` instead.
+///
+/// The (userId, eventId) primary key means one sign-up per person per event, so
+/// switching between attending and volunteering is an upsert of `isVolunteer`,
+/// not a second row.
+///
+/// `volunteerId` is a denormalised pointer to the same person's `Volunteer`
+/// record, set when they sign up as a volunteer. It's what lets staff review
+/// training attendees without joining back through `User`. It can be stale: it
+/// is not repopulated if someone applies to volunteer *after* signing up.
 model RSVP {
   user        User       @relation(fields: [userId], references: [id])
   userId      String
@@ -50,6 +83,73 @@ model RSVP {
   @@map("rsvps")
 }
 
+/// A shift an admin drew on an event, e.g. 8am-12pm on an 8am-4pm event.
+/// Blocks are hand-authored rather than generated, so they may overlap each
+/// other and vary in length — there is deliberately no unique constraint.
+model Event_Time_Slot {
+  id        String   @id @default(uuid())
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId   String
+  startTime DateTime
+  endTime   DateTime
+  capacity  Int      @default(1)
+  note      String?
+
+  signups Event_Time_Slot_Signup[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([eventId])
+  @@map("event_time_slots")
+}
+
+/// One volunteer claiming one block. Cancelled rows are kept rather than
+/// deleted, so re-signing up is an upsert that flips `status` back to
+/// CONFIRMED — and every capacity count must filter on CONFIRMED, or
+/// cancelled rows silently consume capacity.
+model Event_Time_Slot_Signup {
+  id          String          @id @default(uuid())
+  timeSlot    Event_Time_Slot @relation(fields: [timeSlotId], references: [id], onDelete: Cascade)
+  timeSlotId  String
+  volunteer   Volunteer       @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  volunteerId String
+
+  status          SlotSignupStatus @default(CONFIRMED)
+  removedByUserId String?
+  removedAt       DateTime?
+  removalReason   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@unique([timeSlotId, volunteerId])
+  @@index([volunteerId])
+  @@map("event_time_slot_signups")
+}
+
+/// Why a signup is no longer active. A volunteer dropping out and staff
+/// removing someone are deliberately distinct.
+enum SlotSignupStatus {
+  CONFIRMED
+  CANCELLED_BY_VOLUNTEER
+  REMOVED_BY_ADMIN
+}
+
+/// DEPRECATED — a sign-up by someone with no account, name and email only.
+///
+/// Guest sign-up has been removed: attending now requires an account, so every
+/// new registration is an `RSVP` and nothing writes this table any more. The
+/// rows are kept because they are real people holding real places on events
+/// that may not have happened yet; staff still see them in the sign-up list
+/// (flagged `isGuest`) and can clear them through `events/[id]/rsvp.delete.ts`,
+/// which is now admin-only. Safe to drop once no future event has guest rows.
+///
+/// Has no unique constraint on (eventId, email) — duplicate prevention was a
+/// racy findFirst check in the handler that created these.
+///
+/// The only relation here that cascades on delete, so guest sign-ups clean
+/// themselves up when an event is removed while other relations don't.
 model GuestRSVP {
   id          String   @id @default(uuid())
   eventId     String
@@ -58,6 +158,8 @@ model GuestRSVP {
   email       String
   isVolunteer Boolean  @default(false)
   createdAt   DateTime @default(now())
+
+  reminders Guest_Event_Reminder[]
 
   @@map("guest_rsvps")
 }

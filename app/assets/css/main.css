@@ -6,9 +6,13 @@
     --font-poppins: 'Poppins', sans-serif;
 }
 
+html {
+  scrollbar-gutter: stable
+}
 @layer base {
   /* Default text uses Poppins; */
   html, body {
+    overflow-x: hidden;
     font-family: var(--font-poppins);
     font-weight: 700;
   }
@@ -16,7 +20,7 @@
 
 
 @theme static {
-  /*Abide Color Palette*/
+  --color-primary: #00786f;
 
   /*Terracotta Rose / Warm Clay*/
   --color-brand1: #A26B61;
@@ -41,4 +45,92 @@
 
   /* Light Teal */
   --color-brand8: #00d5be;
+
+  /* Dark Teal */
+  --color-brand9: #00786f;
+}
+/*
+ * Data-visualisation tokens for /admin/reports.
+ *
+ * The charts are hand-drawn SVG, so they can't inherit Tailwind utilities the
+ * way the rest of the UI does — every stroke and fill reads a variable from
+ * here instead. Keeping them in one block is also what makes the light/dark
+ * pair reviewable: the dark values are their own selected steps for the dark
+ * card surface, not an automatic inversion of the light ones.
+ *
+ * The two series hues are validated (OKLab CVD separation and >= 3:1 contrast)
+ * against the exact card surfaces below — white and gray-800 — not against a
+ * generic page background. Re-validate before changing either one.
+ */
+:root {
+  --viz-surface: #ffffff;
+  --viz-grid: #e5e7eb;
+  --viz-axis: #d1d5db;
+  --viz-ink: #111827;
+  --viz-ink-secondary: #4b5563;
+  --viz-ink-muted: #6b7280;
+
+  /* Categorical slot 1 — hours, the subject of nearly every chart here. */
+  --viz-series-1: #2a78d6;
+  /* Categorical slot 2 — the second series (headcount, new volunteers). */
+  --viz-series-2: #eb6834;
+  /* De-emphasis: prior-year and context marks, which must not compete. */
+  --viz-muted-mark: #9ca3af;
+
+  /* Sequential ramp (one hue, light to dark) for the coverage heatmap. */
+  --viz-seq-0: #eef4fd;
+  --viz-seq-1: #cde2fb;
+  --viz-seq-2: #9ec5f4;
+  --viz-seq-3: #6da7ec;
+  --viz-seq-4: #3987e5;
+  --viz-seq-5: #256abf;
+  --viz-seq-6: #184f95;
+
+  /* Ink paired to each ramp step. A single "dark steps get white text" rule
+     can't work across both modes: the ramp runs light-to-dark here and
+     dark-to-light against the dark surface, so the step that needs white text
+     in one mode needs near-black in the other. Pairing them explicitly is what
+     keeps an in-cell value legible in both. */
+  --viz-seq-ink-0: #4b5563;
+  --viz-seq-ink-1: #4b5563;
+  --viz-seq-ink-2: #1f2937;
+  --viz-seq-ink-3: #1f2937;
+  --viz-seq-ink-4: #ffffff;
+  --viz-seq-ink-5: #ffffff;
+  --viz-seq-ink-6: #ffffff;
+
+  --viz-good: #0ca30c;
+  --viz-critical: #d03b3b;
+}
+
+.dark {
+  --viz-surface: #1f2937;
+  --viz-grid: #374151;
+  --viz-axis: #4b5563;
+  --viz-ink: #f9fafb;
+  --viz-ink-secondary: #d1d5db;
+  --viz-ink-muted: #9ca3af;
+
+  --viz-series-1: #3987e5;
+  --viz-series-2: #d95926;
+  --viz-muted-mark: #6b7280;
+
+  --viz-seq-0: #1e2b3d;
+  --viz-seq-1: #1c3a5c;
+  --viz-seq-2: #184f95;
+  --viz-seq-3: #256abf;
+  --viz-seq-4: #2a78d6;
+  --viz-seq-5: #5598e7;
+  --viz-seq-6: #9ec5f4;
+
+  --viz-seq-ink-0: #9ca3af;
+  --viz-seq-ink-1: #d1d5db;
+  --viz-seq-ink-2: #ffffff;
+  --viz-seq-ink-3: #ffffff;
+  --viz-seq-ink-4: #ffffff;
+  --viz-seq-ink-5: #0b1220;
+  --viz-seq-ink-6: #0b1220;
+
+  --viz-good: #0ca30c;
+  --viz-critical: #e66767;
 }

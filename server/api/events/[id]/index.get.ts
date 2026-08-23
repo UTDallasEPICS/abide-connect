@@ -2,6 +2,13 @@ import prisma from '#server/utils/prisma'
 import { getEventViewer } from '#server/utils/eventViewer'
 import { canViewEvent } from '#shared/utils/eventType'
 
+/**
+ * A single event with its images and location.
+ *
+ * Open to anonymous callers, but audience-filtered — see the 404-not-403 note
+ * below. Fetching happens before the visibility check because the event's own
+ * audience flags are what the check reads.
+ */
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
 

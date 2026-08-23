@@ -1,8 +1,17 @@
 import prisma from '#server/utils/prisma'
-import { requireRole } from '~~/server/utils/requireRole';
+import { requireRole } from '~~/server/utils/requireRole'
 
+/**
+ * Replaces a donation campaign's fields. Admin only.
+ *
+ * A full replace, not a patch: every field is written from the body, so a
+ * caller omitting one clears it. `imageUrl` is expected to be the bare filename
+ * previously returned by the `<id>/image` upload — sending something else will
+ * point the record at a file that isn't there.
+ */
 export default defineEventHandler(async (event) => {
-  const session = await requireRole(event, 'admin');
+  await requireRole(event, 'admin')
+
   const id = getRouterParam(event, 'id')
 
   if (!id) {
