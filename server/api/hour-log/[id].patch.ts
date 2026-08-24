@@ -1,4 +1,5 @@
 import { requireRole } from '~~/server/utils/requireRole'
+import { roundHours } from '#shared/utils/hours'
 import type { ApprovalStatus, VolunteerArea } from '#server/utils/generated/prisma/client'
 
 /**
@@ -44,6 +45,19 @@ export default defineEventHandler(async (event) => {
     program?: string | null
     comment?: string
   }>(event)
+
+  // Same rule as the create path: hours are stored to two decimals, and an
+  // edit that rounds away to zero (or isn't a number at all) is a 400 rather
+  // than a silent 0-hour log.
+  if (body.hours !== undefined) {
+    const hours = roundHours(Number(body.hours))
+
+    if (!Number.isFinite(hours) || hours <= 0) {
+      throw createError({ statusCode: 400, statusMessage: 'A valid number of hours is required' })
+    }
+
+    body.hours = hours
+  }
 
   const nextStatus = body.approvalStatus !== undefined
     ? dehumanize(body.approvalStatus)

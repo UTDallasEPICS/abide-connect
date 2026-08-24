@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { roundHours } from '#shared/utils/hours'
+
 /**
  * Logs hours on a member's behalf, from the admin member-detail page.
  *
@@ -69,10 +71,16 @@ async function handleSubmit() {
     formError.value = 'Please select a date.'
     return
   }
-  if (form.hours === null || form.hours <= 0) {
+  // Snapped to two decimals in the field itself, so what the admin sees before
+  // submitting is what gets stored — the API rounds too, but silently.
+  const hours = form.hours === null ? null : roundHours(form.hours)
+
+  if (hours === null || !Number.isFinite(hours) || hours <= 0) {
     formError.value = 'Please enter a valid number of hours.'
     return
   }
+
+  form.hours = hours
 
   isSubmitting.value = true
   try {
@@ -82,7 +90,7 @@ async function handleSubmit() {
         userId: props.userId,
         eventName: form.eventName || undefined,
         date: form.date,
-        hours: form.hours,
+        hours,
         approvalStatus: form.approvalStatus,
         comment: form.comment || undefined,
       },

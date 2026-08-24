@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { DateValue } from '@internationalized/date'
 import { getLocalTimeZone, today } from '@internationalized/date'
+import { roundHours } from '#shared/utils/hours'
 
 /**
  * The signed-in user's profile: their details, sign-ups, and hour logs.
@@ -340,7 +341,7 @@ const { isVolunteer } = useUserRoles()
                       </p>
                     </div>
                     <span class="text-sm font-medium text-amber-600 dark:text-amber-400">
-                      {{ log.hours }}h
+                      {{ roundHours(log.hours) }}h
                     </span>
                   </div>
                 </div>
@@ -389,7 +390,7 @@ const { isVolunteer } = useUserRoles()
                       </p>
                     </div>
                     <span class="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                      {{ log.hours }}h
+                      {{ roundHours(log.hours) }}h
                     </span>
                   </div>
                 </div>
@@ -439,7 +440,7 @@ const { isVolunteer } = useUserRoles()
                       </p>
                     </div>
                     <span class="text-sm font-medium text-red-600 dark:text-red-400">
-                      {{ log.hours }}h
+                      {{ roundHours(log.hours) }}h
                     </span>
                   </div>
                   <p class="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-2 rounded">

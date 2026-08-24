@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { roundHours } from '#shared/utils/hours'
+
 /**
  * Lets a volunteer log their own hours, from their profile page.
  *
@@ -27,10 +29,15 @@ async function submitLog() {
     return
   }
 
-  if (form.value.hours > 1000 || form.value.hours <= 0) {
+  // Snapped to two decimals in the field, matching what the API stores.
+  const hours = roundHours(form.value.hours)
+
+  if (!Number.isFinite(hours) || hours > 1000 || hours <= 0) {
     errorMsg.value = 'Hours must be between 1 and 1000'
     return
   }
+
+  form.value.hours = hours
 
   isSubmitting.value = true
   errorMsg.value = null
@@ -41,7 +48,7 @@ async function submitLog() {
       body: {
         eventName: form.value.eventName || null,
         date: form.value.date,
-        hours: form.value.hours,
+        hours,
         comment: form.value.comment || null,
       },
     })

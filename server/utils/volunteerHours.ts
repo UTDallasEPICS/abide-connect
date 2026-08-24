@@ -1,3 +1,4 @@
+import { roundHours } from '#shared/utils/hours'
 import { slotDurationHours } from '#shared/utils/timeSlot'
 
 /**
@@ -24,6 +25,7 @@ export interface EventHoursInput {
 
 export interface VolunteerHours {
   volunteerId: string
+  /** Rounded to two decimals, like every other hour figure that reaches the DB. */
   hours: number
   /** How many blocks made up those hours; 0 on events without blocks. */
   blocks: number
@@ -39,7 +41,7 @@ export interface VolunteerHours {
  */
 export function volunteerHoursForEvent(event: EventHoursInput): VolunteerHours[] {
   if (event.timeSlots.length === 0) {
-    const hours = (event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60 * 60)
+    const hours = roundHours((event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60 * 60))
 
     return event.participants
       .filter(rsvp => rsvp.volunteerId !== null)
@@ -70,5 +72,7 @@ export function volunteerHoursForEvent(event: EventHoursInput): VolunteerHours[]
     }
   }
 
-  return [...worked.values()]
+  // Rounded once here rather than per block: rounding each 50-minute block to
+  // 0.83 first and then adding would lose a minute per block.
+  return [...worked.values()].map(entry => ({ ...entry, hours: roundHours(entry.hours) }))
 }

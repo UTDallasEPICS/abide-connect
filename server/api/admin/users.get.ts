@@ -1,3 +1,4 @@
+import { sumHours } from '#shared/utils/hours'
 import { getQuery, defineEventHandler } from 'h3'
 import { requireRole } from '#server/utils/requireRole'
 
@@ -75,9 +76,13 @@ function countUsersByRole(searchClause: UserWhereInput | undefined, role: string
   })
 }
 
-/** Sums approved hour logs into a single total. */
+/**
+ * Sums approved hour logs into a single total, rounded to two decimals — the
+ * rows are floats, so adding them raw can surface noise (12.299999999999999)
+ * in a column that reads as a plain hour count.
+ */
 function calculateApprovedHours(hourLogs: { hours: number }[] = []) {
-  return hourLogs.reduce((sum, log) => sum + log.hours, 0)
+  return sumHours(hourLogs.map(log => log.hours))
 }
 
 /**

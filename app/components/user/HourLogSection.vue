@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { roundHours, sumHours } from '#shared/utils/hours'
 import DetailSection from '~/components/user/DetailSection.vue'
 import type { UserData } from '~/types/user/user-data'
 
@@ -38,8 +39,9 @@ const approvalStatusOptions = ['Pending', 'Approved', 'Rejected']
 // Single neutral badge style used for hour log status
 const badgeStyle = 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
 
+// Rounded: the rows are floats, so a plain sum can read as 12.299999999999999.
 const totalHours = computed(() =>
-  props.hourLogs.reduce((sum, log) => sum + log.hours, 0),
+  sumHours(props.hourLogs.map(log => log.hours)),
 )
 
 function formatDate(value: Date | string) {
@@ -109,7 +111,7 @@ function formatDate(value: Date | string) {
           </template>
           <template v-else>
             <p class="font-normal text-gray-400 dark:text-gray-400 text-sm">
-              {{ formatDate(log.date) }} · {{ log.hours }} hrs
+              {{ formatDate(log.date) }} · {{ roundHours(log.hours) }} hrs
             </p>
             <p
               v-if="log.comment"

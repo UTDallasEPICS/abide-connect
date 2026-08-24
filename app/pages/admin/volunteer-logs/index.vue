@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { roundHours } from '#shared/utils/hours'
+
 /**
  * Volunteer hour-log review queue, tabbed by approval status.
  *
@@ -225,7 +227,7 @@ async function confirmAction(id: string) {
                 <p
                   class="text-xl font-bold text-teal-600 dark:text-teal-400 whitespace-nowrap"
                 >
-                  {{ item.hours }} hrs
+                  {{ roundHours(item.hours) }} hrs
                 </p>
 
                 <span
@@ -255,7 +257,7 @@ async function confirmAction(id: string) {
                 </p>
                 <p>
                   <span class="font-medium">Hours:</span>
-                  {{ item.hours }}
+                  {{ roundHours(item.hours) }}
                 </p>
                 <p>
                   <span class="font-medium">Status:</span>

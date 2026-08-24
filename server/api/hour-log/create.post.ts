@@ -1,4 +1,5 @@
 import { requireRole } from '~~/server/utils/requireRole'
+import { roundHours } from '#shared/utils/hours'
 import type { ApprovalStatus, VolunteerArea } from '#server/utils/generated/prisma/client'
 
 /**
@@ -34,7 +35,11 @@ export default defineEventHandler(async (event) => {
   if (!body.date) {
     throw createError({ statusCode: 400, statusMessage: 'Date is required' })
   }
-  if (body.hours === undefined || body.hours === null || body.hours <= 0) {
+  // Rounded before the check, not after, so a value that rounds away to zero
+  // (0.004h, under 15 seconds) is rejected rather than stored as a 0-hour log.
+  const hours = body.hours === undefined || body.hours === null ? null : roundHours(body.hours)
+
+  if (hours === null || !Number.isFinite(hours) || hours <= 0) {
     throw createError({ statusCode: 400, statusMessage: 'A valid number of hours is required' })
   }
 
@@ -55,7 +60,7 @@ export default defineEventHandler(async (event) => {
       eventId: body.eventId || null,
       eventName: body.eventName || null,
       date: new Date(body.date),
-      hours: body.hours,
+      hours,
       approvalStatus: body.approvalStatus ?? 'PENDING',
       // Optional: left null, the reports attribute these hours by falling back
       // to the volunteer's declared area (see `server/utils/reporting.ts`).

@@ -1,5 +1,6 @@
 import prisma from '#server/utils/prisma'
 import { auth } from '#server/utils/auth'
+import { roundHours } from '#shared/utils/hours'
 
 /**
  * Lets a volunteer log their own hours. Always created as PENDING — the
@@ -29,6 +30,17 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // Stored to two decimals, like every other hour-log write path. Rounding
+    // before the check means 0.004h is rejected instead of landing as 0.
+    const roundedHours = roundHours(Number(hours))
+
+    if (!Number.isFinite(roundedHours) || roundedHours <= 0) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'A valid number of hours is required',
+      })
+    }
+
     const volunteer = await prisma.volunteer.findUnique({
       where: { userId: session?.user.id },
     })
@@ -46,7 +58,7 @@ export default defineEventHandler(async (event) => {
         eventId: eventId,
         eventName: eventName,
         date: new Date(date),
-        hours: hours,
+        hours: roundedHours,
         approvalStatus: 'PENDING',
       },
     })
