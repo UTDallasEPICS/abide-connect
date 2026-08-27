@@ -1,4 +1,17 @@
 <script setup lang="ts">
+/**
+ * Top bar shown by the `default` layout, i.e. on the five bottom-nav
+ * destinations only.
+ *
+ * The settings gear is scoped to the profile tab — `/volunteer` for everyone
+ * and `/admin` for admins, the same pair `NavBottom` links its profile icon at.
+ * Settings belong to the account, so they hang off the account page rather than
+ * following the user around home, events and the clinic map.
+ */
+const route = useRoute()
+
+const showSettings = computed(() => route.path === '/volunteer' || route.path === '/admin')
+
 const onSettingsClick = () => navigateTo('/settings')
 const isScrolled = ref(false)
 const handleScroll = () => {
@@ -43,6 +56,7 @@ onUnmounted(() => {
         <slot name="right">
           <NavNotificationMenu />
           <UButton
+            v-if="showSettings"
             color="neutral"
             variant="ghost"
             aria-label="Settings"
