@@ -1,59 +1,71 @@
 <template>
-  <!-- Map Section -->
-  <div
-    id="mapbox"
-    class="pt-12 pb-12 h-full w-full"
-  >
+  <!--
+    Plain, unstyled wrapper: the single template root eslint asks for. It must
+    stay free of transforms/filters, which would become the containing block
+    for the `fixed` children below and break both the map box and the sheet.
+  -->
+  <div>
+    <!-- Map Section -->
     <div
-      id="map"
-      class="h-full w-full relative overflow-hidden"
+      id="mapbox"
+      class="fixed inset-x-0 top-19 bottom-12 overflow-hidden"
     >
-      <MapInteractive
-        :style="style"
-        :center="center"
-        :zoom="zoom"
-      />
-      <UDrawer
-        class="absolute bottom-4 w-11/12 left-1/2 -translate-x-1/2"
-        :default-open="true"
-        :handle-only="true"
-        :dismissible="false"
-        :overlay="false"
-        :swipe-to-close="true"
-        :close-on-escape="false"
-        :close-on-click-outside="false"
-        :modal="false"
-        portal="#map"
-        :snap-points="snapPoints"
+      <div
+        id="map"
+        class="h-full w-full relative overflow-hidden"
       >
-        <template #content>
-          <div
-            class="max-h-[55vh] overflow-y-auto space-y-2 px-2 pb-4"
-          >
-            <EventTile
-              v-if="upcomingEvents.length === 0"
-              class="w-11/12 mx-auto my-4 cursor-pointer"
-              title="No upcoming events"
-              subtitle="Check back later for updates!"
-            />
-            <EventTile
-              v-for="event in upcomingEvents"
-              v-else
-              :key="event.id"
-              class="w-11/12 mx-auto my-4 cursor-pointer"
-              :title="event.title"
-              :subtitle="
-                new Date(event.startTime).toLocaleString()
-              "
-              button-type="arrow"
-              :event-id="event.eventId"
-              @add="eventClick"
-              @click="handleTileClick(event)"
-            />
-          </div>
-        </template>
-      </UDrawer>
+        <MapInteractive
+          :map-style="mapStyle"
+          :center="center"
+          :zoom="zoom"
+        />
+      </div>
     </div>
+
+    <!--
+      The sheet is a sibling of the map, not a child of it, and `portal` is off so
+      it renders here rather than being teleported to `<body>`. Both matter: see
+      the `snapPoints` note below for why it can't live inside the map box, and
+      the z-index note for why it must not leave the app root.
+    -->
+    <UDrawer
+      :default-open="true"
+      :handle-only="true"
+      :dismissible="false"
+      :overlay="false"
+      :modal="false"
+      :inset="true"
+      :portal="false"
+      :snap-points="snapPoints"
+      :ui="{ content: 'z-40 max-h-full' }"
+    >
+      <template #content>
+        <div
+          class="overflow-y-auto space-y-2 px-2 pb-16"
+        >
+          <EventTile
+            v-if="upcomingEvents.length === 0"
+            class="w-11/12 mx-auto my-4 cursor-pointer"
+            title="No upcoming events"
+            subtitle="Check back later for updates!"
+          />
+          <EventTile
+            v-for="event in upcomingEvents"
+            v-else
+            :key="event.id"
+            class="w-11/12 mx-auto my-4 cursor-pointer"
+            :title="event.title"
+            :subtitle="
+              new Date(event.startTime).toLocaleString()
+            "
+            button-type="arrow"
+            :event-id="event.eventId"
+            @add="eventClick"
+            @click="handleTileClick(event)"
+          />
+        </div>
+      </template>
+    </UDrawer>
   </div>
 </template>
 
@@ -72,13 +84,42 @@
  */
 import 'maplibre-gl/dist/maplibre-gl.css'
 
-const style = '/mapstyles.json'
+const mapStyle = '/mapstyles.json'
 // Downtown Dallas — the default view before any stop is selected.
 const center = ref([-96.77049780046936, 32.772891246510596])
 const zoom = ref(15)
 
-// Drawer heights in pixels: peek, half, full.
-const snapPoints = ['230', '340', '450']
+// Drawer heights in pixels: peek, half, full. vaul measures these up from the
+// bottom of the *window*, so the sheet has to stay a viewport-anchored `fixed`
+// element — anything that makes it `absolute` inside the map box (or gives one
+// of its ancestors a transform) makes every snap point overshoot by however far
+// that box sits above the viewport bottom.
+//
+// It therefore reaches the bottom of the screen and runs under the bottom nav,
+// which is why it needs to sit *behind* it: hence `portal: false` plus an
+// explicit `z-40` on the content. `@nuxt/ui` puts `isolate` on `#__nuxt`, so
+// that root is its own stacking context and the nav's `z-60` only outranks
+// things inside it — a sheet teleported to `<body>` is a sibling of the whole
+// app and paints over the nav no matter what z-index either one carries. The
+// `z-40` keeps it above maplibre's own controls (`z-index: 2`) and below both
+// nav bars (top `z-50`, bottom `z-60`); the list's `pb-16` clears the 48px nav
+// so no tile is stranded behind it.
+//
+// The stops are sized so each drag step reveals exactly one more row instead of
+// a row and a fraction of the next. Measured against the sheet's own top edge:
+// 22px of handle (`mt-4` + `h-1.5`), then rows on a 90px pitch (74px tall — a
+// `h-12` thumbnail plus `py-3` and a border — with 16px between them), the
+// first offset a further 16px by its own margin. A snap point of S leaves
+// `S - 32` of that usable: +16 because the sheet sits `bottom-4` off the
+// viewport floor, -48 for the bottom nav across its foot. Rounding up by 8
+// lands the cut inside the gap between rows rather than on a row edge.
+//
+// This is also why the sheet is forced to `max-h-full` above: the drawer
+// theme's own `max-h-[96%]` would make the usable height a function of the
+// viewport, so the rows would drift out of alignment on any other screen size.
+const ROW_PITCH = 90
+const SHEET_CHROME = 22 + 16 + 8 + 16
+const snapPoints = [1, 2, 3].map(rows => String(SHEET_CHROME + rows * ROW_PITCH))
 
 const upcomingEvents = ref([])
 
