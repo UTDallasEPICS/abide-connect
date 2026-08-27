@@ -99,25 +99,24 @@ export const auth = betterAuth({
     },
   },
   /**
-   * Session lifetime.
+   * Session lifetime, spelled out rather than left to better-auth's defaults so
+   * that changing it is a deliberate act.
    *
-   * `disableSessionRefresh` is the load-bearing part. Without it better-auth
-   * slides `expiresAt` forward by another `expiresIn` on every request older
-   * than `updateAge` (defaulting to 7 days / 1 day), so a session that is merely
-   * *used* never expires — an offboarded staff member who opened the app once a
-   * week kept their access indefinitely. With refresh disabled the seven days
-   * are absolute, measured from sign-in rather than from last use.
+   * These are the values better-auth would pick anyway: a session lives 7 days
+   * and slides forward another 7 whenever it's used and is more than a day old.
+   * So an ordinary volunteer or donor who keeps coming back stays signed in and
+   * never sees a login screen.
    *
-   * That ceiling is the backstop for accounts `idpRevalidation.ts` cannot check:
-   * an email-OTP sign-in has no Google grant behind it, so nothing else bounds
-   * how long its session can live.
-   *
-   * The cost is that everyone re-authenticates weekly. Through Google that's one
-   * click on an already-consented account; through OTP it's another emailed code.
+   * Admin sessions are *not* allowed to renew indefinitely like that, but this
+   * is the wrong place to express it — `disableSessionRefresh` here is global
+   * and would log everybody out weekly. The admin ceiling is enforced instead by
+   * `enforceAdminSessionAge` in `sessionPolicy.ts`, which is per-request and can
+   * see who is asking. Loosening anything here without reading that leaves
+   * privileged sessions renewing forever, which is what it exists to prevent.
    */
   session: {
-    expiresIn: 60 * 60 * 24 * 7, // 7 days, absolute — not a rolling window
-    disableSessionRefresh: true,
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    updateAge: 60 * 60 * 24, // slide forward at most once a day
   },
   database: prismaAdapter(prisma, {
     provider: 'sqlite',

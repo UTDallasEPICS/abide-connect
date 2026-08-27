@@ -1,6 +1,7 @@
 import { auth } from '#server/utils/auth'
 import prisma from '#server/utils/prisma'
 import { revalidateGoogleGrant } from '#server/utils/idpRevalidation'
+import { enforceAdminSessionAge } from '#server/utils/sessionPolicy'
 import type { H3Event } from 'h3'
 
 /**
@@ -9,9 +10,11 @@ import type { H3Event } from 'h3'
  * logged in but lacks the role. Returns the session on success so you can
  * use it right after without fetching it again.
  *
- * For `admin` there is a third check: the Google account behind the session
- * must still be live in Abide's Workspace (see `idpRevalidation.ts`). Holding a
- * valid session cookie is not on its own enough to stay an admin.
+ * Asking for `admin` adds two checks on top of the role itself, because holding
+ * a valid session cookie is not on its own enough to stay an admin: the session
+ * must be inside the admin age ceiling (`sessionPolicy.ts`), and the Google
+ * account behind it must still be live in Abide's Workspace
+ * (`idpRevalidation.ts`). Either one failing drops the session and 401s.
  *
  * @example
  * export default defineEventHandler(async (event) => {
@@ -36,10 +39,14 @@ export async function requireRole(event: H3Event, role: string) {
     throw createError({ statusCode: 403, message: 'Forbidden' })
   }
 
-  // Only admin is re-checked against Google. Ordinary users and volunteers have
-  // no elevated access to strip, and most of them have no Google grant to check.
-  // Throws 401 and drops the session if Workspace has since offboarded them.
+  // Two extra checks that apply to admin only. Ordinary users and volunteers
+  // skip both: they have no elevated access to bound, and most of them signed in
+  // by OTP and have no Google grant to check in the first place.
+  //
+  // Age first — it's local arithmetic, so a session that is already past its
+  // ceiling is rejected without spending a network round-trip on Google.
   if (role.toLowerCase() === 'admin') {
+    await enforceAdminSessionAge(session.session.token, session.session.createdAt)
     await revalidateGoogleGrant(session.user.id)
   }
 
