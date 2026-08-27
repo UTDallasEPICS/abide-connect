@@ -1,5 +1,12 @@
+<script setup lang="ts">
+definePageMeta({
+  layout: 'secondary',
+  backTo: '/volunteer',
+})
+</script>
+
 <template>
-  <div class="min-h-screen w-screen flex items-center justify-center">
+  <div class="min-h-[calc(100vh-4.75rem)] w-full flex items-center justify-center">
     <div class="text-center space-y-4 max-w-xl px-6">
       <h1 class="text-4xl text-gray-900 dark:text-white">
         Volunteer Application Required

@@ -13,6 +13,12 @@ import type { TrainingAttendee } from '~/components/event/TrainingApprovalList.v
  * everyone also counts as complete.
  */
 
+definePageMeta({
+  layout: 'secondary',
+  backText: 'Admin',
+  backTo: '/admin',
+})
+
 interface TrainingEvent {
   id: string
   title: string
@@ -66,18 +72,8 @@ function toAccordionItems(list: TrainingEvent[]) {
 </script>
 
 <template>
-  <div class="flex flex-col w-screen min-h-screen bg-slate-50 dark:bg-gray-900 items-stretch pb-20">
-    <div class="px-6 pt-20">
-      <UButton
-        icon="i-lucide-arrow-left"
-        variant="ghost"
-        color="neutral"
-        class="-ml-2 mb-2"
-        to="/admin"
-      >
-        Admin
-      </UButton>
-
+  <div class="flex flex-col w-full min-h-[calc(100vh-4.75rem)] bg-slate-50 dark:bg-gray-900 items-stretch pb-20">
+    <div class="px-6 pt-4">
       <h1 class="text-3xl font-bold text-[#313131] dark:text-white">
         Training <span class="text-teal-600 dark:text-teal-400">Certificates</span>
       </h1>

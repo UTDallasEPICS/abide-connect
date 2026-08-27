@@ -4,7 +4,7 @@ import SecondaryEventCard from '~/components/event/SecondaryEventCard.vue'
 
 definePageMeta({
   layout: 'secondary',
-  backText: 'All Upcomming Events',
+  backTo: '/events',
 })
 
 type EventFilter = 'ALL' | 'PAST'
@@ -107,7 +107,7 @@ const filters = computed(() => [
 
 <template>
   <div class="overflow-x-hidden">
-    <div class="w-full max-w-(--ui-container) mx-auto mt-19 min-h-[calc(100vh-4.75rem)] flex flex-col">
+    <div class="w-full max-w-(--ui-container) mx-auto min-h-[calc(100vh-4.75rem)] flex flex-col">
       <!-- Header -->
       <div class="mx-10">
         <h1 class="text-2xl font-normal">

@@ -3,6 +3,8 @@ import { ref, computed } from 'vue'
 
 definePageMeta({
   layout: 'secondary',
+  backText: 'Admin',
+  backTo: '/admin',
 })
 
 /**
@@ -149,9 +151,9 @@ async function deleteFund(id: string) {
 </script>
 
 <template>
-  <div class="flex flex-col w-screen min-h-screen bg-slate-50 items-stretch pb-20">
+  <div class="flex flex-col w-full min-h-[calc(100vh-4.75rem)] bg-slate-50 items-stretch pb-20">
     <!-- Header -->
-    <div class="px-6 mt-20">
+    <div class="px-6 pt-4">
       <h1 class="text-3xl font-bold text-[#313131]">
         Donation Funds
       </h1>

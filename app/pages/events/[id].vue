@@ -30,6 +30,12 @@ import {
  * `/api/events/[id]` rather than a 403, so `notFound` covers both cases.
  */
 
+definePageMeta({
+  layout: 'secondary',
+  // Fallback only, for the emailed/shared links that open this page cold.
+  backTo: '/events',
+})
+
 const colorMode = useColorMode()
 const isDark = computed(() => colorMode.value === 'dark')
 
@@ -416,7 +422,7 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
         <UButton
           icon="i-lucide-arrow-left"
           :color="brandColor"
-          @click="navigateTo('/eventManagement')"
+          :to="backNavigate"
         >
           Back to Events
         </UButton>
@@ -425,20 +431,15 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
 
     <!-- Event Details -->
     <div v-else-if="event">
-      <!-- Sticky Header -->
-      <div class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-10 mt-16 border-b border-transparent dark:border-gray-700">
-        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <UButton
-            icon="i-lucide-arrow-left"
-            variant="ghost"
-            :class="isDark ? 'text-brand8' : 'text-brand4'"
-            @click="navigateTo(backNavigate)"
-          />
-
-          <div
-            v-if="isAdmin"
-            class="flex gap-2"
-          >
+      <!-- Sticky admin action bar. Non-admins get nothing in it now that the
+           back button lives in the header, so the whole strip is hidden rather
+           than rendering as an empty band under the header. -->
+      <div
+        v-if="isAdmin"
+        class="bg-white dark:bg-gray-800 shadow-sm sticky top-19 z-10 border-b border-transparent dark:border-gray-700"
+      >
+        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-end">
+          <div class="flex gap-2">
             <UButton
               v-if="!isEditMode"
               icon="i-lucide-pencil"

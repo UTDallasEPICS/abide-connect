@@ -30,6 +30,11 @@ import { safeRedirect } from '~/lib/safeRedirect'
  * enforcement.
  */
 
+definePageMeta({
+  layout: 'secondary',
+  backTo: '/',
+})
+
 const route = useRoute()
 const redirectTo = computed(() => safeRedirect(route.query.redirect))
 const signUpLink = computed(() => ({
@@ -139,7 +144,7 @@ function goBack() {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center p-8 min-h-screen">
+  <div class="flex flex-col items-center justify-center p-8 min-h-[calc(100vh-4.75rem)]">
     <UAuthForm
       v-if="step === 'request'"
       class="w-full max-w-md"

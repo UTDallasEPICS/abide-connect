@@ -14,6 +14,7 @@ import type { UserData } from '~/types/user/user-data'
 definePageMeta({
   layout: 'secondary',
   backText: 'Management',
+  backTo: '/admin/member-management',
 })
 
 /**
@@ -323,7 +324,7 @@ async function handleRemoveRole(role: string) {
 <template>
   <div
     v-if="userData"
-    class="w-full max-w-(--ui-container) mx-auto mt-19 min-h-[calc(100vh-4.75rem)] flex flex-col"
+    class="w-full max-w-(--ui-container) mx-auto min-h-[calc(100vh-4.75rem)] flex flex-col"
   >
     <div class="mx-10">
       <div class="flex gap-4">

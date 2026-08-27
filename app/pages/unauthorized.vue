@@ -14,10 +14,15 @@
  *     colour (should be `-600` / `-500`)
  *   - the heading reads "400", but this is an authorization failure (403)
  */
+
+definePageMeta({
+  layout: 'secondary',
+  backTo: '/',
+})
 </script>
 
 <template>
-  <div class="min-h-screen w-screen flex items-center justify-center">
+  <div class="min-h-[calc(100vh-4.75rem)] w-full flex items-center justify-center">
     <div class="text-center space-y-5">
       <h0 class="text-6xl text-gray-900 dark:text-white">
         400

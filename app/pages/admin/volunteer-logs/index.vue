@@ -10,6 +10,12 @@
  * client-side, so switching tabs costs nothing.
  */
 
+definePageMeta({
+  layout: 'secondary',
+  backText: 'Admin',
+  backTo: '/admin',
+})
+
 const activeTab = ref('PENDING')
 
 const tabs = [
@@ -133,10 +139,10 @@ async function confirmAction(id: string) {
 
 <template>
   <div
-    class="flex flex-col w-screen min-h-screen bg-slate-50 dark:bg-gray-900 items-stretch pb-20"
+    class="flex flex-col w-full min-h-[calc(100vh-4.75rem)] bg-slate-50 dark:bg-gray-900 items-stretch pb-20"
   >
     <!-- page content -->
-    <div class="px-6 pt-20">
+    <div class="px-6 pt-4">
       <h1 class="text-3xl font-bold text-[#313131] dark:text-white">
         Volunteer Log <span class="text-teal-600 dark:text-teal-400">Approvals</span>
       </h1>

@@ -98,6 +98,27 @@ export const auth = betterAuth({
       },
     },
   },
+  /**
+   * Session lifetime.
+   *
+   * `disableSessionRefresh` is the load-bearing part. Without it better-auth
+   * slides `expiresAt` forward by another `expiresIn` on every request older
+   * than `updateAge` (defaulting to 7 days / 1 day), so a session that is merely
+   * *used* never expires — an offboarded staff member who opened the app once a
+   * week kept their access indefinitely. With refresh disabled the seven days
+   * are absolute, measured from sign-in rather than from last use.
+   *
+   * That ceiling is the backstop for accounts `idpRevalidation.ts` cannot check:
+   * an email-OTP sign-in has no Google grant behind it, so nothing else bounds
+   * how long its session can live.
+   *
+   * The cost is that everyone re-authenticates weekly. Through Google that's one
+   * click on an already-consented account; through OTP it's another emailed code.
+   */
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 days, absolute — not a rolling window
+    disableSessionRefresh: true,
+  },
   database: prismaAdapter(prisma, {
     provider: 'sqlite',
   }),
