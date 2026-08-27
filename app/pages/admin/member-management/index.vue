@@ -118,143 +118,141 @@ const roleStyles: Record<string, string> = {
 </script>
 
 <template>
-  <div class="overflow-x-hidden">
-    <div class="w-full max-w-(--ui-container) mx-auto min-h-[calc(100vh-4.75rem)] flex flex-col">
-      <!-- Header -->
-      <div class="mx-10">
-        <h1 class="text-2xl font-normal">
-          <span class="font-light text-gray-500 dark:text-gray-400">Member</span>
-          <br>
-          <span class="text-[var(--color-brand9)] dark:text-[var(--color-brand8)] font-bold">Management</span>
-        </h1>
+  <div class="flex flex-1 flex-col overflow-x-hidden">
+    <!-- Header -->
+    <PageContainer>
+      <h1 class="text-2xl font-normal">
+        <span class="font-light text-gray-500 dark:text-gray-400">Member</span>
+        <br>
+        <span class="text-[var(--color-brand9)] dark:text-[var(--color-brand8)] font-bold">Management</span>
+      </h1>
 
-        <!-- Search -->
-        <UInput
-          v-model="search"
-          placeholder="Search members..."
-          class="w-full my-5 font-normal"
-          icon="i-lucide-search"
+      <!-- Search -->
+      <UInput
+        v-model="search"
+        placeholder="Search members..."
+        class="w-full my-5 font-normal"
+        icon="i-lucide-search"
+      />
+
+      <!-- Role filters -->
+      <div class="w-full flex gap-2">
+        <SectionButton
+          v-for="filter in roleFilters"
+          :key="filter.value"
+          :label="filter.label"
+          :selected="selectedRoleFilter === filter.value"
+          @click="selectedRoleFilter = filter.value"
         />
-
-        <!-- Role filters -->
-        <div class="w-full flex gap-2">
-          <SectionButton
-            v-for="filter in roleFilters"
-            :key="filter.value"
-            :label="filter.label"
-            :selected="selectedRoleFilter === filter.value"
-            @click="selectedRoleFilter = filter.value"
-          />
-        </div>
       </div>
+    </PageContainer>
 
-      <!-- Backdrop -->
-      <div class="w-screen relative left-1/2 right-1/2 -mx-[50vw] bg-gray-50 dark:bg-gray-900 flex-1 min-h-0 mt-7 rounded-4xl">
-        <div class="w-full max-w-(--ui-container) mx-auto px-4 sm:px-10 pt-5 pb-10 h-full flex flex-col">
-          <!-- User list -->
-          <div class="w-full flex-1 min-h-0 rounded-lg border border-gray-300 dark:border-gray-700 divide-y divide-gray-300 dark:divide-gray-700 overflow-y-auto bg-white dark:bg-gray-800">
-            <!-- Loading -->
-            <div
-              v-if="showLoadingScreen"
-              class="flex items-center justify-center py-16"
+    <!-- Backdrop -->
+    <div class="w-screen relative left-1/2 right-1/2 -mx-[50vw] bg-gray-50 dark:bg-gray-900 flex-1 min-h-0 mt-7 rounded-4xl">
+      <PageContainer class="flex h-full flex-col pt-5 pb-10">
+        <!-- User list -->
+        <div class="w-full flex-1 min-h-0 rounded-lg border border-gray-300 dark:border-gray-700 divide-y divide-gray-300 dark:divide-gray-700 overflow-y-auto bg-white dark:bg-gray-800">
+          <!-- Loading -->
+          <div
+            v-if="showLoadingScreen"
+            class="flex items-center justify-center py-16"
+          >
+            <UIcon
+              name="i-lucide-loader-2"
+              class="animate-spin text-3xl text-gray-400 dark:text-gray-500"
+            />
+          </div>
+
+          <!-- Error -->
+          <div
+            v-else-if="error"
+            class="flex flex-col items-center justify-center text-center py-16 px-6"
+          >
+            <p class="text-sm text-red-400 dark:text-red-400">
+              Something went wrong loading members.
+            </p>
+            <UButton
+              class="mt-3"
+              size="sm"
+              variant="solid"
+              @click="refresh()"
             >
-              <UIcon
-                name="i-lucide-loader-2"
-                class="animate-spin text-3xl text-gray-400 dark:text-gray-500"
-              />
-            </div>
+              Retry
+            </UButton>
+          </div>
 
-            <!-- Error -->
-            <div
-              v-else-if="error"
-              class="flex flex-col items-center justify-center text-center py-16 px-6"
-            >
-              <p class="text-sm text-red-400 dark:text-red-400">
-                Something went wrong loading members.
-              </p>
-              <UButton
-                class="mt-3"
-                size="sm"
-                variant="solid"
-                @click="refresh()"
-              >
-                Retry
-              </UButton>
-            </div>
+          <!-- User row -->
+          <div
+            v-for="user in users"
+            v-else
+            :key="user.id"
+            class="p-3 flex items-center justify-between"
+          >
+            <div class="flex items-center gap-3 min-w-0 flex-1">
+              <div class="w-10 h-10 shrink-0">
+                <UserAvatar
+                  :name="user.name"
+                  :src="user.avatarUrl"
+                />
+              </div>
 
-            <!-- User row -->
-            <div
-              v-for="user in users"
-              v-else
-              :key="user.id"
-              class="p-3 flex items-center justify-between"
-            >
-              <div class="flex items-center gap-3 min-w-0 flex-1">
-                <div class="w-10 h-10 shrink-0">
-                  <UserAvatar
-                    :name="user.name"
-                    :src="user.avatarUrl"
-                  />
-                </div>
-
-                <div class="min-w-0 flex-1">
-                  <p class="font-semibold text-gray-900 dark:text-gray-100 truncate">
-                    {{ user.name }}
-                  </p>
-                  <p class="font-normal text-gray-400 dark:text-gray-500 text-sm truncate">
-                    {{ user.email }}
-                  </p>
-                  <!-- Roles -->
-                  <div class="flex gap-1 mt-2">
-                    <div
-                      v-for="role in user.roles"
-                      :key="role"
-                      class="font-semibold text-[10px] sm:text-xs rounded-full py-0.5 px-2 sm:py-1 sm:px-3"
-                      :class="roleStyles[role]"
-                    >
-                      {{ role }}
-                    </div>
-                    <div class="whitespace-nowrap font-normal text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 py-0.5 px-2 sm:py-1 sm:px-3">
-                      {{ user.hours }} hours
-                    </div>
+              <div class="min-w-0 flex-1">
+                <p class="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                  {{ user.name }}
+                </p>
+                <p class="font-normal text-gray-400 dark:text-gray-500 text-sm truncate">
+                  {{ user.email }}
+                </p>
+                <!-- Roles -->
+                <div class="flex gap-1 mt-2">
+                  <div
+                    v-for="role in user.roles"
+                    :key="role"
+                    class="font-semibold text-[10px] sm:text-xs rounded-full py-0.5 px-2 sm:py-1 sm:px-3"
+                    :class="roleStyles[role]"
+                  >
+                    {{ role }}
+                  </div>
+                  <div class="whitespace-nowrap font-normal text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 py-0.5 px-2 sm:py-1 sm:px-3">
+                    {{ user.hours }} hours
                   </div>
                 </div>
               </div>
-
-              <!-- Edit button -->
-              <UButton
-                icon="i-lucide-pencil"
-                variant="ghost"
-                color="neutral"
-                class="text-gray-400 dark:text-gray-500"
-                @click="navigateTo(`/admin/member-management/${user.id}`)"
-              />
             </div>
 
-            <!-- Empty state -->
-            <div
-              v-if="!showLoadingScreen && !error && users.length === 0"
-              class="flex flex-col items-center justify-center text-center py-16 px-6"
-            >
-              <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                No users found.
-              </p>
-            </div>
-          </div>
-
-          <!-- Pagination -->
-          <div class="w-full flex justify-center pt-4">
-            <UPagination
-              v-model:page="page"
-              :items-per-page="PAGE_SIZE"
-              :total="totalUsers"
-              :disabled="showLoadingScreen"
-              :sibling-count="1"
-              :active-bg-color="paginationActiveBgColor"
+            <!-- Edit button -->
+            <UButton
+              icon="i-lucide-pencil"
+              variant="ghost"
+              color="neutral"
+              class="text-gray-400 dark:text-gray-500"
+              @click="navigateTo(`/admin/member-management/${user.id}`)"
             />
           </div>
+
+          <!-- Empty state -->
+          <div
+            v-if="!showLoadingScreen && !error && users.length === 0"
+            class="flex flex-col items-center justify-center text-center py-16 px-6"
+          >
+            <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">
+              No users found.
+            </p>
+          </div>
         </div>
-      </div>
+
+        <!-- Pagination -->
+        <div class="w-full flex justify-center pt-4">
+          <UPagination
+            v-model:page="page"
+            :items-per-page="PAGE_SIZE"
+            :total="totalUsers"
+            :disabled="showLoadingScreen"
+            :sibling-count="1"
+            :active-bg-color="paginationActiveBgColor"
+          />
+        </div>
+      </PageContainer>
     </div>
   </div>
 </template>

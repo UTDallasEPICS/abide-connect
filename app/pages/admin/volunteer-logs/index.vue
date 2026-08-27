@@ -138,235 +138,235 @@ async function confirmAction(id: string) {
 </script>
 
 <template>
-  <div
-    class="flex flex-col w-full min-h-[calc(100vh-4.75rem)] bg-slate-50 dark:bg-gray-900 items-stretch pb-20"
-  >
-    <!-- page content -->
-    <div class="px-6 pt-4">
-      <h1 class="text-3xl font-bold text-[#313131] dark:text-white">
-        Volunteer Log <span class="text-teal-600 dark:text-teal-400">Approvals</span>
-      </h1>
+  <div class="flex flex-1 flex-col bg-slate-50 dark:bg-gray-900">
+    <PageContainer>
+      <!-- page content -->
+      <div>
+        <h1 class="text-3xl font-bold text-[#313131] dark:text-white">
+          Volunteer Log <span class="text-teal-600 dark:text-teal-400">Approvals</span>
+        </h1>
 
-      <!-- tabs -->
-      <div class="flex gap-3 mt-6">
-        <button
-          v-for="tab in tabs"
-          :key="tab.id"
-          class="px-4 py-2 rounded-full border"
-          :class="
-            activeTab === tab.id
-              ? 'bg-teal-600 text-white border-teal-600'
-              : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
-          "
-          @click="activeTab = tab.id"
+        <!-- tabs -->
+        <div class="flex gap-3 mt-6">
+          <button
+            v-for="tab in tabs"
+            :key="tab.id"
+            class="px-4 py-2 rounded-full border"
+            :class="
+              activeTab === tab.id
+                ? 'bg-teal-600 text-white border-teal-600'
+                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
+            "
+            @click="activeTab = tab.id"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
+        <USeparator class="mt-8" />
+        <!-- Loading -->
+        <div
+          v-if="loading"
+          class="flex justify-center items-center h-40"
         >
-          {{ tab.label }}
-        </button>
-      </div>
-      <USeparator class="mt-8" />
-      <!-- Loading -->
-      <div
-        v-if="loading"
-        class="flex justify-center items-center h-40"
-      >
-        <UIcon
-          name="i-heroicons-arrow-path"
-          class="w-6 h-6 animate-spin text-teal-600"
-        />
-      </div>
+          <UIcon
+            name="i-heroicons-arrow-path"
+            class="w-6 h-6 animate-spin text-teal-600"
+          />
+        </div>
 
-      <!-- Error -->
-      <div
-        v-else-if="error"
-        class="mt-8 text-red-500 text-sm"
-      >
-        {{ error }}
-      </div>
-
-      <!-- Empty -->
-      <div
-        v-else-if="accordionItems.length === 0"
-        class="mt-8 text-gray-400 dark:text-gray-500 text-sm text-center"
-      >
-        No {{ activeTab.toLowerCase() }} logs found.
-      </div>
-      <!-- logs -->
-      <div
-        v-else
-        class="mt-8"
-      >
-        <UAccordion
-          type="multiple"
-          class="bg-slate-50 dark:bg-gray-900 w-full"
-          :items="accordionItems"
-          :ui="{
-            item: 'border-none mt-4',
-            header: 'px-0',
-            trigger: 'block w-full text-left p-0',
-            trailingIcon: 'hidden pointer-events-none',
-          }"
+        <!-- Error -->
+        <div
+          v-else-if="error"
+          class="mt-8 text-red-500 text-sm"
         >
-          <!-- Header (matches inbox pattern) -->
-          <template #default="{ item, open }">
-            <div
-              class="bg-white dark:bg-gray-800 rounded-xl p-5 border border-transparent dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
-            >
+          {{ error }}
+        </div>
+
+        <!-- Empty -->
+        <div
+          v-else-if="accordionItems.length === 0"
+          class="mt-8 text-gray-400 dark:text-gray-500 text-sm text-center"
+        >
+          No {{ activeTab.toLowerCase() }} logs found.
+        </div>
+        <!-- logs -->
+        <div
+          v-else
+          class="mt-8"
+        >
+          <UAccordion
+            type="multiple"
+            class="bg-slate-50 dark:bg-gray-900 w-full"
+            :items="accordionItems"
+            :ui="{
+              item: 'border-none mt-4',
+              header: 'px-0',
+              trigger: 'block w-full text-left p-0',
+              trailingIcon: 'hidden pointer-events-none',
+            }"
+          >
+            <!-- Header (matches inbox pattern) -->
+            <template #default="{ item, open }">
               <div
-                class="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-4 w-full"
+                class="bg-white dark:bg-gray-800 rounded-xl p-5 border border-transparent dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
               >
-                <div class="min-w-0">
-                  <h2 class="text-lg font-semibold truncate text-[#313131] dark:text-white">
-                    {{ item.label }}
-                  </h2>
-                  <p class="text-sm text-gray-500 dark:text-gray-400 flex gap-3">
-                    <span class="truncate">{{
-                      item.event
-                    }}</span>
-                    <span class="whitespace-nowrap">{{
-                      item.date
-                    }}</span>
+                <div
+                  class="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-4 w-full"
+                >
+                  <div class="min-w-0">
+                    <h2 class="text-lg font-semibold truncate text-[#313131] dark:text-white">
+                      {{ item.label }}
+                    </h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 flex gap-3">
+                      <span class="truncate">{{
+                        item.event
+                      }}</span>
+                      <span class="whitespace-nowrap">{{
+                        item.date
+                      }}</span>
+                    </p>
+                  </div>
+
+                  <p
+                    class="text-xl font-bold text-teal-600 dark:text-teal-400 whitespace-nowrap"
+                  >
+                    {{ item.hours }} hrs
+                  </p>
+
+                  <span
+                    class="text-gray-400 dark:text-gray-500 transition-transform duration-200"
+                    :class="open ? 'rotate-180' : ''"
+                  >
+                    ▾
+                  </span>
+                </div>
+              </div>
+            </template>
+            <!-- Expanded content -->
+            <template #content="{ item }">
+              <div
+                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-black/20 px-5 pb-5 mt-1 border border-transparent dark:border-gray-700"
+              >
+                <div
+                  class="rounded-lg bg-white dark:bg-gray-800 p-4 text-sm text-gray-700 dark:text-gray-300 space-y-2"
+                >
+                  <p>
+                    <span class="font-medium">Event:</span>
+                    {{ item.event }}
+                  </p>
+                  <p>
+                    <span class="font-medium">Date:</span>
+                    {{ item.date }}
+                  </p>
+                  <p>
+                    <span class="font-medium">Hours:</span>
+                    {{ item.hours }}
+                  </p>
+                  <p>
+                    <span class="font-medium">Status:</span>
+                    {{ item.status }}
+                  </p>
+                  <p v-if="item.comment">
+                    <span class="font-medium">Comment:</span>
+                    {{ item.comment }}
                   </p>
                 </div>
 
-                <p
-                  class="text-xl font-bold text-teal-600 dark:text-teal-400 whitespace-nowrap"
-                >
-                  {{ item.hours }} hrs
-                </p>
-
-                <span
-                  class="text-gray-400 dark:text-gray-500 transition-transform duration-200"
-                  :class="open ? 'rotate-180' : ''"
-                >
-                  ▾
-                </span>
-              </div>
-            </div>
-          </template>
-          <!-- Expanded content -->
-          <template #content="{ item }">
-            <div
-              class="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-black/20 px-5 pb-5 mt-1 border border-transparent dark:border-gray-700"
-            >
-              <div
-                class="rounded-lg bg-white dark:bg-gray-800 p-4 text-sm text-gray-700 dark:text-gray-300 space-y-2"
-              >
-                <p>
-                  <span class="font-medium">Event:</span>
-                  {{ item.event }}
-                </p>
-                <p>
-                  <span class="font-medium">Date:</span>
-                  {{ item.date }}
-                </p>
-                <p>
-                  <span class="font-medium">Hours:</span>
-                  {{ item.hours }}
-                </p>
-                <p>
-                  <span class="font-medium">Status:</span>
-                  {{ item.status }}
-                </p>
-                <p v-if="item.comment">
-                  <span class="font-medium">Comment:</span>
-                  {{ item.comment }}
-                </p>
-              </div>
-
-              <div
-                v-if="item.status === 'PENDING'"
-                class="space-y-3"
-              >
-                <!-- Normal buttons -->
                 <div
-                  v-if="actioningId !== item.id"
-                  class="flex gap-2"
+                  v-if="item.status === 'PENDING'"
+                  class="space-y-3"
                 >
-                  <button
-                    class="px-4 py-2 rounded-full bg-teal-600 text-white hover:bg-teal-700 dark:hover:bg-teal-500 transition-colors"
-                    @click.stop="
-                      startAction(item.id, 'approve')
-                    "
+                  <!-- Normal buttons -->
+                  <div
+                    v-if="actioningId !== item.id"
+                    class="flex gap-2"
                   >
-                    Approve
-                  </button>
-
-                  <button
-                    class="px-4 py-2 rounded-full bg-rose-600 text-white hover:bg-rose-700 dark:hover:bg-rose-500 transition-colors"
-                    @click.stop="
-                      startAction(item.id, 'reject')
-                    "
-                  >
-                    Reject
-                  </button>
-                </div>
-                <!-- Inline reject reason (only for this log) -->
-                <div
-                  v-else
-                  class="mt-3 space-y-2"
-                >
-                  <label
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    {{
-                      actionType === "reject"
-                        ? "Rejection reason"
-                        : "Comment (optional)"
-                    }}
-                    <span
-                      v-if="actionType === 'reject'"
-                      class="text-rose-600"
-                    >*</span>
-                  </label>
-
-                  <textarea
-                    v-model="commentDraft[item.id]"
-                    rows="3"
-                    class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300"
-                    :class="
-                      actionType === 'reject'
-                        ? 'focus:ring-rose-300'
-                        : 'focus:ring-teal-300'
-                    "
-                    @click.stop
-                  />
-
-                  <div class="flex gap-2">
                     <button
-                      class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                      @click.stop="cancelAction"
+                      class="px-4 py-2 rounded-full bg-teal-600 text-white hover:bg-teal-700 dark:hover:bg-teal-500 transition-colors"
+                      @click.stop="
+                        startAction(item.id, 'approve')
+                      "
                     >
-                      Cancel
+                      Approve
                     </button>
 
                     <button
-                      class="px-4 py-2 rounded-lg bg-rose-600 text-white disabled:opacity-50"
-                      :class="
-                        actionType === 'reject'
-                          ? 'bg-rose-600 hover:bg-rose-700 dark:hover:bg-rose-500'
-                          : 'bg-teal-600 hover:bg-teal-700 dark:hover:bg-teal-500'
+                      class="px-4 py-2 rounded-full bg-rose-600 text-white hover:bg-rose-700 dark:hover:bg-rose-500 transition-colors"
+                      @click.stop="
+                        startAction(item.id, 'reject')
                       "
-                      :disabled="
-                        actionType === 'reject'
-                          && !(
-                            commentDraft[item.id] || ''
-                          ).trim()
-                      "
-                      @click.stop="confirmAction(item.id)"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                  <!-- Inline reject reason (only for this log) -->
+                  <div
+                    v-else
+                    class="mt-3 space-y-2"
+                  >
+                    <label
+                      class="text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{
                         actionType === "reject"
-                          ? "Confirm Reject"
-                          : "Confirm Approve"
+                          ? "Rejection reason"
+                          : "Comment (optional)"
                       }}
-                    </button>
+                      <span
+                        v-if="actionType === 'reject'"
+                        class="text-rose-600"
+                      >*</span>
+                    </label>
+
+                    <textarea
+                      v-model="commentDraft[item.id]"
+                      rows="3"
+                      class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300"
+                      :class="
+                        actionType === 'reject'
+                          ? 'focus:ring-rose-300'
+                          : 'focus:ring-teal-300'
+                      "
+                      @click.stop
+                    />
+
+                    <div class="flex gap-2">
+                      <button
+                        class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        @click.stop="cancelAction"
+                      >
+                        Cancel
+                      </button>
+
+                      <button
+                        class="px-4 py-2 rounded-lg bg-rose-600 text-white disabled:opacity-50"
+                        :class="
+                          actionType === 'reject'
+                            ? 'bg-rose-600 hover:bg-rose-700 dark:hover:bg-rose-500'
+                            : 'bg-teal-600 hover:bg-teal-700 dark:hover:bg-teal-500'
+                        "
+                        :disabled="
+                          actionType === 'reject'
+                            && !(
+                              commentDraft[item.id] || ''
+                            ).trim()
+                        "
+                        @click.stop="confirmAction(item.id)"
+                      >
+                        {{
+                          actionType === "reject"
+                            ? "Confirm Reject"
+                            : "Confirm Approve"
+                        }}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </template>
-        </UAccordion>
+            </template>
+          </UAccordion>
+        </div>
       </div>
-    </div>
+    </PageContainer>
   </div>
 </template>

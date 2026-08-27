@@ -82,8 +82,8 @@ const exportHref = computed(() => `/api/admin/reports/export?dataset=logs&${quer
 </script>
 
 <template>
-  <div class="flex flex-col w-full min-h-[calc(100vh-4.75rem)] bg-slate-50 dark:bg-gray-900 pb-24">
-    <div class="px-4 sm:px-6 pt-4 max-w-6xl w-full mx-auto">
+  <div class="flex flex-1 flex-col bg-slate-50 dark:bg-gray-900">
+    <PageContainer width="wide">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold text-[#313131] dark:text-white">
@@ -474,6 +474,6 @@ const exportHref = computed(() => `/api/admin/reports/export?dataset=logs&${quer
           <ReportsSettingsCard @saved="refresh()" />
         </div>
       </div>
-    </div>
+    </PageContainer>
   </div>
 </template>

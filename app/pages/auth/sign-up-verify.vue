@@ -112,9 +112,12 @@ async function onVerify(event: FormSubmitEvent<VerifyOtpSchema>) {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center p-8 min-h-[calc(100vh-4.75rem)]">
+  <PageContainer
+    width="form"
+    class="flex flex-1 flex-col items-center justify-center"
+  >
     <UAuthForm
-      class="w-full max-w-md"
+      class="w-full"
       :schema="verifyOtpSchema"
       :fields="verifyOtpFields"
       title="Check your email"
@@ -171,5 +174,5 @@ async function onVerify(event: FormSubmitEvent<VerifyOtpSchema>) {
         </div>
       </template>
     </UAuthForm>
-  </div>
+  </PageContainer>
 </template>

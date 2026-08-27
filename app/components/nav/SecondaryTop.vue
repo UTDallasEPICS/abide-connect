@@ -1,26 +1,20 @@
 <script setup lang="ts">
 /**
- * The platform's one back-button header, shown by the `secondary` layout.
+ * Back-button header shown by the `secondary` layout.
  *
- * Every page except the five bottom-nav destinations (home, events, mobile
- * clinic, volunteer dashboard, admin dashboard) opts into `secondary`, so the
- * control sits in the same place at the same size everywhere and pages don't
- * hand-roll their own arrow.
+ * Pages reached from within a flow (settings sub-pages, the volunteer
+ * application, admin sub-pages) opt into `secondary`, which drops the bottom
+ * tab bar: those screens are a detour out of the tabs, so the only way onward
+ * is back. The tab destinations and the events browse pages under them use
+ * `default` instead and get the back control from `NavTop`.
  *
- * `router.back()` returns the user wherever they actually came from, which is
- * the point — the same page is reached from several places. A page opened cold
- * (deep link, emailed event, refresh) has nothing to pop, so instead of doing
- * nothing the button falls back to `definePageMeta({ backTo: '/…' })`.
- *
- * `backText` supplies the optional label; it's part of the button so the whole
- * target is tappable rather than just the arrow.
+ * The arrow itself is `NavBackButton`, shared with `NavTop`, and the right of
+ * the bar carries whatever the page registered with `useNavActions`, same as
+ * there.
  *
  * Height and chrome match `NavTop` (h-19, translucent, shadow on scroll) so the
  * two headers read as the same bar.
  */
-const router = useRouter()
-const route = useRoute()
-
 const isScrolled = ref(false)
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 0
@@ -32,16 +26,6 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
 })
-
-function goBack() {
-  // vue-router records the previous entry on history state; it's absent when
-  // this page is the first entry in the tab.
-  if (window.history.state?.back) {
-    router.back()
-    return
-  }
-  return navigateTo(route.meta.backTo ?? '/')
-}
 </script>
 
 <template>
@@ -55,21 +39,13 @@ function goBack() {
     :class="isScrolled ? 'shadow-sm' : 'shadow-none'"
   >
     <template #left>
-      <UButton
-        color="neutral"
-        variant="ghost"
-        icon="i-lucide-arrow-left"
-        class="-ml-2 gap-2 text-teal-700 dark:text-teal-400"
-        :aria-label="route.meta.backText ? `Back to ${route.meta.backText}` : 'Go back'"
-        @click="goBack"
-      >
-        <span
-          v-if="route.meta.backText"
-          class="font-medium"
-        >
-          {{ route.meta.backText }}
-        </span>
-      </UButton>
+      <NavBackButton />
+    </template>
+
+    <template #right>
+      <div class="flex items-center gap-0.5">
+        <NavActions />
+      </div>
     </template>
 
     <template #toggle />

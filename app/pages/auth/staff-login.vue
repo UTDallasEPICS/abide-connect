@@ -83,7 +83,10 @@ onMounted(signInWithGoogle)
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center p-8 min-h-[calc(100vh-4.75rem)]">
+  <PageContainer
+    width="form"
+    class="flex flex-1 flex-col items-center justify-center"
+  >
     <div
       v-if="!errorMessage"
       class="flex flex-col items-center gap-3"
@@ -98,7 +101,7 @@ onMounted(signInWithGoogle)
     </div>
     <UCard
       v-else
-      class="w-full max-w-md"
+      class="w-full"
     >
       <div class="flex flex-col items-center gap-6 py-4">
         <UIcon
@@ -137,5 +140,5 @@ onMounted(signInWithGoogle)
         </ULink>
       </div>
     </UCard>
-  </div>
+  </PageContainer>
 </template>

@@ -30,8 +30,8 @@ import {
  */
 
 definePageMeta({
-  layout: 'secondary',
-  // Fallback only, for the emailed/shared links that open this page cold.
+  // Puts the back arrow in `NavTop`. The target is a fallback only, used when
+  // there is no history to pop — an emailed or shared link opened cold.
   backTo: '/events',
 })
 
@@ -367,6 +367,46 @@ const center = computed(() => {
 const zoom = 15
 const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
 
+/**
+ * The admin edit controls live in the top bar. They used to sit in a sticky
+ * strip of their own under the header, which meant admins read every event
+ * through a full-width band holding one right-aligned button. Registering them
+ * here keeps them out of the page for everyone else: the list is empty unless
+ * the viewer is an admin, and it only exists while this page is mounted, so no
+ * other route inherits an "Edit Event" button.
+ */
+useNavActions(() => {
+  if (!isAdmin.value) return []
+  if (!isEditMode.value) {
+    return [{
+      key: 'edit',
+      label: 'Edit Event',
+      icon: 'i-lucide-pencil',
+      color: brandColor.value,
+      variant: 'soft' as const,
+      onSelect: enterEditMode,
+    }]
+  }
+  return [
+    {
+      key: 'cancel',
+      label: 'Cancel',
+      icon: 'i-lucide-x',
+      color: 'neutral' as const,
+      variant: 'ghost' as const,
+      onSelect: cancelEdit,
+    },
+    {
+      key: 'save',
+      label: 'Save Changes',
+      icon: 'i-lucide-check',
+      color: brandColor.value,
+      variant: 'solid' as const,
+      onSelect: () => { void saveChanges() },
+    },
+  ]
+})
+
 // Shared "card" look — same background/shadow treatment used across the app
 // (see the event-list card component), reused for framed sections
 // (date/time box, registration-detail panels, volunteer/attendee counts,
@@ -377,11 +417,11 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
 const cardClass = 'rounded-2xl bg-white shadow-sm dark:bg-gray-800'
 </script>
 <template>
-  <div class="min-h-screen bg-white dark:bg-gray-900 pb-24">
+  <div class="flex flex-1 flex-col bg-white dark:bg-gray-900">
     <!-- Loading State -->
     <div
       v-if="loading"
-      class="flex items-center justify-center min-h-screen"
+      class="flex flex-1 items-center justify-center"
     >
       <div class="text-center">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4" />
@@ -393,7 +433,7 @@ const cardClass = 'rounded-2xl bg-white shadow-sm dark:bg-gray-800'
     <!-- Not Found State -->
     <div
       v-else-if="notFound"
-      class="flex items-center justify-center min-h-screen dark:bg-gray-900"
+      class="flex flex-1 items-center justify-center"
     >
       <div class="text-center">
         <UIcon
@@ -409,7 +449,7 @@ const cardClass = 'rounded-2xl bg-white shadow-sm dark:bg-gray-800'
         <UButton
           icon="i-lucide-arrow-left"
           :color="brandColor"
-          :to="backNavigate"
+          to="/events"
         >
           Back to Events
         </UButton>
@@ -417,423 +457,352 @@ const cardClass = 'rounded-2xl bg-white shadow-sm dark:bg-gray-800'
     </div>
     <!-- Event Details -->
     <div v-else-if="event">
-      <!-- Sticky admin action bar. Non-admins get nothing in it now that the
-           back button lives in the header, so the whole strip is hidden rather
-           than rendering as an empty band under the header. -->
-      <div
-        v-if="isAdmin"
-        class="bg-white dark:bg-gray-800 shadow-sm sticky top-19 z-10 border-b border-transparent dark:border-gray-700"
-      >
-        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-end">
-          <div class="flex gap-2">
-            <UButton
-              v-if="!isEditMode"
-              icon="i-lucide-pencil"
-              :color="brandColor"
-              variant="soft"
-              @click="enterEditMode"
-            >
-              Edit Event
-            </UButton>
-
-            <template v-else>
-              <UButton
-                variant="ghost"
-                color="neutral"
-                @click="cancelEdit"
-              >
-                Cancel
-              </UButton>
-              <UButton
-                icon="i-lucide-check"
-                :color="brandColor"
-                @click="async () => { await saveChanges() }"
-              >
-                Save Changes
-              </UButton>
-            </template>
-          </div>
-        </div>
-
+      <PageContainer width="content">
         <p
           v-if="saveError"
-          class="max-w-4xl mx-auto px-4 pb-3 text-sm text-red-600 dark:text-red-400"
+          class="mb-4 text-sm text-red-600 dark:text-red-400"
         >
           {{ saveError }}
         </p>
-      </div>
-      <p
-        v-if="saveError"
-        class="mb-4 text-sm text-red-600 dark:text-red-400"
-      >
-        {{ saveError }}
-      </p>
 
-      <!-- Hero: title/short-desc and the image+location column are laid
-           out with CSS grid (see .event-hero below) rather than flex, so
-           the image can share the title's top grid row on desktop — its
-           top edge lines up with the title instead of sitting below it —
-           while mobile keeps the natural title → image → content stack. -->
-      <div class="event-hero grid gap-6 lg:gap-8 items-start">
-        <!-- Title + short description -->
-        <div class="hero-title mb-6 lg:mb-0">
-          <h1
-            v-if="!isEditMode"
-            class="text-left text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white"
-          >
-            {{ event.title }}
-          </h1>
-          <UInput
-            v-else
-            v-model="editForm.title"
-            size="xl"
-            placeholder="Event Title"
-            class="w-full text-4xl sm:text-5xl font-extrabold tracking-tight"
-          />
-          <div
-            v-if="event.shortDesc || isEditMode"
-            class="mt-2"
-          >
-            <p
+        <!-- Hero: title/short-desc and the image+location column are laid
+             out with CSS grid (see .event-hero below) rather than flex, so
+             the image can share the title's top grid row on desktop — its
+             top edge lines up with the title instead of sitting below it —
+             while mobile keeps the natural title → image → content stack. -->
+        <div class="event-hero grid gap-6 lg:gap-8 items-start">
+          <!-- Title + short description -->
+          <div class="hero-title mb-6 lg:mb-0">
+            <h1
               v-if="!isEditMode"
-              class="text-left text-sm font-normal text-gray-500 dark:text-gray-400"
+              class="text-left text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white"
             >
-              {{ event.shortDesc }}
-            </p>
+              {{ event.title }}
+            </h1>
             <UInput
               v-else
-              v-model="editForm.shortDesc"
-              placeholder="Short Description"
-              size="sm"
-              class="w-full mt-2 text-sm font-normal"
+              v-model="editForm.title"
+              size="xl"
+              placeholder="Event Title"
+              class="w-full text-4xl sm:text-5xl font-extrabold tracking-tight"
             />
-          </div>
-        </div>
-
-        <!-- Left (desktop): carousel, then Date & Time / Location, then
-             Registrations directly under it. -->
-        <div class="hero-image w-full shrink-0 space-y-4">
-          <UCarousel
-            v-if="!isEditMode"
-            v-slot="{ item }"
-            loop
-            dots
-            class="w-full overflow-hidden"
-            :class="cardClass"
-            :autoplay="{ delay: 6000 }"
-            :items="carouselItems"
-            :ui="{
-              item: 'overflow-hidden',
-              dots: 'bottom-3 gap-1.5',
-              dot: 'w-2 h-2 bg-black/30 data-[state=active]:bg-white transition-colors shadow-lg',
-            }"
-          >
-            <img
-              :src="item"
-              class="w-full aspect-video object-cover"
-              alt=""
+            <div
+              v-if="event.shortDesc || isEditMode"
+              class="mt-2"
             >
-          </UCarousel>
-
-          <!-- Image management (edit mode) -->
-          <div v-if="isEditMode">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Event Images</label>
-            <EventImageUpload
-              :existing-assets="event.eventAssets"
-              :event-id="eventId"
-              @files-changed="onFilesChanged"
-            />
-          </div>
-
-          <!-- Date & Time / Location — same width as the carousel above it. -->
-          <div
-            class="p-4"
-            :class="cardClass"
-          >
-            <div class="flex items-start gap-2 mb-3">
-              <UIcon
-                name="i-lucide-calendar"
-                class="w-4 h-4 mt-0.5 text-gray-500 dark:text-gray-400 shrink-0"
-              />
-              <div
+              <p
                 v-if="!isEditMode"
-                class="flex-1"
+                class="text-left text-sm font-normal text-gray-500 dark:text-gray-400"
               >
-                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                  Date & Time
-                </p>
-                <p class="text-sm font-normal text-gray-900 dark:text-white">
-                  {{ formattedDate }}
-                </p>
-              </div>
-              <div
-                v-else
-                class="grid grid-rows-2 gap-2 flex-1"
-              >
-                <div>
-                  <label class="text-xs text-gray-500 dark:text-gray-400">Start</label>
-                  <UInput
-                    v-model="editForm.startTime"
-                    type="datetime-local"
-                    size="sm"
-                    class="w-full text-sm font-normal"
-                  />
-                </div>
-                <div>
-                  <label class="text-xs text-gray-500 dark:text-gray-400">End</label>
-                  <UInput
-                    v-model="editForm.endTime"
-                    type="datetime-local"
-                    size="sm"
-                    class="w-full text-sm font-normal"
-                  />
-                </div>
-              </div>
-            </div>
-            <div class="flex items-start gap-2">
-              <UIcon
-                name="i-lucide-map-pin"
-                class="w-4 h-4 mt-0.5 text-gray-500 dark:text-gray-400 shrink-0"
-              />
-              <div class="flex-1">
-                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                  Location
-                </p>
-                <p
-                  v-if="!isEditMode"
-                  class="text-sm font-normal text-gray-900 dark:text-white"
-                >
-                  {{ event.location.address }}
-                </p>
-                <UInput
-                  v-else
-                  v-model="editForm.location.address"
-                  placeholder="Event Location"
-                  size="sm"
-                  class="w-full mt-1 text-sm font-normal"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Volunteers & Attendees — moved directly under Date & Time /
-               Location, still a plain icon + number + label display. -->
-          <div
-            v-if="isAdmin && !isEditMode"
-            class="p-4"
-            :class="cardClass"
-          >
-            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">
-              Registrations
-            </p>
-            <div class="flex items-center gap-6">
-              <div class="flex items-center gap-2">
-                <UIcon
-                  name="i-lucide-heart-handshake"
-                  class="w-4 h-4 text-brand4 dark:text-brand8 shrink-0"
-                />
-                <span class="text-sm font-medium text-gray-900 dark:text-white">{{ rsvpCounts?.volunteers ?? 0 }}</span>
-                <span class="text-sm text-gray-500 dark:text-gray-400">Volunteers</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <UIcon
-                  name="i-lucide-users"
-                  class="w-4 h-4 text-brand4 dark:text-brand8 shrink-0"
-                />
-                <span class="text-sm font-medium text-gray-900 dark:text-white">{{ rsvpCounts?.attendees ?? 0 }}</span>
-                <span class="text-sm text-gray-500 dark:text-gray-400">Attendees</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right (desktop): description, map, registration actions, admin
-             panels — everything here shares the column's width. -->
-        <div class="hero-content min-w-0 space-y-6">
-          <div>
-            <h2 class="text-lg font-semibold mb-2 text-gray-900 dark:text-white">
-              Details
-            </h2>
-            <p
-              v-if="!isEditMode"
-              class="text-base font-normal text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line mb-4"
-            >
-              {{ event.description }}
-            </p>
-            <UTextarea
-              v-else
-              v-model="editForm.description"
-              placeholder="Full event description"
-              size="md"
-              :rows="6"
-              class="w-full mb-4 text-base font-normal leading-relaxed"
-            />
-
-            <div
-              v-if="event.mobileClinicId && !isEditMode"
-              class="mb-4"
-            >
-              <p class="text-sm text-gray-600 dark:text-gray-300">
-                This event is part of our Mobile Clinic program. Please
-                visit the clinic for health services and support.
+                {{ event.shortDesc }}
               </p>
-            </div>
-          </div>
-
-          <!-- Map — MapInteractive (MapLibre) injects its own absolutely
-               positioned canvas + control elements that ignore a rounded
-               class on a plain parent, so this wrapper forces a new
-               stacking/clipping context (`isolate` + `overflow-hidden` on
-               both layers) to actually clip the map to the rounded corners. -->
-          <div
-            v-if="!isEditMode"
-            id="map"
-            class="h-60 relative isolate overflow-hidden rounded-2xl"
-          >
-            <div class="absolute inset-0 overflow-hidden rounded-2xl">
-              <MapInteractive
-                :style="mapStyle"
-                :center="center"
-                :zoom="zoom"
-              />
-            </div>
-          </div>
-
-          <!-- Registration / volunteer actions -->
-          <div
-            v-if="!isEditMode"
-            class="space-y-3"
-          >
-            <p
-              v-if="eventType === 'VOLUNTEERS' || eventType === 'TRAINING'"
-              class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
-            >
-              <UIcon
-                name="i-lucide-lock"
-                class="w-4 h-4"
-              />
-              {{ eventTypeLabel(eventType) }} — only visible to volunteers
-            </p>
-            <!-- Time blocks: replaces one-tap volunteering on events that
-                 have them. Shown above the Register to Attend button since
-                 claiming a shift is the primary action on these events. -->
-            <EventTimeSlotList
-              v-if="hasTimeSlots"
-              :event-id="eventId"
-              :slots="timeSlots"
-              :can-volunteer="canVolunteer"
-              :is-admin="isAdmin"
-              :volunteer-status="viewer.volunteerStatus"
-              :is-signed-in="isSignedIn"
-              :color="brandColor"
-              @changed="onTimeSlotsChanged"
-            />
-            <div class="flex flex-col gap-3">
-              <UButton
-                v-if="canVolunteer && !isSignedUpToVolunteer && !hasTimeSlots"
-                color="neutral"
-                size="lg"
-                icon="i-lucide-heart-handshake"
-                block
-                class="rounded-full bg-rose-900 hover:bg-rose-800 text-white font-bold"
-                :disabled="hasEnded"
-                :loading="signUpPending"
-                @click="signUpAsVolunteer"
-              >
-                Sign Up as Volunteer
-              </UButton>
-              <!-- Filled, full-width, softer corners and regular weight so
-                   it reads a step down from the volunteer CTA. Disabled
-                   rather than hidden once the event has passed, so it
-                   doesn't look like the option vanished. -->
-              <UButton
-                v-if="canAttend && isSignedIn && !isRegisteredToAttend"
-                :color="brandColor"
-                size="lg"
-                icon="i-lucide-ticket"
-                block
-                class="rounded-lg"
-                :disabled="hasEnded"
-                :loading="signUpPending"
-                @click="registerToAttend"
-              >
-                Register to Attend
-              </UButton>
-              <!-- Attending requires an account: we register people by their
-                   profile, so there's nothing to submit until they have one. -->
-              <UButton
-                v-else-if="canAttend && !isSignedIn"
-                :color="brandColor"
-                size="lg"
-                icon="i-lucide-log-in"
-                block
-                class="rounded-lg"
-                :disabled="hasEnded"
-                :to="loginLink"
-              >
-                Sign In to Register
-              </UButton>
-            </div>
-            <p
-              v-if="hasEnded && (canVolunteer || canAttend)"
-              class="text-sm text-gray-500 dark:text-gray-400"
-            >
-              This event has ended — registration is closed.
-            </p>
-            <p
-              v-if="canAttend && !isSignedIn"
-              class="text-sm text-gray-500 dark:text-gray-400"
-            >
-              You'll need an account to attend.
-              <ULink
-                :to="{ path: '/auth/sign-up', query: { redirect: route.fullPath } }"
-                class="text-primary font-medium"
-              >
-                Create one
-              </ULink>
-              — we'll bring you back here.
-            </p>
-
-            <!-- Already signed up to volunteer: a details frame pops up in
-                 place of the button, instead of the button just vanishing. -->
-            <div
-              v-if="isSignedUpToVolunteer && !hasTimeSlots"
-              class="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
-              :class="cardClass"
-            >
-              <span class="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                <UIcon
-                  name="i-lucide-check-circle-2"
-                  class="w-5 h-5"
-                />
-                You're signed up to volunteer
-              </span>
-              <UButton
-                variant="ghost"
-                color="neutral"
+              <UInput
+                v-else
+                v-model="editForm.shortDesc"
+                placeholder="Short Description"
                 size="sm"
-                :loading="signUpPending"
-                @click="cancelSignUp"
+                class="w-full mt-2 text-sm font-normal"
+              />
+            </div>
+          </div>
+
+          <!-- Left (desktop): carousel, then Date & Time / Location, then
+               Registrations directly under it. -->
+          <div class="hero-image w-full shrink-0 space-y-4">
+            <UCarousel
+              v-if="!isEditMode"
+              v-slot="{ item }"
+              loop
+              dots
+              class="w-full overflow-hidden"
+              :class="cardClass"
+              :autoplay="{ delay: 6000 }"
+              :items="carouselItems"
+              :ui="{
+                item: 'overflow-hidden',
+                dots: 'bottom-3 gap-1.5',
+                dot: 'w-2 h-2 bg-black/30 data-[state=active]:bg-white transition-colors shadow-lg',
+              }"
+            >
+              <img
+                :src="item"
+                class="w-full aspect-video object-cover"
+                alt=""
               >
-                Cancel sign-up
-              </UButton>
+            </UCarousel>
+
+            <!-- Image management (edit mode) -->
+            <div v-if="isEditMode">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Event Images</label>
+              <EventImageUpload
+                :existing-assets="event.eventAssets"
+                :event-id="eventId"
+                @files-changed="onFilesChanged"
+              />
             </div>
 
-            <!-- Registered to attend: the detail frame that pops up under the
-                 button once you sign up. Name and email only — no phone
-                 number shown here, just a nudge to add one if it's missing. -->
+            <!-- Date & Time / Location — same width as the carousel above it. -->
             <div
-              v-if="isRegisteredToAttend"
-              class="space-y-2 px-4 py-3"
+              class="p-4"
               :class="cardClass"
             >
-              <div class="flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-start gap-2 mb-3">
+                <UIcon
+                  name="i-lucide-calendar"
+                  class="w-4 h-4 mt-0.5 text-gray-500 dark:text-gray-400 shrink-0"
+                />
+                <div
+                  v-if="!isEditMode"
+                  class="flex-1"
+                >
+                  <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
+                    Date & Time
+                  </p>
+                  <p class="text-sm font-normal text-gray-900 dark:text-white">
+                    {{ formattedDate }}
+                  </p>
+                </div>
+                <div
+                  v-else
+                  class="grid grid-rows-2 gap-2 flex-1"
+                >
+                  <div>
+                    <label class="text-xs text-gray-500 dark:text-gray-400">Start</label>
+                    <UInput
+                      v-model="editForm.startTime"
+                      type="datetime-local"
+                      size="sm"
+                      class="w-full text-sm font-normal"
+                    />
+                  </div>
+                  <div>
+                    <label class="text-xs text-gray-500 dark:text-gray-400">End</label>
+                    <UInput
+                      v-model="editForm.endTime"
+                      type="datetime-local"
+                      size="sm"
+                      class="w-full text-sm font-normal"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-start gap-2">
+                <UIcon
+                  name="i-lucide-map-pin"
+                  class="w-4 h-4 mt-0.5 text-gray-500 dark:text-gray-400 shrink-0"
+                />
+                <div class="flex-1">
+                  <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
+                    Location
+                  </p>
+                  <p
+                    v-if="!isEditMode"
+                    class="text-sm font-normal text-gray-900 dark:text-white"
+                  >
+                    {{ event.location.address }}
+                  </p>
+                  <UInput
+                    v-else
+                    v-model="editForm.location.address"
+                    placeholder="Event Location"
+                    size="sm"
+                    class="w-full mt-1 text-sm font-normal"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Volunteers & Attendees — moved directly under Date & Time /
+                 Location, still a plain icon + number + label display. -->
+            <div
+              v-if="isAdmin && !isEditMode"
+              class="p-4"
+              :class="cardClass"
+            >
+              <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">
+                Registrations
+              </p>
+              <div class="flex items-center gap-6">
+                <div class="flex items-center gap-2">
+                  <UIcon
+                    name="i-lucide-heart-handshake"
+                    class="w-4 h-4 text-brand4 dark:text-brand8 shrink-0"
+                  />
+                  <span class="text-sm font-medium text-gray-900 dark:text-white">{{ rsvpCounts?.volunteers ?? 0 }}</span>
+                  <span class="text-sm text-gray-500 dark:text-gray-400">Volunteers</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <UIcon
+                    name="i-lucide-users"
+                    class="w-4 h-4 text-brand4 dark:text-brand8 shrink-0"
+                  />
+                  <span class="text-sm font-medium text-gray-900 dark:text-white">{{ rsvpCounts?.attendees ?? 0 }}</span>
+                  <span class="text-sm text-gray-500 dark:text-gray-400">Attendees</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right (desktop): description, map, registration actions, admin
+               panels — everything here shares the column's width. -->
+          <div class="hero-content min-w-0 space-y-6">
+            <div>
+              <h2 class="text-lg font-semibold mb-2 text-gray-900 dark:text-white">
+                Details
+              </h2>
+              <p
+                v-if="!isEditMode"
+                class="text-base font-normal text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line mb-4"
+              >
+                {{ event.description }}
+              </p>
+              <UTextarea
+                v-else
+                v-model="editForm.description"
+                placeholder="Full event description"
+                size="md"
+                :rows="6"
+                class="w-full mb-4 text-base font-normal leading-relaxed"
+              />
+
+              <div
+                v-if="event.mobileClinicId && !isEditMode"
+                class="mb-4"
+              >
+                <p class="text-sm text-gray-600 dark:text-gray-300">
+                  This event is part of our Mobile Clinic program. Please
+                  visit the clinic for health services and support.
+                </p>
+              </div>
+            </div>
+
+            <!-- Map — MapInteractive (MapLibre) injects its own absolutely
+                 positioned canvas + control elements that ignore a rounded
+                 class on a plain parent, so this wrapper forces a new
+                 stacking/clipping context (`isolate` + `overflow-hidden` on
+                 both layers) to actually clip the map to the rounded corners. -->
+            <div
+              v-if="!isEditMode"
+              id="map"
+              class="h-60 relative isolate overflow-hidden rounded-2xl"
+            >
+              <div class="absolute inset-0 overflow-hidden rounded-2xl">
+                <MapInteractive
+                  :style="mapStyle"
+                  :center="center"
+                  :zoom="zoom"
+                />
+              </div>
+            </div>
+
+            <!-- Registration / volunteer actions -->
+            <div
+              v-if="!isEditMode"
+              class="space-y-3"
+            >
+              <p
+                v-if="eventType === 'VOLUNTEERS' || eventType === 'TRAINING'"
+                class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
+              >
+                <UIcon
+                  name="i-lucide-lock"
+                  class="w-4 h-4"
+                />
+                {{ eventTypeLabel(eventType) }} — only visible to volunteers
+              </p>
+              <!-- Time blocks: replaces one-tap volunteering on events that
+                   have them. Shown above the Register to Attend button since
+                   claiming a shift is the primary action on these events. -->
+              <EventTimeSlotList
+                v-if="hasTimeSlots"
+                :event-id="eventId"
+                :slots="timeSlots"
+                :can-volunteer="canVolunteer"
+                :is-admin="isAdmin"
+                :volunteer-status="viewer.volunteerStatus"
+                :is-signed-in="isSignedIn"
+                :color="brandColor"
+                @changed="onTimeSlotsChanged"
+              />
+              <div class="flex flex-col gap-3">
+                <UButton
+                  v-if="canVolunteer && !isSignedUpToVolunteer && !hasTimeSlots"
+                  color="neutral"
+                  size="lg"
+                  icon="i-lucide-heart-handshake"
+                  block
+                  class="rounded-full bg-rose-900 hover:bg-rose-800 text-white font-bold"
+                  :disabled="hasEnded"
+                  :loading="signUpPending"
+                  @click="signUpAsVolunteer"
+                >
+                  Sign Up as Volunteer
+                </UButton>
+                <!-- Filled, full-width, softer corners and regular weight so
+                     it reads a step down from the volunteer CTA. Disabled
+                     rather than hidden once the event has passed, so it
+                     doesn't look like the option vanished. -->
+                <UButton
+                  v-if="canAttend && isSignedIn && !isRegisteredToAttend"
+                  :color="brandColor"
+                  size="lg"
+                  icon="i-lucide-ticket"
+                  block
+                  class="rounded-lg"
+                  :disabled="hasEnded"
+                  :loading="signUpPending"
+                  @click="registerToAttend"
+                >
+                  Register to Attend
+                </UButton>
+                <!-- Attending requires an account: we register people by their
+                     profile, so there's nothing to submit until they have one. -->
+                <UButton
+                  v-else-if="canAttend && !isSignedIn"
+                  :color="brandColor"
+                  size="lg"
+                  icon="i-lucide-log-in"
+                  block
+                  class="rounded-lg"
+                  :disabled="hasEnded"
+                  :to="loginLink"
+                >
+                  Sign In to Register
+                </UButton>
+              </div>
+              <p
+                v-if="hasEnded && (canVolunteer || canAttend)"
+                class="text-sm text-gray-500 dark:text-gray-400"
+              >
+                This event has ended — registration is closed.
+              </p>
+              <p
+                v-if="canAttend && !isSignedIn"
+                class="text-sm text-gray-500 dark:text-gray-400"
+              >
+                You'll need an account to attend.
+                <ULink
+                  :to="{ path: '/auth/sign-up', query: { redirect: route.fullPath } }"
+                  class="text-primary font-medium"
+                >
+                  Create one
+                </ULink>
+                — we'll bring you back here.
+              </p>
+
+              <!-- Already signed up to volunteer: a details frame pops up in
+                   place of the button, instead of the button just vanishing. -->
+              <div
+                v-if="isSignedUpToVolunteer && !hasTimeSlots"
+                class="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+                :class="cardClass"
+              >
                 <span class="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
                   <UIcon
                     name="i-lucide-check-circle-2"
                     class="w-5 h-5"
                   />
-                  You're registered to attend
+                  You're signed up to volunteer
                 </span>
                 <UButton
                   variant="ghost"
@@ -842,115 +811,143 @@ const cardClass = 'rounded-2xl bg-white shadow-sm dark:bg-gray-800'
                   :loading="signUpPending"
                   @click="cancelSignUp"
                 >
-                  Cancel registration
+                  Cancel sign-up
                 </UButton>
               </div>
-              <p class="text-sm text-gray-600 dark:text-gray-400">
-                Registered as {{ registeredAsDisplay }}.
-                <ULink
-                  to="/settings"
-                  class="text-primary font-medium"
-                >
-                  {{ missingPhone ? 'Add a phone number' : 'Update your details' }}
-                </ULink>
+
+              <!-- Registered to attend: the detail frame that pops up under the
+                   button once you sign up. Name and email only — no phone
+                   number shown here, just a nudge to add one if it's missing. -->
+              <div
+                v-if="isRegisteredToAttend"
+                class="space-y-2 px-4 py-3"
+                :class="cardClass"
+              >
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                  <span class="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+                    <UIcon
+                      name="i-lucide-check-circle-2"
+                      class="w-5 h-5"
+                    />
+                    You're registered to attend
+                  </span>
+                  <UButton
+                    variant="ghost"
+                    color="neutral"
+                    size="sm"
+                    :loading="signUpPending"
+                    @click="cancelSignUp"
+                  >
+                    Cancel registration
+                  </UButton>
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                  Registered as {{ registeredAsDisplay }}.
+                  <ULink
+                    to="/settings"
+                    class="text-primary font-medium"
+                  >
+                    {{ missingPhone ? 'Add a phone number' : 'Update your details' }}
+                  </ULink>
+                </p>
+              </div>
+
+              <p
+                v-if="signUpError"
+                class="text-sm text-red-500"
+              >
+                {{ signUpError }}
               </p>
             </div>
 
-            <p
-              v-if="signUpError"
-              class="text-sm text-red-500"
+            <!-- Event Settings (admin edit mode) -->
+            <div
+              v-if="isAdmin && isEditMode"
+              class="p-6"
+              :class="cardClass"
             >
-              {{ signUpError }}
-            </p>
-          </div>
-
-          <!-- Event Settings (admin edit mode) -->
-          <div
-            v-if="isAdmin && isEditMode"
-            class="p-6"
-            :class="cardClass"
-          >
-            <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
-              Event Settings
-            </h2>
-            <div class="space-y-4">
-              <EventTypeSelector
-                v-model="editForm.eventType"
-                :color="brandColor"
-              />
-              <EventTimeSlotEditor
-                v-if="acceptsTimeBlocks || (editForm.timeSlots?.length ?? 0) > 0"
-                v-model="editForm.timeSlots"
-                :event-start="editForm.startTime"
-                :event-end="editForm.endTime"
-                :color="brandColor"
-              />
-              <p
-                v-if="!acceptsTimeBlocks && (editForm.timeSlots?.length ?? 0) > 0"
-                class="text-xs text-amber-700 dark:text-amber-400"
-              >
-                This event type doesn't use time blocks. Remove the blocks above
-                before saving, or switch back to an event type that volunteers
-                sign up for.
-              </p>
-              <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                <div class="flex items-center gap-3">
-                  <UIcon
-                    name="i-lucide-ticket"
-                    class="w-5 h-5 text-brand4 dark:text-brand8"
-                  />
-                  <div>
-                    <p class="font-medium text-gray-900 dark:text-white">
-                      Mobile Clinic
-                    </p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                      Will this event have a mobile clinic?
-                    </p>
+              <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
+                Event Settings
+              </h2>
+              <div class="space-y-4">
+                <EventTypeSelector
+                  v-model="editForm.eventType"
+                  :color="brandColor"
+                />
+                <EventTimeSlotEditor
+                  v-if="acceptsTimeBlocks || (editForm.timeSlots?.length ?? 0) > 0"
+                  v-model="editForm.timeSlots"
+                  :event-start="editForm.startTime"
+                  :event-end="editForm.endTime"
+                  :color="brandColor"
+                />
+                <p
+                  v-if="!acceptsTimeBlocks && (editForm.timeSlots?.length ?? 0) > 0"
+                  class="text-xs text-amber-700 dark:text-amber-400"
+                >
+                  This event type doesn't use time blocks. Remove the blocks above
+                  before saving, or switch back to an event type that volunteers
+                  sign up for.
+                </p>
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                  <div class="flex items-center gap-3">
+                    <UIcon
+                      name="i-lucide-ticket"
+                      class="w-5 h-5 text-brand4 dark:text-brand8"
+                    />
+                    <div>
+                      <p class="font-medium text-gray-900 dark:text-white">
+                        Mobile Clinic
+                      </p>
+                      <p class="text-sm text-gray-500 dark:text-gray-400">
+                        Will this event have a mobile clinic?
+                      </p>
+                    </div>
                   </div>
+                  <label
+                    v-if="isEditMode"
+                    class="flex items-center gap-2 cursor-pointer"
+                  >
+                    <UCheckbox
+                      v-model="editForm.mobileClinic"
+                      :color="brandColor"
+                    />
+                  </label>
+                  <label
+                    v-else
+                    class="flex items-center gap-2"
+                  >
+                    <UCheckbox
+                      :model-value="Boolean(event.mobileClinicId)"
+                      :color="brandColor"
+                      disabled
+                    />
+                  </label>
                 </div>
-                <label
-                  v-if="isEditMode"
-                  class="flex items-center gap-2 cursor-pointer"
-                >
-                  <UCheckbox
-                    v-model="editForm.mobileClinic"
-                    :color="brandColor"
-                  />
-                </label>
-                <label
-                  v-else
-                  class="flex items-center gap-2"
-                >
-                  <UCheckbox
-                    :model-value="Boolean(event.mobileClinicId)"
-                    :color="brandColor"
-                    disabled
-                  />
-                </label>
               </div>
             </div>
-          </div>
-          <!-- Training approvals (staff only, once the training has finished) -->
-          <EventTrainingApprovals
-            v-if="event.isTraining && isAdmin && !isEditMode && hasEnded"
-            :event-id="eventId"
-          />
-          <div
-            v-else-if="event.isTraining && isAdmin && !isEditMode"
-            class="p-6 flex items-center gap-3"
-            :class="cardClass"
-          >
-            <UIcon
-              name="i-lucide-clock"
-              class="w-5 h-5 text-brand4 dark:text-brand8 shrink-0"
+            <!-- Training approvals (staff only, once the training has finished) -->
+            <EventTrainingApprovals
+              v-if="event.isTraining && isAdmin && !isEditMode && hasEnded"
+              :event-id="eventId"
             />
-            <p class="text-sm text-gray-500 dark:text-gray-400">
-              Volunteer approvals open once this training has finished, so you can
-              approve the people who actually attended.
-            </p>
+            <div
+              v-else-if="event.isTraining && isAdmin && !isEditMode"
+              class="p-6 flex items-center gap-3"
+              :class="cardClass"
+            >
+              <UIcon
+                name="i-lucide-clock"
+                class="w-5 h-5 text-brand4 dark:text-brand8 shrink-0"
+              />
+              <p class="text-sm text-gray-500 dark:text-gray-400">
+                Volunteer approvals open once this training has finished, so you can
+                approve the people who actually attended.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      </PageContainer>
     </div>
   </div>
 </template>

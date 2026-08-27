@@ -76,9 +76,12 @@ function goToPreviousStep() {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center p-8 my-8 mb-64">
+  <PageContainer
+    width="form"
+    class="flex flex-1 flex-col items-center justify-center"
+  >
     <UAuthForm
-      class="w-full max-w-md"
+      class="w-full"
       :fields="volunteerApplicationSteps[currentStepIndex]"
       :schema="volunteerApplicationStepSchemas[currentStepIndex]"
       :loading="isLoading && isLastStep"
@@ -163,6 +166,5 @@ function goToPreviousStep() {
         />
       </template>
     </UAuthForm>
-    <br>
-  </div>
+  </PageContainer>
 </template>

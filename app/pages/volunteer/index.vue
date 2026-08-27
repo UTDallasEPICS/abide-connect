@@ -151,307 +151,308 @@ const { isVolunteer } = useUserRoles()
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-white dark:bg-gray-900">
-    <main class="flex-1 px-4 pt-24 pb-24">
-      <div class="max-w-4xl mx-auto space-y-6">
-        <h2 class="text-center text-2xl font-bold text-brand4 dark:text-teal-400">
-          Welcome back, {{ user?.name }}
-        </h2>
+  <div class="flex flex-1 flex-col">
+    <PageContainer
+      width="content"
+      class="space-y-6"
+    >
+      <h2 class="text-center text-2xl font-bold text-brand4 dark:text-teal-400">
+        Welcome back, {{ user?.name }}
+      </h2>
 
-        <!-- Volunteer application prompt (users who haven't applied yet) -->
-        <NuxtLink
-          v-if="!isVolunteer"
-          to="/volunteer-application"
-          class="flex items-center justify-between gap-3 rounded-xl bg-brand4/10 border border-brand4/30 px-4 py-3 hover:bg-brand4/15 transition-colors"
-        >
-          <div>
-            <p class="text-sm font-semibold text-brand4">
-              Want to volunteer with us?
-            </p>
-            <p class="text-xs text-gray-600 dark:text-gray-400">
-              Submit your volunteer application to get started.
-            </p>
-          </div>
-          <UIcon
-            name="i-lucide-arrow-right"
-            class="w-5 h-5 text-brand4 shrink-0"
-          />
-        </NuxtLink>
-
-        <!-- Calendar Card -->
-        <UCard>
-          <UCalendar
-            :v-model="value"
-            color="brand4"
-            :is-date-disabled="isDateDisabled"
-            locale="en-US"
-            weekday-format="short"
-            :first-day-of-week="0"
-            class="rounded-2xl"
-          >
-            <template #day="{ day }">
-              <span
-                v-if="highlightForDay(day)"
-                :class="[
-                  'absolute inset-0 flex items-center justify-center rounded-full font-semibold',
-                  highlightForDay(day)?.class,
-                ]"
-              >
-                {{ day.day }}
-                <span class="sr-only">, {{ highlightForDay(day)?.label }}</span>
-              </span>
-              <template v-else>
-                {{ day.day }}
-              </template>
-            </template>
-          </UCalendar>
-
-          <!-- Key for the shaded days; pointless when nothing is marked. -->
-          <div
-            v-if="hasSignUps"
-            class="flex items-center justify-center gap-4 pt-3 text-xs text-gray-500 dark:text-gray-400"
-          >
-            <span class="flex items-center gap-1.5">
-              <span class="size-3 rounded-full bg-emerald-100 dark:bg-emerald-900/50" />
-              Volunteering
-            </span>
-            <span class="flex items-center gap-1.5">
-              <span class="size-3 rounded-full bg-sky-100 dark:bg-sky-900/50" />
-              Attending
-            </span>
-          </div>
-        </UCard>
-
-        <!-- Upcoming Events (Signed Up) — everyone with an account sees these,
-             since attendee sign-ups don't require a volunteer profile. -->
+      <!-- Volunteer application prompt (users who haven't applied yet) -->
+      <NuxtLink
+        v-if="!isVolunteer"
+        to="/volunteer-application"
+        class="flex items-center justify-between gap-3 rounded-xl bg-brand4/10 border border-brand4/30 px-4 py-3 hover:bg-brand4/15 transition-colors"
+      >
         <div>
-          <h3 class="text-lg font-semibold text-brand4 mb-4">
-            Upcoming Events
-          </h3>
-          <div
-            v-if="upcomingEvents?.length"
-            class="space-y-4"
-          >
-            <NuxtLink
-              v-for="event in upcomingEvents"
-              :key="event.id"
-              :to="`/events/${event.id}`"
-              class="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            >
-              <div class="min-w-0">
-                <p class="font-medium text-sm truncate">
-                  {{ event.title }}
-                </p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">
-                  {{ formatEventDate(event) }}
-                </p>
-                <p
-                  v-if="event.address"
-                  class="text-xs text-gray-500 dark:text-gray-400 truncate"
-                >
-                  {{ event.address }}
-                </p>
-              </div>
-              <span
-                v-if="event.isVolunteer"
-                class="text-xs px-2 py-1 rounded-full shrink-0 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-              >
-                {{ event.isTraining ? 'Training' : 'Volunteering' }}
-              </span>
-              <span
-                v-else
-                class="text-xs px-2 py-1 rounded-full shrink-0 bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400"
-              >
-                Attending
-              </span>
-            </NuxtLink>
-          </div>
-          <p
-            v-else
-            class="text-sm text-gray-500 dark:text-gray-400"
-          >
-            You haven't signed up for any upcoming events.
-            <NuxtLink
-              to="/events"
-              class="text-brand4 hover:underline"
-            >
-              Browse events
-            </NuxtLink>
+          <p class="text-sm font-semibold text-brand4">
+            Want to volunteer with us?
+          </p>
+          <p class="text-xs text-gray-600 dark:text-gray-400">
+            Submit your volunteer application to get started.
           </p>
         </div>
+        <UIcon
+          name="i-lucide-arrow-right"
+          class="w-5 h-5 text-brand4 shrink-0"
+        />
+      </NuxtLink>
 
-        <!-- Volunteer-only sections; hidden until someone has applied -->
-        <template v-if="isVolunteer">
-          <!-- Hour Logs -->
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-brand4">
-              Hour Logs
-            </h3>
-            <UButton
-              icon="i-lucide-plus"
-              size="sm"
-              color="brand4"
-              label="Log Your Hours"
-              @click="() => { showLogModal = true }"
-            />
-          </div>
+      <!-- Calendar Card -->
+      <UCard>
+        <UCalendar
+          :v-model="value"
+          color="brand4"
+          :is-date-disabled="isDateDisabled"
+          locale="en-US"
+          weekday-format="short"
+          :first-day-of-week="0"
+          class="rounded-2xl"
+        >
+          <template #day="{ day }">
+            <span
+              v-if="highlightForDay(day)"
+              :class="[
+                'absolute inset-0 flex items-center justify-center rounded-full font-semibold',
+                highlightForDay(day)?.class,
+              ]"
+            >
+              {{ day.day }}
+              <span class="sr-only">, {{ highlightForDay(day)?.label }}</span>
+            </span>
+            <template v-else>
+              {{ day.day }}
+            </template>
+          </template>
+        </UCalendar>
 
-          <div class="space-y-3">
-            <!-- In Review -->
-            <div class="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
-              <button
-                class="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                @click="showPending = !showPending"
+        <!-- Key for the shaded days; pointless when nothing is marked. -->
+        <div
+          v-if="hasSignUps"
+          class="flex items-center justify-center gap-4 pt-3 text-xs text-gray-500 dark:text-gray-400"
+        >
+          <span class="flex items-center gap-1.5">
+            <span class="size-3 rounded-full bg-emerald-100 dark:bg-emerald-900/50" />
+            Volunteering
+          </span>
+          <span class="flex items-center gap-1.5">
+            <span class="size-3 rounded-full bg-sky-100 dark:bg-sky-900/50" />
+            Attending
+          </span>
+        </div>
+      </UCard>
+
+      <!-- Upcoming Events (Signed Up) — everyone with an account sees these,
+           since attendee sign-ups don't require a volunteer profile. -->
+      <div>
+        <h3 class="text-lg font-semibold text-brand4 mb-4">
+          Upcoming Events
+        </h3>
+        <div
+          v-if="upcomingEvents?.length"
+          class="space-y-4"
+        >
+          <NuxtLink
+            v-for="event in upcomingEvents"
+            :key="event.id"
+            :to="`/events/${event.id}`"
+            class="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          >
+            <div class="min-w-0">
+              <p class="font-medium text-sm truncate">
+                {{ event.title }}
+              </p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                {{ formatEventDate(event) }}
+              </p>
+              <p
+                v-if="event.address"
+                class="text-xs text-gray-500 dark:text-gray-400 truncate"
               >
-                <div class="flex items-center gap-3">
-                  <div class="w-2 h-2 rounded-full bg-amber-500" />
-                  <span class="font-medium">In Review</span>
-                  <span
-                    class="text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
-                  >
-                    {{ pendingLogs.length }}
-                  </span>
-                </div>
-                <UIcon
-                  :name="showPending
-                    ? 'i-heroicons-chevron-up'
-                    : 'i-heroicons-chevron-down'
-                  "
-                  class="w-5 h-5 text-gray-400"
-                />
-              </button>
-
-              <div
-                v-if="showPending"
-                class="p-4 pt-0 space-y-2 bg-gray-50 dark:bg-gray-900/50"
-              >
-                <div
-                  v-for="log in pendingLogs"
-                  :key="log.id"
-                  class="p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800"
-                >
-                  <div class="flex items-start justify-between">
-                    <div>
-                      <p class="font-medium text-sm">
-                        {{ log.event }}
-                      </p>
-                      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        {{ log.date }}
-                      </p>
-                    </div>
-                    <span class="text-sm font-medium text-amber-600 dark:text-amber-400">
-                      {{ log.hours }}h
-                    </span>
-                  </div>
-                </div>
-              </div>
+                {{ event.address }}
+              </p>
             </div>
-            <!-- Approved -->
-            <div class="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
-              <button
-                class="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                @click="showApproved = !showApproved"
-              >
-                <div class="flex items-center gap-3">
-                  <div class="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span class="font-medium">Approved</span>
-                  <span
-                    class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-                  >
-                    {{ approvedLogs.length }}
-                  </span>
-                </div>
-                <UIcon
-                  :name="showApproved
-                    ? 'i-heroicons-chevron-up'
-                    : 'i-heroicons-chevron-down'
-                  "
-                  class="w-5 h-5 text-gray-400"
-                />
-              </button>
-
-              <div
-                v-if="showApproved"
-                class="p-4 pt-0 space-y-2 bg-gray-50 dark:bg-gray-900/50"
-              >
-                <div
-                  v-for="log in approvedLogs"
-                  :key="log.id"
-                  class="p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800"
-                >
-                  <div class="flex items-start justify-between">
-                    <div>
-                      <p class="font-medium text-sm">
-                        {{ log.event }}
-                      </p>
-                      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        {{ log.date }}
-                      </p>
-                    </div>
-                    <span class="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                      {{ log.hours }}h
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Denied -->
-            <div class="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
-              <button
-                class="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                @click="showDenied = !showDenied"
-              >
-                <div class="flex items-center gap-3">
-                  <div class="w-2 h-2 rounded-full bg-red-500" />
-                  <span class="font-medium">Denied</span>
-                  <span
-                    class="text-xs px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
-                  >
-                    {{ deniedLogs.length }}
-                  </span>
-                </div>
-                <UIcon
-                  :name="showDenied
-                    ? 'i-heroicons-chevron-up'
-                    : 'i-heroicons-chevron-down'
-                  "
-                  class="w-5 h-5 text-gray-400"
-                />
-              </button>
-
-              <div
-                v-if="showDenied"
-                class="p-4 pt-0 space-y-2 bg-gray-50 dark:bg-gray-900/50"
-              >
-                <div
-                  v-for="log in deniedLogs"
-                  :key="log.id"
-                  class="p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800"
-                >
-                  <div class="flex items-start justify-between mb-2">
-                    <div>
-                      <p class="font-medium text-sm">
-                        {{ log.event }}
-                      </p>
-                      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        {{ log.date }}
-                      </p>
-                    </div>
-                    <span class="text-sm font-medium text-red-600 dark:text-red-400">
-                      {{ log.hours }}h
-                    </span>
-                  </div>
-                  <p class="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-2 rounded">
-                    {{ log.comment }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </template>
+            <span
+              v-if="event.isVolunteer"
+              class="text-xs px-2 py-1 rounded-full shrink-0 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+            >
+              {{ event.isTraining ? 'Training' : 'Volunteering' }}
+            </span>
+            <span
+              v-else
+              class="text-xs px-2 py-1 rounded-full shrink-0 bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400"
+            >
+              Attending
+            </span>
+          </NuxtLink>
+        </div>
+        <p
+          v-else
+          class="text-sm text-gray-500 dark:text-gray-400"
+        >
+          You haven't signed up for any upcoming events.
+          <NuxtLink
+            to="/events"
+            class="text-brand4 hover:underline"
+          >
+            Browse events
+          </NuxtLink>
+        </p>
       </div>
-    </main>
+
+      <!-- Volunteer-only sections; hidden until someone has applied -->
+      <template v-if="isVolunteer">
+        <!-- Hour Logs -->
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-brand4">
+            Hour Logs
+          </h3>
+          <UButton
+            icon="i-lucide-plus"
+            size="sm"
+            color="brand4"
+            label="Log Your Hours"
+            @click="() => { showLogModal = true }"
+          />
+        </div>
+
+        <div class="space-y-3">
+          <!-- In Review -->
+          <div class="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
+            <button
+              class="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              @click="showPending = !showPending"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-amber-500" />
+                <span class="font-medium">In Review</span>
+                <span
+                  class="text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
+                >
+                  {{ pendingLogs.length }}
+                </span>
+              </div>
+              <UIcon
+                :name="showPending
+                  ? 'i-heroicons-chevron-up'
+                  : 'i-heroicons-chevron-down'
+                "
+                class="w-5 h-5 text-gray-400"
+              />
+            </button>
+
+            <div
+              v-if="showPending"
+              class="p-4 pt-0 space-y-2 bg-gray-50 dark:bg-gray-900/50"
+            >
+              <div
+                v-for="log in pendingLogs"
+                :key="log.id"
+                class="p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800"
+              >
+                <div class="flex items-start justify-between">
+                  <div>
+                    <p class="font-medium text-sm">
+                      {{ log.event }}
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      {{ log.date }}
+                    </p>
+                  </div>
+                  <span class="text-sm font-medium text-amber-600 dark:text-amber-400">
+                    {{ log.hours }}h
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Approved -->
+          <div class="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
+            <button
+              class="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              @click="showApproved = !showApproved"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-emerald-500" />
+                <span class="font-medium">Approved</span>
+                <span
+                  class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                >
+                  {{ approvedLogs.length }}
+                </span>
+              </div>
+              <UIcon
+                :name="showApproved
+                  ? 'i-heroicons-chevron-up'
+                  : 'i-heroicons-chevron-down'
+                "
+                class="w-5 h-5 text-gray-400"
+              />
+            </button>
+
+            <div
+              v-if="showApproved"
+              class="p-4 pt-0 space-y-2 bg-gray-50 dark:bg-gray-900/50"
+            >
+              <div
+                v-for="log in approvedLogs"
+                :key="log.id"
+                class="p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800"
+              >
+                <div class="flex items-start justify-between">
+                  <div>
+                    <p class="font-medium text-sm">
+                      {{ log.event }}
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      {{ log.date }}
+                    </p>
+                  </div>
+                  <span class="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                    {{ log.hours }}h
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Denied -->
+          <div class="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
+            <button
+              class="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              @click="showDenied = !showDenied"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-red-500" />
+                <span class="font-medium">Denied</span>
+                <span
+                  class="text-xs px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
+                >
+                  {{ deniedLogs.length }}
+                </span>
+              </div>
+              <UIcon
+                :name="showDenied
+                  ? 'i-heroicons-chevron-up'
+                  : 'i-heroicons-chevron-down'
+                "
+                class="w-5 h-5 text-gray-400"
+              />
+            </button>
+
+            <div
+              v-if="showDenied"
+              class="p-4 pt-0 space-y-2 bg-gray-50 dark:bg-gray-900/50"
+            >
+              <div
+                v-for="log in deniedLogs"
+                :key="log.id"
+                class="p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800"
+              >
+                <div class="flex items-start justify-between mb-2">
+                  <div>
+                    <p class="font-medium text-sm">
+                      {{ log.event }}
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      {{ log.date }}
+                    </p>
+                  </div>
+                  <span class="text-sm font-medium text-red-600 dark:text-red-400">
+                    {{ log.hours }}h
+                  </span>
+                </div>
+                <p class="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-2 rounded">
+                  {{ log.comment }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </PageContainer>
     <Teleport to="body">
       <div
         v-if="showLogModal"
