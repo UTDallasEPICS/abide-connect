@@ -2,33 +2,29 @@
   <!-- Map Section -->
   <div
     id="mapbox"
-    class="pt-12 pb-12 h-full w-full"
+    class="fixed inset-x-0 top-19 bottom-12 overflow-hidden"
   >
     <div
       id="map"
       class="h-full w-full relative overflow-hidden"
     >
       <MapInteractive
-        :style="style"
+        :map-style="mapStyle"
         :center="center"
         :zoom="zoom"
       />
       <UDrawer
-        class="absolute bottom-4 w-11/12 left-1/2 -translate-x-1/2"
         :default-open="true"
         :handle-only="true"
         :dismissible="false"
         :overlay="false"
-        :swipe-to-close="true"
-        :close-on-escape="false"
-        :close-on-click-outside="false"
         :modal="false"
-        portal="#map"
+        :inset="true"
         :snap-points="snapPoints"
       >
         <template #content>
           <div
-            class="max-h-[55vh] overflow-y-auto space-y-2 px-2 pb-4"
+            class="overflow-y-auto space-y-2 px-2 pb-16"
           >
             <EventTile
               v-if="upcomingEvents.length === 0"
@@ -72,12 +68,15 @@
  */
 import 'maplibre-gl/dist/maplibre-gl.css'
 
-const style = '/mapstyles.json'
+const mapStyle = '/mapstyles.json'
 // Downtown Dallas — the default view before any stop is selected.
 const center = ref([-96.77049780046936, 32.772891246510596])
 const zoom = ref(15)
 
-// Drawer heights in pixels: peek, half, full.
+// Drawer heights in pixels: peek, half, full. vaul measures these up from the
+// bottom of the *window*, so the sheet has to stay a viewport-anchored `fixed`
+// element — teleporting it into the map box makes every snap point overshoot by
+// however far that box sits above the viewport bottom.
 const snapPoints = ['230', '340', '450']
 
 const upcomingEvents = ref([])
