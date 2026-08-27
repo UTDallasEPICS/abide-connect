@@ -23,6 +23,7 @@ interface Slot {
   startTime: string
   endTime: string
   capacity: number
+  role: string | null
   note: string | null
   signupCount: number
   spotsRemaining: number
@@ -206,6 +207,14 @@ function removeVolunteer(slot: Slot, volunteerId: string) {
           <div>
             <p class="font-medium text-gray-900 dark:text-white">
               {{ range(slot) }}
+            </p>
+            <!-- What the shift actually is. Blocks predating roles, and ones
+                 staff left blank, simply don't show a line here. -->
+            <p
+              v-if="slot.role"
+              class="text-sm font-medium text-gray-700 dark:text-gray-200"
+            >
+              {{ slot.role }}
             </p>
             <p
               v-if="slot.note"

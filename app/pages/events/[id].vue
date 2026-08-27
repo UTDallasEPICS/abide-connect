@@ -124,7 +124,9 @@ interface EventTimeSlot {
   startTime: string
   endTime: string
   capacity: number
+  role: string | null
   note: string | null
+  color: string | null
   signupCount: number
   spotsRemaining: number
   isFull: boolean
@@ -258,6 +260,12 @@ function enterEditMode() {
       startTime: formatForInput(slot.startTime),
       endTime: formatForInput(slot.endTime),
       capacity: slot.capacity,
+      // Loaded back in, not defaulted: the save sends whatever is in the form,
+      // so a block whose role didn't make it into the editor would come back
+      // blank the next time an admin saved an unrelated change.
+      role: slot.role,
+      note: slot.note,
+      color: slot.color,
       signupCount: slot.signupCount,
     })),
   }
@@ -290,11 +298,17 @@ async function saveChanges() {
             startTime: string
             endTime: string
             capacity: number
+            role?: string | null
+            note?: string | null
+            color?: string | null
           }) => ({
             id: slot.id,
             startTime: new Date(slot.startTime).toISOString(),
             endTime: new Date(slot.endTime).toISOString(),
             capacity: Number(slot.capacity),
+            role: slot.role ?? null,
+            note: slot.note ?? null,
+            color: slot.color ?? null,
           })),
         }
     await $fetch(`/api/events/${eventId}`, {

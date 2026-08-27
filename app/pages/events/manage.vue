@@ -12,7 +12,11 @@
  * two lists correctly partitioned when an edit moves an event across the
  * past/upcoming boundary.
  */
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useColorMode } from '#imports'
+
+const colorMode = useColorMode()
+const isDark = computed(() => colorMode.value === 'dark')
 
 definePageMeta({
   layout: 'secondary',
@@ -144,10 +148,12 @@ function getEventDate(event) {
             UPCOMING EVENTS
           </h2>
 
+          <!-- `primary` is a single flat value with no dark variant, so it
+               lands at 3.3:1 on the dark page and reads as washed out. The
+               brighter teal is 9.5:1 — the same swap `[id].vue` makes. -->
           <UButton
             icon="i-lucide-plus"
-            color="primary"
-            variant="soft"
+            :color="isDark ? 'brand8' : 'primary'"
             size="lg"
             class="rounded-full"
             label="Add"
