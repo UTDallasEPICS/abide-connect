@@ -22,6 +22,11 @@ import { errorMessage as toErrorMessage } from '~/lib/errorMessage'
  * they wanted to attend gets returned to that event once the account exists.
  */
 
+definePageMeta({
+  layout: 'secondary',
+  backTo: '/auth/login',
+})
+
 const route = useRoute()
 // Bouncing between sign-up and login must not lose where the user was headed.
 const loginLink = computed(() => ({
@@ -67,7 +72,7 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center min-h-screen">
+  <div class="flex flex-col items-center justify-center min-h-[calc(100vh-4.75rem)]">
     <UAuthForm
       class="w-full max-w-md"
       :fields="signUpFields"

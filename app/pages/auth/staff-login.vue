@@ -15,6 +15,11 @@ import { authClient } from '#server/utils/auth-client'
  * redirect. `isLoading` starts true because the redirect begins on mount.
  */
 
+definePageMeta({
+  layout: 'secondary',
+  backTo: '/auth/login',
+})
+
 const isLoading = ref(true)
 const errorMessage = ref<string | null>(null)
 
@@ -40,7 +45,7 @@ onMounted(signInWithGoogle)
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center p-8 min-h-screen">
+  <div class="flex flex-col items-center justify-center p-8 min-h-[calc(100vh-4.75rem)]">
     <div
       v-if="!errorMessage"
       class="flex flex-col items-center gap-3"

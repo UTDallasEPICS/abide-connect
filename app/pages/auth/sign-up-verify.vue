@@ -20,6 +20,11 @@ import { safeRedirect } from '~/lib/safeRedirect'
  * say) instead of the volunteer dashboard.
  */
 
+definePageMeta({
+  layout: 'secondary',
+  backTo: '/auth/sign-up',
+})
+
 const errorMessage = ref<string | null>(null)
 const isLoading = ref(false)
 const pendingSignUp = ref<Record<string, unknown> | null>(null)
@@ -107,7 +112,7 @@ async function onVerify(event: FormSubmitEvent<VerifyOtpSchema>) {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center p-8 min-h-screen">
+  <div class="flex flex-col items-center justify-center p-8 min-h-[calc(100vh-4.75rem)]">
     <UAuthForm
       class="w-full max-w-md"
       :schema="verifyOtpSchema"

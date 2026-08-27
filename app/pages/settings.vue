@@ -12,6 +12,7 @@ import {
 
 definePageMeta({
   layout: 'secondary',
+  backTo: '/',
   // This page shows personal details and can delete the account, so it must
   // not render for signed-out visitors. `auth` is opt-in per page (see
   // app/middleware/auth.ts); auth.global.ts only guards role-prefixed routes.
@@ -331,8 +332,8 @@ async function signOut() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-white dark:bg-gray-900">
-    <main class="mx-auto flex w-full max-w-2xl flex-col gap-5 px-5 pt-16 pb-28">
+  <div>
+    <main class="mx-auto flex w-full max-w-2xl flex-col gap-5 px-5 pt-4 pb-28">
       <h1 class="text-2xl font-bold text-brand4 dark:text-brand8">
         Settings
       </h1>
