@@ -8,7 +8,9 @@
  * is back. The tab destinations and the events browse pages under them use
  * `default` instead and get the back control from `NavTop`.
  *
- * The arrow itself is `NavBackButton`, shared with `NavTop`.
+ * The arrow itself is `NavBackButton`, shared with `NavTop`, and the right of
+ * the bar carries whatever the page registered with `useNavActions`, same as
+ * there.
  *
  * Height and chrome match `NavTop` (h-19, translucent, shadow on scroll) so the
  * two headers read as the same bar.
@@ -38,6 +40,12 @@ onUnmounted(() => {
   >
     <template #left>
       <NavBackButton />
+    </template>
+
+    <template #right>
+      <div class="flex items-center gap-0.5">
+        <NavActions />
+      </div>
     </template>
 
     <template #toggle />

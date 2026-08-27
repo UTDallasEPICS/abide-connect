@@ -367,6 +367,46 @@ const center = computed(() => {
 const zoom = 15
 const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
 
+/**
+ * The admin edit controls live in the top bar. They used to sit in a sticky
+ * strip of their own under the header, which meant admins read every event
+ * through a full-width band holding one right-aligned button. Registering them
+ * here keeps them out of the page for everyone else: the list is empty unless
+ * the viewer is an admin, and it only exists while this page is mounted, so no
+ * other route inherits an "Edit Event" button.
+ */
+useNavActions(() => {
+  if (!isAdmin.value) return []
+  if (!isEditMode.value) {
+    return [{
+      key: 'edit',
+      label: 'Edit Event',
+      icon: 'i-lucide-pencil',
+      color: brandColor.value,
+      variant: 'soft' as const,
+      onSelect: enterEditMode,
+    }]
+  }
+  return [
+    {
+      key: 'cancel',
+      label: 'Cancel',
+      icon: 'i-lucide-x',
+      color: 'neutral' as const,
+      variant: 'ghost' as const,
+      onSelect: cancelEdit,
+    },
+    {
+      key: 'save',
+      label: 'Save Changes',
+      icon: 'i-lucide-check',
+      color: brandColor.value,
+      variant: 'solid' as const,
+      onSelect: () => { void saveChanges() },
+    },
+  ]
+})
+
 // Shared "card" look — same background/shadow treatment used across the app
 // (see the event-list card component), reused for framed sections
 // (date/time box, registration-detail panels, volunteer/attendee counts,
@@ -417,56 +457,6 @@ const cardClass = 'rounded-2xl bg-white shadow-sm dark:bg-gray-800'
     </div>
     <!-- Event Details -->
     <div v-else-if="event">
-      <!-- Sticky admin action bar. Non-admins get nothing in it, so the whole
-           strip is hidden rather than rendering as an empty band under the
-           header. `top-19` parks it directly beneath the fixed `NavTop`. -->
-      <div
-        v-if="isAdmin"
-        class="bg-white dark:bg-gray-800 shadow-sm sticky top-19 z-10 border-b border-transparent dark:border-gray-700"
-      >
-        <PageContainer
-          width="content"
-          class="py-4 flex items-center justify-end"
-        >
-          <div class="flex gap-2">
-            <UButton
-              v-if="!isEditMode"
-              icon="i-lucide-pencil"
-              :color="brandColor"
-              variant="soft"
-              @click="enterEditMode"
-            >
-              Edit Event
-            </UButton>
-
-            <template v-else>
-              <UButton
-                variant="ghost"
-                color="neutral"
-                @click="cancelEdit"
-              >
-                Cancel
-              </UButton>
-              <UButton
-                icon="i-lucide-check"
-                :color="brandColor"
-                @click="async () => { await saveChanges() }"
-              >
-                Save Changes
-              </UButton>
-            </template>
-          </div>
-        </PageContainer>
-
-        <PageContainer
-          v-if="saveError"
-          width="content"
-        >
-          <p class="pb-3 text-sm text-red-600 dark:text-red-400">
-            {{ saveError }}
-          </p>
-        </PageContainer>
-      </div>
       <PageContainer width="content">
         <p
           v-if="saveError"

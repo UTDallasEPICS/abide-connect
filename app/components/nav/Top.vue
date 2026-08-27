@@ -10,6 +10,10 @@
  * the same corner is worse than one, and the bottom bar still carries the home
  * tab. Nothing else about the bar changes, so it stays the same bar.
  *
+ * A page can add its own buttons to the right of the bar with `useNavActions`
+ * — that's where the admin edit/save controls on an event live, rather than in
+ * a second action strip below the header.
+ *
  * The settings gear is scoped to the profile tab — `/volunteer` for everyone
  * and `/admin` for admins, the same pair `NavBottom` links its profile icon at.
  * Settings belong to the account, so they hang off the account page rather than
@@ -67,6 +71,7 @@ onUnmounted(() => {
     <template #right>
       <div class="flex items-center gap-0.5">
         <slot name="right">
+          <NavActions />
           <NavNotificationMenu />
           <UButton
             v-if="showSettings"
