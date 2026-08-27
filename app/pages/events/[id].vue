@@ -688,7 +688,7 @@ const cardClass = 'rounded-2xl bg-white shadow-sm dark:bg-gray-800'
             >
               <div class="absolute inset-0 overflow-hidden rounded-2xl">
                 <MapInteractive
-                  :style="mapStyle"
+                  :map-style="mapStyle"
                   :center="center"
                   :zoom="zoom"
                 />
