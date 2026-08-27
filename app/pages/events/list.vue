@@ -3,7 +3,7 @@ import SectionButton from '~/components/buttons/SectionButton.vue'
 import SecondaryEventCard from '~/components/event/SecondaryEventCard.vue'
 
 definePageMeta({
-  layout: 'secondary',
+  // Puts the back arrow in `NavTop`; the target is the fallback for a cold open.
   backTo: '/events',
 })
 
@@ -106,7 +106,7 @@ const filters = computed(() => [
 </script>
 
 <template>
-  <div class="overflow-x-hidden">
+  <div class="mt-20 overflow-x-hidden pb-20">
     <div class="w-full max-w-(--ui-container) mx-auto min-h-[calc(100vh-4.75rem)] flex flex-col">
       <!-- Header -->
       <div class="mx-10">

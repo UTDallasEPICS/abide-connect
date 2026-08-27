@@ -1,7 +1,14 @@
 <script setup lang="ts">
 /**
- * Top bar shown by the `default` layout, i.e. on the five bottom-nav
- * destinations only.
+ * Top bar shown by the `default` layout — the bottom-nav destinations plus the
+ * events browse pages (`/events/list`, `/events/[id]`), which sit inside the
+ * events tab rather than outside the tabs.
+ *
+ * A tab root has nowhere to go back to, so the leading slot holds the logo. A
+ * page pushed within a tab does, and declares `backTo`; there the logo gives
+ * way to `NavBackButton`, because two competing "leave this page" controls in
+ * the same corner is worse than one, and the bottom bar still carries the home
+ * tab. Nothing else about the bar changes, so it stays the same bar.
  *
  * The settings gear is scoped to the profile tab — `/volunteer` for everyone
  * and `/admin` for admins, the same pair `NavBottom` links its profile icon at.
@@ -11,6 +18,10 @@
 const route = useRoute()
 
 const showSettings = computed(() => route.path === '/volunteer' || route.path === '/admin')
+
+// Set by `definePageMeta` on pages that are pushed within a tab rather than
+// being a tab root.
+const showBack = computed(() => !!route.meta.backTo)
 
 const onSettingsClick = () => navigateTo('/settings')
 const isScrolled = ref(false)
@@ -35,7 +46,9 @@ onUnmounted(() => {
     :class="isScrolled ? 'shadow-sm' : 'shadow-none'"
   >
     <template #left>
+      <NavBackButton v-if="showBack" />
       <NuxtLink
+        v-else
         to="/"
         aria-label="Go to home page"
       >

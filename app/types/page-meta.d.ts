@@ -1,5 +1,10 @@
 /**
- * Page-meta keys read by `NavSecondaryTop` (the `secondary` layout's back bar).
+ * Page-meta keys read by `NavBackButton`, the shared back control in both
+ * headers.
+ *
+ * `secondary` pages always get the arrow; on a `default` page, declaring
+ * `backTo` is what puts one in `NavTop` — so it doubles as the switch for
+ * pages that sit inside a tab rather than being its root.
  *
  * Declared here so a typo in `definePageMeta` is a type error rather than a
  * back button that silently loses its label or its deep-link fallback.

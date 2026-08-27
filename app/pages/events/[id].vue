@@ -30,8 +30,8 @@ import {
  */
 
 definePageMeta({
-  layout: 'secondary',
-  // Fallback only, for the emailed/shared links that open this page cold.
+  // Puts the back arrow in `NavTop`. The target is a fallback only, used when
+  // there is no history to pop — an emailed or shared link opened cold.
   backTo: '/events',
 })
 
@@ -377,7 +377,7 @@ const brandColor = computed(() => isDark.value ? 'brand8' : 'brand4')
 const cardClass = 'rounded-2xl bg-white shadow-sm dark:bg-gray-800'
 </script>
 <template>
-  <div class="min-h-screen bg-white dark:bg-gray-900 pb-24">
+  <div class="mt-20 min-h-screen bg-white dark:bg-gray-900 pb-24">
     <!-- Loading State -->
     <div
       v-if="loading"
@@ -409,7 +409,7 @@ const cardClass = 'rounded-2xl bg-white shadow-sm dark:bg-gray-800'
         <UButton
           icon="i-lucide-arrow-left"
           :color="brandColor"
-          :to="backNavigate"
+          to="/events"
         >
           Back to Events
         </UButton>
@@ -417,9 +417,9 @@ const cardClass = 'rounded-2xl bg-white shadow-sm dark:bg-gray-800'
     </div>
     <!-- Event Details -->
     <div v-else-if="event">
-      <!-- Sticky admin action bar. Non-admins get nothing in it now that the
-           back button lives in the header, so the whole strip is hidden rather
-           than rendering as an empty band under the header. -->
+      <!-- Sticky admin action bar. Non-admins get nothing in it, so the whole
+           strip is hidden rather than rendering as an empty band under the
+           header. `top-19` parks it directly beneath the fixed `NavTop`. -->
       <div
         v-if="isAdmin"
         class="bg-white dark:bg-gray-800 shadow-sm sticky top-19 z-10 border-b border-transparent dark:border-gray-700"
