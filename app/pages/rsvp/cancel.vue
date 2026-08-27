@@ -65,8 +65,11 @@ async function confirmCancel() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 px-5 py-16 dark:bg-gray-900">
-    <div class="mx-auto flex w-full max-w-md flex-col gap-6">
+  <div class="min-h-screen bg-gray-50 py-16 dark:bg-gray-900">
+    <PageContainer
+      width="form"
+      class="flex flex-col gap-6"
+    >
       <h1 class="text-center text-2xl font-bold text-brand4 dark:text-brand8">
         Abide Connect
       </h1>
@@ -176,6 +179,6 @@ async function confirmCancel() {
           </div>
         </div>
       </UCard>
-    </div>
+    </PageContainer>
   </div>
 </template>

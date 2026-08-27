@@ -72,9 +72,12 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center min-h-[calc(100vh-4.75rem)]">
+  <PageContainer
+    width="form"
+    class="flex flex-1 flex-col items-center justify-center"
+  >
     <UAuthForm
-      class="w-full max-w-md"
+      class="w-full"
       :fields="signUpFields"
       :schema="signUpSchema"
       title="Let's get you started to be a Volunteer!"
@@ -107,5 +110,5 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
         >Terms of Service</ULink>.
       </template>
     </UAuthForm>
-  </div>
+  </PageContainer>
 </template>

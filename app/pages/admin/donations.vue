@@ -151,47 +151,173 @@ async function deleteFund(id: string) {
 </script>
 
 <template>
-  <div class="flex flex-col w-full min-h-[calc(100vh-4.75rem)] bg-slate-50 items-stretch pb-20">
-    <!-- Header -->
-    <div class="px-6 pt-4">
-      <h1 class="text-3xl font-bold text-[#313131]">
-        Donation Funds
-      </h1>
-    </div>
+  <div class="flex flex-1 flex-col bg-slate-50 dark:bg-gray-900">
+    <PageContainer>
+      <!-- Header -->
+      <div>
+        <h1 class="text-3xl font-bold text-[#313131]">
+          Donation Funds
+        </h1>
+      </div>
 
-    <!-- New Button -->
-    <div class="px-6 mt-4 justify-end">
+      <!-- New Button -->
+      <div class="mt-4 justify-end">
+        <UModal
+          v-model:open="open"
+          title="New Fund"
+          :ui="{ footer: 'justify-end' }"
+        >
+          <UButton
+            color="brand4"
+            class="grid place-items-center rounded-xl h-9 w-9
+                  border border-gray-800/70
+                  hover:bg-gray-100/70
+                  transition duration-200"
+            :ui="{ base: 'flex items-center justify-center' }"
+          >
+            <UIcon
+              name="i-heroicons-plus"
+              class="w-5 h-5"
+            />
+          </UButton>
+          <!-- New Modal -->
+          <template #body>
+            <div class="space-y-4">
+              <UFormField label="Fund Name">
+                <UInput
+                  v-model="fundName"
+                  placeholder="Name"
+                  color="brand4"
+                />
+              </UFormField>
+              <UFormField label="Link">
+                <UInput
+                  v-model="link"
+                  placeholder="Link"
+                  color="brand4"
+                  class="w-full"
+                />
+              </UFormField>
+              <UFormField label="Start Date">
+                <UInput
+                  v-model="startDate"
+                  placeholder="Start Date"
+                  type="date"
+                  color="brand4"
+                />
+              </UFormField>
+              <UFormField label="End Date">
+                <UInput
+                  v-model="endDate"
+                  placeholder="End Date"
+                  type="date"
+                  color="brand4"
+                />
+              </UFormField>
+              <UFormField label="Image">
+                <UFileUpload
+                  v-model="image"
+                  accept="image/*"
+                  placeholder="Upload image"
+                  color="brand4"
+                />
+              </UFormField>
+            </div>
+          </template>
+
+          <template #footer="{ close }">
+            <UButton
+              label="Save"
+              color="brand4"
+              @click="saveFund(close)"
+            />
+          </template>
+        </UModal>
+      </div>
+
+      <!-- Funds Layout -->
+      <div class="mt-8">
+        <div class="grid grid-cols-2 gap-6">
+          <div
+            v-for="fund in funds"
+            :key="fund.id"
+            class="rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer"
+            @click="openEdit(fund)"
+          >
+            <!-- Fund Image -->
+            <div class="h-35 relative overflow-hidden">
+              <img
+                :src="fund.imageUrl ? `/api/admin/donations/${fund.id}/image?t=${new Date(fund.updatedAt).getTime()}` : ''"
+                :alt="fund.name"
+                class="w-full h-full object-cover"
+              >
+            </div>
+            <!-- Fund  Content -->
+            <div class="p-2">
+              <h4 class="text-sm font_semibold text-brand4 mb-1.5">
+                {{ fund.name }}
+              </h4>
+              <div class="space-y-2">
+                <!-- Date Range -->
+                <div class="flex items-center text-gray-600 text-[12px]">
+                  <svg
+                    class="w-4 h-4 mr-2 text-teal-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <rect
+                      x="3"
+                      y="4"
+                      width="18"
+                      height="18"
+                      rx="2"
+                      ry="2"
+                    />
+                    <line
+                      x1="16"
+                      y1="2"
+                      x2="16"
+                      y2="6"
+                    />
+                    <line
+                      x1="8"
+                      y1="2"
+                      x2="8"
+                      y2="6"
+                    />
+                    <line
+                      x1="3"
+                      y1="10"
+                      x2="21"
+                      y2="10"
+                    />
+                  </svg>
+                  <span>{{ formatShort(fund.startDate) }} - {{ formatShort(fund.endDate) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Edit Modal -->
       <UModal
-        v-model:open="open"
-        title="New Fund"
+        v-model:open="editOpen"
+        title="Edit Fund"
         :ui="{ footer: 'justify-end' }"
       >
-        <UButton
-          color="brand4"
-          class="grid place-items-center rounded-xl h-9 w-9
-                border border-gray-800/70
-                hover:bg-gray-100/70
-                transition duration-200"
-          :ui="{ base: 'flex items-center justify-center' }"
-        >
-          <UIcon
-            name="i-heroicons-plus"
-            class="w-5 h-5"
-          />
-        </UButton>
-        <!-- New Modal -->
         <template #body>
           <div class="space-y-4">
             <UFormField label="Fund Name">
               <UInput
-                v-model="fundName"
+                v-model="editFundName"
                 placeholder="Name"
                 color="brand4"
               />
             </UFormField>
             <UFormField label="Link">
               <UInput
-                v-model="link"
+                v-model="editLink"
                 placeholder="Link"
                 color="brand4"
                 class="w-full"
@@ -199,7 +325,7 @@ async function deleteFund(id: string) {
             </UFormField>
             <UFormField label="Start Date">
               <UInput
-                v-model="startDate"
+                v-model="editStartDate"
                 placeholder="Start Date"
                 type="date"
                 color="brand4"
@@ -207,7 +333,7 @@ async function deleteFund(id: string) {
             </UFormField>
             <UFormField label="End Date">
               <UInput
-                v-model="endDate"
+                v-model="editEndDate"
                 placeholder="End Date"
                 type="date"
                 color="brand4"
@@ -215,7 +341,7 @@ async function deleteFund(id: string) {
             </UFormField>
             <UFormField label="Image">
               <UFileUpload
-                v-model="image"
+                v-model="editImage"
                 accept="image/*"
                 placeholder="Upload image"
                 color="brand4"
@@ -223,143 +349,19 @@ async function deleteFund(id: string) {
             </UFormField>
           </div>
         </template>
-
         <template #footer="{ close }">
+          <UButton
+            label="Delete"
+            color="brand7"
+            @click="editingFund && deleteFund(editingFund.id)"
+          />
           <UButton
             label="Save"
             color="brand4"
-            @click="saveFund(close)"
+            @click="saveEdit(close)"
           />
         </template>
       </UModal>
-    </div>
-
-    <!-- Funds Layout -->
-    <div class="px-6 mt-8">
-      <div class="grid grid-cols-2 gap-6">
-        <div
-          v-for="fund in funds"
-          :key="fund.id"
-          class="rounded-xl shadow-lg overflow-hidden hover:scale-95 transition-all duration-300 cursor-pointer"
-          @click="openEdit(fund)"
-        >
-          <!-- Fund Image -->
-          <div class="h-35 relative overflow-hidden">
-            <img
-              :src="fund.imageUrl ? `/api/admin/donations/${fund.id}/image?t=${new Date(fund.updatedAt).getTime()}` : ''"
-              :alt="fund.name"
-              class="w-full h-full object-cover"
-            >
-          </div>
-          <!-- Fund  Content -->
-          <div class="p-2">
-            <h4 class="text-sm font_semibold text-brand4 mb-1.5">
-              {{ fund.name }}
-            </h4>
-            <div class="space-y-2">
-              <!-- Date Range -->
-              <div class="flex items-center text-gray-600 text-[12px]">
-                <svg
-                  class="w-4 h-4 mr-2 text-teal-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <rect
-                    x="3"
-                    y="4"
-                    width="18"
-                    height="18"
-                    rx="2"
-                    ry="2"
-                  />
-                  <line
-                    x1="16"
-                    y1="2"
-                    x2="16"
-                    y2="6"
-                  />
-                  <line
-                    x1="8"
-                    y1="2"
-                    x2="8"
-                    y2="6"
-                  />
-                  <line
-                    x1="3"
-                    y1="10"
-                    x2="21"
-                    y2="10"
-                  />
-                </svg>
-                <span>{{ formatShort(fund.startDate) }} - {{ formatShort(fund.endDate) }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- Edit Modal -->
-    <UModal
-      v-model:open="editOpen"
-      title="Edit Fund"
-      :ui="{ footer: 'justify-end' }"
-    >
-      <template #body>
-        <div class="space-y-4">
-          <UFormField label="Fund Name">
-            <UInput
-              v-model="editFundName"
-              placeholder="Name"
-              color="brand4"
-            />
-          </UFormField>
-          <UFormField label="Link">
-            <UInput
-              v-model="editLink"
-              placeholder="Link"
-              color="brand4"
-              class="w-full"
-            />
-          </UFormField>
-          <UFormField label="Start Date">
-            <UInput
-              v-model="editStartDate"
-              placeholder="Start Date"
-              type="date"
-              color="brand4"
-            />
-          </UFormField>
-          <UFormField label="End Date">
-            <UInput
-              v-model="editEndDate"
-              placeholder="End Date"
-              type="date"
-              color="brand4"
-            />
-          </UFormField>
-          <UFormField label="Image">
-            <UFileUpload
-              v-model="editImage"
-              accept="image/*"
-              placeholder="Upload image"
-              color="brand4"
-            />
-          </UFormField>
-        </div>
-      </template>
-      <template #footer="{ close }">
-        <UButton
-          label="Delete"
-          color="brand7"
-          @click="editingFund && deleteFund(editingFund.id)"
-        />
-        <UButton
-          label="Save"
-          color="brand4"
-          @click="saveEdit(close)"
-        />
-      </template>
-    </UModal>
+    </PageContainer>
   </div>
 </template>

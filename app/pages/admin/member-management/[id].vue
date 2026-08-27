@@ -322,123 +322,121 @@ async function handleRemoveRole(role: string) {
 </script>
 
 <template>
-  <div
+  <PageContainer
     v-if="userData"
-    class="w-full max-w-(--ui-container) mx-auto min-h-[calc(100vh-4.75rem)] flex flex-col"
+    class="flex flex-1 flex-col"
   >
-    <div class="mx-10">
-      <div class="flex gap-4">
-        <div class="lg:w-25 lg:h-25 w-15 h-15">
-          <UserAvatar
-            :name="userData.name"
-            :src="userData.imageUrl"
-          />
-        </div>
-        <div class="lg:h-25 h-15 flex flex-col justify-center">
-          <p class="font-semibold lg:text-2xl text-xl">
-            {{ userData.name }}
-          </p>
-          <p class="font-normal lg:text-base text-sm text-gray-400 ">
-            {{ userData.email }}
-          </p>
-        </div>
-      </div>
-
-      <div class="w-full my-5 rounded-2xl flex items-center gap-2">
-        <SectionButton
-          v-for="section in sections"
-          :key="section.key"
-          :label="section.label"
-          :selected="activeSection === section.key"
-          size="md"
-          @click="activeSection = section.key"
+    <div class="flex gap-4">
+      <div class="lg:w-25 lg:h-25 w-15 h-15">
+        <UserAvatar
+          :name="userData.name"
+          :src="userData.imageUrl"
         />
       </div>
-
-      <div class="w-full mb-5 p-2 bg-gray-100 dark:bg-gray-700/50 rounded-xl flex items-center flex-wrap">
-        <UButton
-          label="Add Role"
-          icon="i-lucide-user-plus"
-          color="neutral"
-          variant="ghost"
-          class="rounded-xl font-semibold px-3 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-          @click="isAddRoleModalOpen = true"
-        />
-        <UButton
-          label="Remove Role"
-          icon="i-lucide-user-minus"
-          color="neutral"
-          variant="ghost"
-          class="rounded-xl font-semibold px-3 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-          @click="isRemoveRoleModalOpen = true"
-        />
-        <UButton
-          label="Edit"
-          icon="i-lucide-pencil"
-          color="neutral"
-          variant="ghost"
-          class="rounded-xl font-semibold px-3 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-          @click="toggleEditMode"
-        />
-        <UButton
-          label="Delete"
-          icon="i-lucide-trash-2"
-          color="neutral"
-          variant="ghost"
-          class="rounded-xl font-semibold px-3 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-          @click="isDeleteModalOpen = true"
-        />
-        <UButton
-          v-if="activeSection === 'HOUR_LOG'"
-          label="Add Hour Log"
-          icon="i-lucide-clock-plus"
-          color="neutral"
-          variant="ghost"
-          class="rounded-xl font-semibold px-3 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-          @click="isAddHourLogModalOpen = true"
-        />
+      <div class="lg:h-25 h-15 flex flex-col justify-center">
+        <p class="font-semibold lg:text-2xl text-xl">
+          {{ userData.name }}
+        </p>
+        <p class="font-normal lg:text-base text-sm text-gray-400 ">
+          {{ userData.email }}
+        </p>
       </div>
+    </div>
 
-      <GeneralSection
-        v-if="activeSection === 'GENERAL'"
-        v-model="generalDraft"
-        :user-data="userData"
-        :is-edit-mode="isEditMode"
+    <div class="w-full my-5 rounded-2xl flex items-center gap-2">
+      <SectionButton
+        v-for="section in sections"
+        :key="section.key"
+        :label="section.label"
+        :selected="activeSection === section.key"
+        size="md"
+        @click="activeSection = section.key"
       />
+    </div>
 
-      <HourLogSection
-        v-else-if="activeSection === 'HOUR_LOG'"
-        v-model="hourLogDrafts"
-        :hour-logs="userData.hourLogs"
-        :is-edit-mode="isEditMode"
-        @delete="requestDeleteHourLog"
+    <div class="w-full mb-5 p-2 bg-gray-100 dark:bg-gray-700/50 rounded-xl flex items-center flex-wrap">
+      <UButton
+        label="Add Role"
+        icon="i-lucide-user-plus"
+        color="neutral"
+        variant="ghost"
+        class="rounded-xl font-semibold px-3 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+        @click="isAddRoleModalOpen = true"
       />
-
-      <RsvpsSection
-        v-else-if="activeSection === 'RSVPS'"
-        v-model="rsvpDrafts"
-        :rsvps="userData.rsvps"
-        :is-edit-mode="isEditMode"
-        @delete="requestDeleteRsvp"
+      <UButton
+        label="Remove Role"
+        icon="i-lucide-user-minus"
+        color="neutral"
+        variant="ghost"
+        class="rounded-xl font-semibold px-3 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+        @click="isRemoveRoleModalOpen = true"
       />
+      <UButton
+        label="Edit"
+        icon="i-lucide-pencil"
+        color="neutral"
+        variant="ghost"
+        class="rounded-xl font-semibold px-3 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+        @click="toggleEditMode"
+      />
+      <UButton
+        label="Delete"
+        icon="i-lucide-trash-2"
+        color="neutral"
+        variant="ghost"
+        class="rounded-xl font-semibold px-3 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+        @click="isDeleteModalOpen = true"
+      />
+      <UButton
+        v-if="activeSection === 'HOUR_LOG'"
+        label="Add Hour Log"
+        icon="i-lucide-clock-plus"
+        color="neutral"
+        variant="ghost"
+        class="rounded-xl font-semibold px-3 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+        @click="isAddHourLogModalOpen = true"
+      />
+    </div>
 
-      <div
-        v-if="isEditMode"
-        class="sticky bottom-4 mt-6 flex items-center gap-2 bg-white dark:bg-gray-900 py-2"
-      >
-        <UButton
-          label="Save Changes"
-          color="primary"
-          variant="solid"
-          @click="requestSaveAll"
-        />
-        <UButton
-          label="Cancel"
-          color="neutral"
-          variant="ghost"
-          @click="toggleEditMode"
-        />
-      </div>
+    <GeneralSection
+      v-if="activeSection === 'GENERAL'"
+      v-model="generalDraft"
+      :user-data="userData"
+      :is-edit-mode="isEditMode"
+    />
+
+    <HourLogSection
+      v-else-if="activeSection === 'HOUR_LOG'"
+      v-model="hourLogDrafts"
+      :hour-logs="userData.hourLogs"
+      :is-edit-mode="isEditMode"
+      @delete="requestDeleteHourLog"
+    />
+
+    <RsvpsSection
+      v-else-if="activeSection === 'RSVPS'"
+      v-model="rsvpDrafts"
+      :rsvps="userData.rsvps"
+      :is-edit-mode="isEditMode"
+      @delete="requestDeleteRsvp"
+    />
+
+    <div
+      v-if="isEditMode"
+      class="sticky bottom-4 mt-6 flex items-center gap-2 bg-white dark:bg-gray-900 py-2"
+    >
+      <UButton
+        label="Save Changes"
+        color="primary"
+        variant="solid"
+        @click="requestSaveAll"
+      />
+      <UButton
+        label="Cancel"
+        color="neutral"
+        variant="ghost"
+        @click="toggleEditMode"
+      />
     </div>
 
     <RoleModal
@@ -496,5 +494,5 @@ async function handleRemoveRole(role: string) {
       :error="deleteRsvpError"
       @confirm="confirmDeleteRsvp"
     />
-  </div>
+  </PageContainer>
 </template>
