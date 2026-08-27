@@ -50,6 +50,24 @@ const features: AdminFeature[] = [
     iconBg: 'bg-[#a4123f]',
     bg: 'bg-gradient-to-br from-[#f4d3e0] to-white',
   },
+  {
+    id: 'reports',
+    to: '/admin/reports',
+    label: 'Hours Reporting',
+    description: 'Totals, trends and lapse risk',
+    icon: 'i-heroicons-chart-bar',
+    iconBg: 'bg-[#5FA18B]',
+    bg: 'bg-gradient-to-br from-[#dcebe4] to-white',
+  },
+  {
+    id: 'impact',
+    to: '/admin/reports/impact',
+    label: 'Impact Report',
+    description: 'In-kind value for leadership and funders',
+    icon: 'i-heroicons-presentation-chart-line',
+    iconBg: 'bg-[#6C5846]',
+    bg: 'bg-gradient-to-br from-[#e6d6c3] to-white',
+  },
 ]
 
 interface AdminStats {
@@ -57,36 +75,72 @@ interface AdminStats {
   activeVolunteers: number
   pendingCertificates: number
   pendingTimeLogs: number
+  hoursYearToDate: number
+  hoursQuarterToDate: number
 }
 
 const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
 const { data: stats } = await useFetch<AdminStats>('/api/admin/stats', { headers })
 
+/**
+ * Hours arrive rounded to a tenth; drop a trailing `.0` so a whole number reads
+ * like the counts beside it, and group thousands, since a year of hours runs
+ * into four digits.
+ */
+const formatHours = (hours: number) =>
+  hours.toLocaleString('en-US', { maximumFractionDigits: 1 })
+
+interface AdminKpi {
+  id: string
+  label: string
+  value: string
+  icon: string
+  /** Optional qualifier under the number, e.g. which hours are counted. */
+  hint?: string
+}
+
 // KPI data for top cards
-const kpis = computed(() => [
+const kpis = computed<AdminKpi[]>(() => [
   {
     id: 'total-users',
     label: 'Total Users',
-    value: stats.value?.totalUsers ?? 0,
+    value: String(stats.value?.totalUsers ?? 0),
     icon: 'i-heroicons-user-group',
   },
   {
     id: 'pending-certificates',
     label: 'Pending Certificates',
-    value: stats.value?.pendingCertificates ?? 0,
+    value: String(stats.value?.pendingCertificates ?? 0),
     icon: 'i-heroicons-document-text',
   },
   {
     id: 'active-volunteers',
     label: 'Active Volunteers',
-    value: stats.value?.activeVolunteers ?? 0,
+    value: String(stats.value?.activeVolunteers ?? 0),
     icon: 'i-heroicons-hand-raised',
   },
   {
     id: 'pending-timelog',
     label: 'Pending Time Log',
-    value: stats.value?.pendingTimeLogs ?? 0,
+    value: String(stats.value?.pendingTimeLogs ?? 0),
     icon: 'i-heroicons-clock',
+  },
+  // Approved hours only, so these agree with /admin/reports at its default
+  // filter — the hint says so, since a coordinator with a backlog would
+  // otherwise read the tile as everything logged.
+  {
+    id: 'hours-ytd',
+    label: 'Hours This Year',
+    value: formatHours(stats.value?.hoursYearToDate ?? 0),
+    icon: 'i-heroicons-calendar-days',
+    hint: 'Approved, year to date',
+  },
+  {
+    id: 'hours-qtd',
+    label: 'Hours This Quarter',
+    value: formatHours(stats.value?.hoursQuarterToDate ?? 0),
+    icon: 'i-heroicons-chart-bar-square',
+    hint: 'Approved, quarter to date',
   },
 ])
 </script>
@@ -100,7 +154,7 @@ const kpis = computed(() => [
       </h1>
     </div>
     <!-- KPI section -->
-    <section class="px-4 sm:px-6 mt-7 grid grid-cols-2 gap-3 sm:gap-6">
+    <section class="px-4 sm:px-6 mt-7 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
       <div
         v-for="kpi in kpis"
         :key="kpi.id"
@@ -124,7 +178,14 @@ const kpis = computed(() => [
           <h3 class="text-2xl sm:text-3xl font-bold text-[#313131] dark:text-white">
             {{ kpi.value }}
           </h3>
-          <div class="flex items-center gap-2 text-sm" />
+          <div class="flex items-center gap-2 text-sm">
+            <span
+              v-if="kpi.hint"
+              class="text-[11px] leading-tight text-slate-500 dark:text-gray-400"
+            >
+              {{ kpi.hint }}
+            </span>
+          </div>
         </div>
       </div>
     </section>

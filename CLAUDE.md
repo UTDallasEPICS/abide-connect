@@ -19,7 +19,20 @@ pnpm lint:fix              # eslint . --fix
 pnpm db:generate          # prisma generate (regenerate client after schema changes)
 ```
 
-There is no test suite configured in this repo currently.
+### Tests
+
+```bash
+pnpm test                 # vitest run
+pnpm test:watch           # vitest
+```
+
+Vitest, configured in `vitest.config.ts`. Coverage is the volunteer-hours
+reporting stack only; the rest of the app is untested.
+
+- `tests/unit/` — pure logic: `shared/utils/reportRange.ts`, `server/utils/reporting.ts`, `app/lib/chart.ts`.
+- `tests/integration/` — the report endpoints, run for real against a throwaway SQLite database. `tests/setup/global-setup.ts` builds it by replaying `prisma/migrations/*` (so a column that only exists in `prisma/schema/` fails here the way it would fail on deploy), and `tests/setup/h3-globals.ts` supplies the h3 helpers Nitro normally auto-imports so a route file can be imported and called directly. Only `requireRole` is stubbed.
+- `test.env.TZ` is `UTC` on purpose — production runs in UTC while the org is Central, so a helper that falls back to the host timezone fails the suite.
+- Expected figures in the integration tests are hand-computed literals with the arithmetic in a comment. Don't "fix" a failure by recomputing the expectation the way the handler does; that makes a wrong definition agree with itself.
 
 ### Database (Prisma + SQLite)
 
@@ -62,6 +75,17 @@ All outgoing mail goes through the one nodemailer `transporter` in `server/utils
 
 **Cancel links.** Confirmation and reminder emails carry a one-click "cancel my spot" link, which for a guest is the only handle they have on their sign-up. `server/utils/rsvpCancelToken.ts` signs a stateless HMAC token (`BETTER_AUTH_SECRET`) naming one RSVP — no extra table, and the token dies with the row. The link opens the `app/pages/rsvp/cancel.vue` page, which only posts to `server/api/rsvp/cancel.post.ts` after a real click: mail clients and security scanners fetch every URL in a message, so cancelling on GET would drop people from events they meant to attend.
 
+### Volunteer hours reporting
+
+Two admin-only pages over `Volunteer_Hour_Log`: `/admin/reports` (operational — trend, distribution, coverage, lapse risk, approval backlog, new-vs-returning, retention cohorts) and `/admin/reports/impact` (leadership/funder — year-over-year totals, in-kind value, hours by program, CSV export). Both are guarded by the `/admin` prefix in `auth.global.ts`, and each endpoint calls `requireRole(event, 'admin')`.
+
+- **Time is Central, not UTC.** `shared/utils/reportRange.ts` owns every range, boundary and bucket key, and all of it is timezone-explicit (`REPORT_TIME_ZONE`). Production runs the server in UTC, so an hour logged on the evening of the 31st falls in the next month and a Sunday-evening shift reads as Monday unless you go through these helpers. It lives in `shared/` so the picker and the API resolve "QTD" identically. Aggregation is therefore done in JS over fetched rows rather than in SQL — SQLite's date functions only know UTC.
+- **Ranges.** Presets (YTD, QTD, MTD, rolling windows, previous calendar year, all time) plus a custom `from`/`to`. Picking a preset fills the date boxes with what it resolved to; editing either box switches the selection to Custom. `parseReportQuery` 400s on an unparseable custom range rather than falling back to a default, since a report quietly covering a different period than its header gets pasted into a grant application.
+- **What counts.** Approved logs only by default; `?status=all` adds pending, and the operational page labels which is on screen. The funder report is *always* approved-only regardless of the param. The approval backlog and the lapse list deliberately ignore the range — one is a statement about the queue now, the other is about people who stopped before it started.
+- **Programs.** `Volunteer_Hour_Log.program` is the grant-reporting dimension and is null on everything logged before it existed. `attributeProgram` in `server/utils/reporting.ts` owns the fallback: explicit tag → the volunteer's *single* declared area → `UNASSIGNED`. Volunteers with several areas are never split across them, and the report says how many hours were attributed by inference.
+- **Settings, not constants.** The volunteer hourly rate (Independent Sector republishes it annually), its cited source, and the lapse threshold live in the `AppSetting` key/value table behind `server/utils/appSettings.ts` — the only module that reads it. The funder page warns while the rate is still the built-in default.
+- **Charts are hand-drawn SVG**, no charting library: `app/lib/chart.ts` (scales, ticks, paths, formatting) plus `app/components/reports/*`. Colours come from the `--viz-*` tokens at the bottom of `app/assets/css/main.css`, whose two series hues are validated for CVD separation and contrast against the actual card surfaces (white / gray-800) — re-validate before changing them. Two conventions worth keeping: never a second y-axis (headcount is its own panel under the hours plot, sharing the x-axis), and every chart ships a table view, since a tooltip is not an accessible way to read a value. Chart cards carry `min-w-0` because a grid item's default `min-width: auto` lets a fixed-width SVG stretch the card past a phone's viewport.
+
 ## Architecture
 
 This is a Nuxt 4 app, so the app source root is `app/` (pages, components, layouts, middleware, lib, types), while `server/` holds Nitro server routes/middleware/utils and is a separate root — cross-referencing it from `app/` code goes through the `#server` path alias (e.g. `import { auth } from '#server/utils/auth'`), not a relative path.
@@ -75,6 +99,8 @@ This is a Nuxt 4 app, so the app source root is `app/` (pages, components, layou
 - `app/middleware/auth.ts` is an **opt-in** (non-global) route guard: it calls `/api/auth/get-session` and redirects to `/auth/login` unless the route is in its `publicRoutes` allowlist. Pages that need a session must declare `middleware: 'auth'` in `definePageMeta` (see `settings.vue`, `inbox.vue`) — it does not apply automatically.
 - `app/middleware/auth.global.ts` runs on every route and enforces the role requirements in its `routeRoles` map (`/admin`, `/events/manage`, `/volunteer`, `/volunteer-application`). It only guards those prefixes; everything else is unauthenticated unless the page opts into `auth`.
 - `server/utils/auth-client.ts` exports the `better-auth/vue` client (`authClient`) for use in components/pages.
+- **Session lifetime is split by role.** Ordinary sessions slide: `auth.ts` keeps better-auth's rolling window (7-day `expiresIn`, renewed on use once a day old), so a volunteer or donor who keeps returning never sees a login screen. Admin sessions get a hard ceiling from sign-in instead, enforced per-request by `enforceAdminSessionAge` in `server/utils/sessionPolicy.ts` — better-auth's own `disableSessionRefresh` is global and would have logged everyone out weekly, which is why the ceiling lives in our code rather than in the config. The cap deletes only the session that hit it, not the user's others, since each sign-in gets its own window.
+- **Admin access is re-checked against Google.** `server/utils/idpRevalidation.ts` asks Google whether the acting admin's refresh token still represents a live grant, and drops every one of their sessions when it doesn't — so suspending someone in Workspace ends their admin access here within ~10 minutes instead of never. `requireRole` calls it for `admin` only. Three things to keep in mind before touching it: only `invalid_grant` counts as revocation (`invalid_client` means *our* credentials are broken and must not lock anyone out); inconclusive probes fail *open* for 30 minutes so a Google outage doesn't lock out every admin at once; and users with no Google account (email-OTP sign-ins) are deliberately unaffected, which is why the admin session cap above has to stay. `IDP_REVALIDATION=off` disables it.
 
 ### Data model (`prisma/schema/*.prisma`)
 

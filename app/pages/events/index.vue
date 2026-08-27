@@ -1,176 +1,307 @@
 <script setup lang="ts">
-import type { DateValue } from '@internationalized/date'
-import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
-import { eventTypeFromFlags } from '#shared/utils/eventType'
+import UpcomingEventCard from '~/components/event/UpcomingEventCard.vue';
+import SecondaryEventCard from '~/components/event/SecondaryEventCard.vue';
+import SecondaryEventCardSkeleton from '~/components/event/SecondaryEventCardSkeleton.vue';
+import WeekCalendar from '~/components/WeekCalendar.vue';
 
-/**
- * Event browser: a calendar picker over upcoming events, with training
- * sessions split into their own section.
- *
- * Training events are separated because they're a different kind of thing —
- * only volunteers awaiting approval can attend one, so mixing them into the
- * general list would offer most viewers something they can't sign up for.
- *
- * All filtering here is presentational. Visibility is already enforced by
- * `/api/events`, so nothing sensitive depends on these computeds.
- */
+interface UpcomingEvent {
+  id: string;
+  title: string;
+  url: string;
+  image: string;
+  day: string;
+  month: string;
+  location: string;
+  going: number;
+  startTime: string;
+}
 
-const tz = getLocalTimeZone()
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const selectedDate = ref<any>(today(tz))
+interface UserUpcomingEvent {
+  id: string;
+  title: string;
+  startTime: string;
+  endTime: string;
+  address: string | null;
+  isTraining: boolean;
+  isVolunteer: boolean;
+  imageUrl: string | null;
+}
 
-// Load all events from API
-const { data: allEvents } = await useFetch('/api/events')
+function onSeeAllYourEventsClick() {
+  navigateTo('/volunteer');
+}
 
-// `/api/events` already hides volunteer-only and training events from anyone
-// who shouldn't see them, so whatever arrives here is safe to display — it
-// just gets split into its own section below.
-// Regular event lists exclude the training class.
-const nonTrainingEvents = computed(() =>
-  (allEvents.value || []).filter(event => !event.isTraining),
-)
+function onSeeAllWeekEventsClick() {
+  navigateTo('/events/list');
+}
 
-const trainingEvents = computed(() => {
-  const now = new Date()
-  return (allEvents.value || [])
-    .filter(event => event.isTraining && new Date(event.endTime) >= now)
-    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-})
+// --- Events Today (also powers the carousel) ---
+const {
+  data: todayEvents,
+  pending: todayPending,
+  error: todayFetchError,
+} = await useFetch<UpcomingEvent[]>('/api/events/today', {
+  query: { limit: 20 },
+});
+const todayError = computed(() => !!todayFetchError.value);
 
-const upcomingEvents = computed(() => {
-  const now = new Date()
-  return nonTrainingEvents.value.filter(event => new Date(event.endTime) >= now)
-})
+// --- Your Events ---
+const headers = useRequestHeaders(['cookie']);
+const { data: user } = await useFetch('/api/user/me', { headers });
 
-// Events on the selected calendar date
-const eventsOnSelectedDate = computed(() => {
-  if (!selectedDate.value) return upcomingEvents.value
-  return nonTrainingEvents.value.filter((event) => {
-    const d = new Date(event.startTime)
-    const cal = new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate())
-    return cal.compare(selectedDate.value) === 0
-  })
-})
+const showYourEventsSection = computed(() => !!user.value);
 
-// Show date-filtered events if a date with events is selected, otherwise show all upcoming
-const displayedEvents = computed(() => {
-  if (eventsOnSelectedDate.value.length > 0) return eventsOnSelectedDate.value
-  return upcomingEvents.value
-})
+const yourEventsPending = ref(true);
+const yourEventsError = ref(false);
 
-type CalendarEvent = {
-  id: string
-  title: string
-  startTime: string
-  endTime: string
-  location?: {
-    id?: string
-    address?: string
-    latitude?: number
-    longitude?: number
+const {
+  data: yourEventsRaw,
+  error: yourEventsFetchError,
+  status: yourEventsStatus,
+} = useLazyFetch<UserUpcomingEvent[]>('/api/user/upcoming-events', {
+  default: () => [],
+  server: false,
+  immediate: showYourEventsSection.value,
+});
+
+watch(yourEventsStatus, (newStatus) => {
+  if (newStatus === 'success' || newStatus === 'error') {
+    yourEventsPending.value = false;
+    yourEventsError.value = newStatus === 'error';
+    if (newStatus === 'error') {
+      console.error('Failed to load your events:', yourEventsFetchError.value);
+    }
   }
-  eventAssets?: {
-    id?: string
-    imageUrl: string
-  }[]
-  isTraining?: boolean
+});
+
+watch(
+  showYourEventsSection,
+  (shouldShow) => {
+    if (shouldShow && yourEventsStatus.value === 'idle') {
+      yourEventsPending.value = true;
+      void refreshNuxtData('/api/user/upcoming-events');
+    }
+  },
+  { immediate: true }
+);
+
+const yourEvents = computed(() =>
+  yourEventsRaw.value.map((e) => ({
+    id: e.id,
+    title: e.title,
+    url: `/events/${e.id}`,
+    image: e.imageUrl
+      ? `/api/events/${e.id}/images/${e.imageUrl.split('/').pop()}`
+      : '/images/default-event.jpg',
+    startTime: e.startTime,
+    location: e.address ?? '',
+  }))
+);
+
+const showYourEventsBlock = computed(
+  () =>
+    showYourEventsSection.value &&
+    (yourEventsPending.value || yourEventsError.value || yourEvents.value.length > 0)
+);
+
+// --- Cancel RSVP ---
+function handleCancelRsvp(eventId: string) {
+  navigateTo(`/events/${eventId}`);
 }
 
-const isDateDisabled = (d: DateValue) =>
-  d.toDate(tz) < new Date(new Date().setHours(0, 0, 0, 0))
+// --- Events This Week ---
+const {
+  data: weekEvents,
+  pending: weekPending,
+  error: weekFetchError,
+} = await useFetch<UpcomingEvent[]>('/api/events/week', {
+  query: { limit: 20 },
+});
+const weekError = computed(() => !!weekFetchError.value);
 
-function getEventImage(event: CalendarEvent) {
-  if (event.eventAssets && event.eventAssets.length > 0) {
-    const imageUrl = event.eventAssets[0].imageUrl
-    return `/api/events/${imageUrl}`
+// --- Week Calendar: selected day + events happening that day ---
+const selectedDate = ref(new Date());
+
+function toLocalDateString(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+const { data: dayEvents, pending: dayEventsPending } = await useFetch<UpcomingEvent[]>(
+  '/api/events/by-day',
+  {
+    query: computed(() => ({ date: toLocalDateString(selectedDate.value) })),
+    watch: [selectedDate],
   }
-  return undefined
-}
+);
 
-function getEventSubtitle(event: CalendarEvent) {
-  const date = new Date(event.startTime).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-  const location = event.location?.address || ''
-  // Flag the volunteer-only events so it's clear why others can't see them.
-  const audience = eventTypeFromFlags(event) === 'VOLUNTEERS' ? 'Volunteers only' : ''
-  return [date, location, audience].filter(Boolean).join(' · ')
-}
-
-function goToEvent(id: string) {
-  navigateTo(`/events/${id}`)
-}
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-white dark:bg-gray-900">
-    <div class="w-full h-full mt-12 mb-12 px-4 py-12 overflow-y-auto">
-      <h2 class="text-center text-2xl font-bold text-brand4 dark:text-teal-400 mb-6">
-        Events
-      </h2>
+  <div class="mt-20 min-h-screen pb-20">
+    <div class="w-full max-w-(--ui-container) mx-auto">
+      <div class="lg:px-10 px-5">
+        <!-- Today's Events (carousel) -->
+        <section class="mb-8">
+          <div class="flex items-center justify-between mb-2">
+            <div v-if="todayPending" class="h-5 w-40 animate-pulse rounded bg-gray-200" />
+            <h3 v-else class="uppercase font-gray-900">Today's Events</h3>
+          </div>
 
-      <UCard class="max-w-4xl mx-auto mb-6">
-        <UCalendar
-          v-model="selectedDate"
-          color="brand7"
-          :is-date-disabled="isDateDisabled"
-          locale="en-US"
-          weekday-format="short"
-          :first-day-of-week="0"
-          class="rounded-2xl"
-        />
-      </UCard>
+          <!-- Loading skeleton -->
+          <div v-if="todayPending" class="aspect-[21/9] w-full animate-pulse rounded-2xl bg-gray-200" />
+          <!-- Error state -->
+          <div
+            v-else-if="todayError"
+            class="flex aspect-[21/9] w-full items-center justify-center rounded-2xl bg-gray-50 text-sm text-red-400"
+          >
+            Failed to load today's events.
+          </div>
+          <!-- Empty state -->
+          <div
+            v-else-if="!todayEvents?.length"
+            class="flex aspect-[21/9] w-full items-center justify-center rounded-2xl bg-gray-50 text-sm text-gray-400"
+          >
+            No events today
+          </div>
+          <!-- Carousel -->
+          <UCarousel
+            v-else
+            loop
+            dots
+            :items="todayEvents"
+            :autoplay="{ delay: 6000 }"
+            v-slot="{ item }"
+            :ui="{
+              dots: 'relative -mt-4 gap-1.5',
+              dot: 'w-2 h-2 rounded-full bg-gray-300 data-[state=active]:bg-gray-900 transition-colors',
+            }"
+          >
+            <UpcomingEventCard
+              :url="item.url"
+              :image="item.image"
+              :day="item.day"
+              :month="item.month"
+              :title="item.title"
+              :location="item.location"
+            />
+          </UCarousel>
+        </section>
 
-      <!-- Volunteer Training (pending volunteers only) -->
-      <div
-        v-if="trainingEvents.length > 0"
-        class="mb-8"
-      >
-        <h3 class="text-lg font-semibold text-brand7 mb-1">
-          Volunteer Training
-        </h3>
-        <p class="text-xs text-gray-500 mb-4">
-          Attend a training session to become an approved volunteer.
-        </p>
-        <div class="space-y-4">
-          <EventTile
-            v-for="event in trainingEvents"
-            :key="event.id"
-            :title="event.title"
-            :subtitle="getEventSubtitle(event)"
-            :image-url="getEventImage(event)"
-            @click="goToEvent(event.id)"
-            @add="goToEvent(event.id)"
-          />
-        </div>
-      </div>
+        <!-- Week Calendar (temporarily disabled) -->
+        <section v-if="false" class="mb-8">
+          <WeekCalendar v-model="selectedDate" />
 
-      <h3 class="text-lg font-semibold text-brand4 mb-4 dark:text-teal-400">
-        {{ eventsOnSelectedDate.length > 0 ? 'Events on this day' : 'Upcoming Events' }}
-      </h3>
+          <!-- Events for the selected day -->
+          <div class="mt-4 space-y-2">
+            <div v-if="dayEventsPending" class="flex flex-col gap-3">
+              <SecondaryEventCardSkeleton v-for="n in 3" :key="n" />
+            </div>
+            <div
+              v-else-if="!dayEvents?.length"
+              class="flex h-16 items-center justify-center rounded-2xl bg-gray-50 text-sm text-gray-400"
+            >
+              No events on this day
+            </div>
+            <SecondaryEventCard
+              v-for="event in dayEvents"
+              v-else
+              :key="event.id"
+              :id="event.id"
+              :url="event.url"
+              :image="event.image"
+              :start-time="event.startTime"
+              :title="event.title"
+              :location="event.location"
+              size="lg"
+              :show-actions="false"
+            />
+          </div>
+        </section>
 
-      <div
-        v-if="displayedEvents.length === 0"
-        class="text-center text-gray-500 py-8"
-      >
-        No upcoming events
-      </div>
+        <!-- Your Events -->
+        <section v-if="showYourEventsBlock" class="mb-8">
+          <div class="flex items-center justify-between mb-2">
+            <div v-if="yourEventsPending" class="h-5 w-32 animate-pulse rounded bg-gray-200" />
+            <h3 v-else class="uppercase font-gray-900">Your Events</h3>
+            <UButton
+              v-if="!yourEventsPending"
+              color="neutral"
+              variant="outline"
+              size="sm"
+              class="flex items-center gap-1.5 rounded-full bg-transparent px-3.5 py-1.5 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+              @click="onSeeAllYourEventsClick"
+            >
+              <UIcon name="i-lucide-search" class="w-4 h-4" />
+              <span>See All</span>
+            </UButton>
+          </div>
 
-      <div
-        v-else
-        class="space-y-4"
-      >
-        <EventTile
-          v-for="event in displayedEvents"
-          :key="event.id"
-          :title="event.title"
-          :subtitle="getEventSubtitle(event)"
-          :image-url="getEventImage(event)"
-          @click="goToEvent(event.id)"
-          @add="goToEvent(event.id)"
-        />
+          <div v-if="yourEventsPending" class="flex flex-col gap-3">
+            <SecondaryEventCardSkeleton v-for="n in 2" :key="n" />
+          </div>
+          <p v-else-if="yourEventsError" class="text-red-600 text-sm">
+            Failed to load your events. Please try again later.
+          </p>
+          <div v-else class="flex flex-col gap-3">
+            <SecondaryEventCard
+              v-for="item in yourEvents"
+              :key="item.id"
+              :id="item.id"
+              :url="item.url"
+              :title="item.title"
+              :image="item.image"
+              :start-time="item.startTime"
+              :location="item.location"
+              @cancel="handleCancelRsvp"
+            />
+          </div>
+        </section>
+
+
+        <!-- Events This Week -->
+        <section class="mb-8">
+          <div class="flex items-center justify-between mb-2">
+            <div v-if="weekPending" class="h-5 w-32 animate-pulse rounded bg-gray-200" />
+            <h3 v-else class="uppercase font-gray-900">Events This Week</h3>
+            <UButton
+              v-if="!weekPending"
+              color="neutral"
+              variant="outline"
+              size="sm"
+              class="flex items-center gap-1.5 rounded-full bg-transparent px-3.5 py-1.5 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+              @click="onSeeAllWeekEventsClick"
+            >
+              <UIcon name="i-lucide-search" class="w-4 h-4" />
+              <span>See All</span>
+            </UButton>
+          </div>
+
+          <div v-if="weekPending" class="flex flex-col gap-3">
+            <SecondaryEventCardSkeleton v-for="n in 3" :key="n" />
+          </div>
+          <p v-else-if="weekError" class="text-red-600 text-sm">
+            Failed to load this week's events. Please try again later.
+          </p>
+          <p v-else-if="!weekEvents?.length" class="text-gray-400 font-normal">
+            No event this week
+          </p>
+          <div v-else class="flex flex-col gap-3">
+            <SecondaryEventCard
+              v-for="item in weekEvents"
+              :key="item.id"
+              :id="item.id"
+              :url="item.url"
+              :title="item.title"
+              :image="item.image"
+              :start-time="item.startTime"
+              :location="item.location"
+              :show-actions="false"
+            />
+          </div>
+        </section>
       </div>
     </div>
   </div>

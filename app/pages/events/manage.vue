@@ -14,6 +14,12 @@
  */
 import { ref, onMounted } from 'vue'
 
+definePageMeta({
+  layout: 'secondary',
+  backText: 'Admin',
+  backTo: '/admin',
+})
+
 const showAddModal = ref(false)
 
 const pastEvents = ref([])
@@ -83,7 +89,7 @@ function getEventDate(event) {
 
 <template>
   <div class="flex flex-col relative">
-    <div class="flex-1 mt-12 mb-8 w-full overflow-y-auto">
+    <div class="flex-1 mt-4 mb-8 w-full overflow-y-auto">
       <h1 class="text-center text-2xl font-bold tracking-wide pb-3 text-gray-900 dark:text-gray-100">
         EVENTS MANAGEMENT
       </h1>

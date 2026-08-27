@@ -28,9 +28,13 @@ import {
  * accept. A viewer who shouldn't see the event at all gets a 404 from
  * `/api/events/[id]` rather than a 403, so `notFound` covers both cases.
  */
+
 definePageMeta({
   layout: 'secondary',
+  // Fallback only, for the emailed/shared links that open this page cold.
+  backTo: '/events',
 })
+
 const colorMode = useColorMode()
 const isDark = computed(() => colorMode.value === 'dark')
 const route = useRoute()
@@ -405,51 +409,58 @@ const cardClass = 'rounded-2xl bg-white shadow-sm dark:bg-gray-800'
         <UButton
           icon="i-lucide-arrow-left"
           :color="brandColor"
-          @click="navigateTo('/eventManagement')"
+          :to="backNavigate"
         >
           Back to Events
         </UButton>
       </div>
     </div>
     <!-- Event Details -->
-    <!-- pt-24 offsets for the fixed/sticky site header — adjust to match
-         its actual height if this doesn't line up. -->
-    <div
-      v-else-if="event"
-      class="max-w-(--ui-container) mx-auto pt-24 pb-8 lg:px-10 px-5"
-    >
-      <!-- Edit controls: floated over the header itself (which sits at
-           z-50, fixed, h-19) rather than in normal page flow — pinned
-           dead center of the header bar with a z-index high enough that
-           nothing else can ever sit on top of it. -->
+    <div v-else-if="event">
+      <!-- Sticky admin action bar. Non-admins get nothing in it now that the
+           back button lives in the header, so the whole strip is hidden rather
+           than rendering as an empty band under the header. -->
       <div
         v-if="isAdmin"
-        class="fixed top-0 w-full z-[1000000] h-19 flex items-center justify-end gap-2 px-5 max-w-(--ui-container) pr-20"
+        class="bg-white dark:bg-gray-800 shadow-sm sticky top-19 z-10 border-b border-transparent dark:border-gray-700"
       >
-        <UButton
-          v-if="!isEditMode"
-          icon="i-lucide-pencil"
-          :color="brandColor"
-          @click="enterEditMode"
+        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-end">
+          <div class="flex gap-2">
+            <UButton
+              v-if="!isEditMode"
+              icon="i-lucide-pencil"
+              :color="brandColor"
+              variant="soft"
+              @click="enterEditMode"
+            >
+              Edit Event
+            </UButton>
+
+            <template v-else>
+              <UButton
+                variant="ghost"
+                color="neutral"
+                @click="cancelEdit"
+              >
+                Cancel
+              </UButton>
+              <UButton
+                icon="i-lucide-check"
+                :color="brandColor"
+                @click="async () => { await saveChanges() }"
+              >
+                Save Changes
+              </UButton>
+            </template>
+          </div>
+        </div>
+
+        <p
+          v-if="saveError"
+          class="max-w-4xl mx-auto px-4 pb-3 text-sm text-red-600 dark:text-red-400"
         >
-          Edit Event
-        </UButton>
-        <template v-else>
-          <UButton
-            variant="soft"
-            color="neutral"
-            @click="cancelEdit"
-          >
-            Cancel
-          </UButton>
-          <UButton
-            icon="i-lucide-check"
-            :color="brandColor"
-            @click="async () => { await saveChanges() }"
-          >
-            Save Changes
-          </UButton>
-        </template>
+          {{ saveError }}
+        </p>
       </div>
       <p
         v-if="saveError"

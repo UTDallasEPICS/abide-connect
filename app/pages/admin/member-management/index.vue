@@ -5,7 +5,8 @@ import type { UsersResponse } from '~/types/admin/admin-user-response'
 
 definePageMeta({
   layout: 'secondary',
-  backText: 'Management',
+  backText: 'Admin',
+  backTo: '/admin',
 })
 
 /**
@@ -118,7 +119,7 @@ const roleStyles: Record<string, string> = {
 
 <template>
   <div class="overflow-x-hidden">
-    <div class="w-full max-w-(--ui-container) mx-auto mt-19 min-h-[calc(100vh-4.75rem)] flex flex-col">
+    <div class="w-full max-w-(--ui-container) mx-auto min-h-[calc(100vh-4.75rem)] flex flex-col">
       <!-- Header -->
       <div class="mx-10">
         <h1 class="text-2xl font-normal">

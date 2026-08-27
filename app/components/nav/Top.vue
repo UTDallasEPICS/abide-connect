@@ -1,11 +1,9 @@
 <script setup lang="ts">
 const onSettingsClick = () => navigateTo('/settings')
-
 const isScrolled = ref(false)
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 0
 }
-
 onMounted(() => {
   window.addEventListener('scroll', handleScroll, { passive: true })
   handleScroll()
@@ -14,7 +12,6 @@ onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
 })
 </script>
-
 <template>
   <UHeader
     :ui="{
@@ -32,7 +29,12 @@ onUnmounted(() => {
         <img
           src="/images/abide_logo.svg"
           alt="Abide logo"
-          class="h-9 w-auto cursor-pointer"
+          class="h-9 w-auto cursor-pointer block dark:hidden"
+        >
+        <img
+          src="/images/abide_logo_darkmode.svg"
+          alt="Abide logo"
+          class="h-9 w-auto cursor-pointer hidden dark:block"
         >
       </NuxtLink>
     </template>

@@ -13,6 +13,11 @@ import { requireRole } from '~~/server/utils/requireRole'
  *
  * `comment` is unconditionally overwritten: omitting it clears any existing
  * reviewer note rather than leaving it in place.
+ *
+ * `approvedAt` is stamped on the first decision and left alone afterwards, so
+ * the approval-latency stat on `/admin/reports` measures how long the volunteer
+ * waited for an answer rather than when a reviewer last touched the row.
+ * Sending the log back to PENDING clears it, since it is waiting again.
  */
 export default eventHandler(async (event) => {
   await requireRole(event, 'admin')
@@ -29,11 +34,19 @@ export default eventHandler(async (event) => {
       })
     }
 
+    const existing = await prisma.volunteer_Hour_Log.findUnique({
+      where: { id: Number(id) },
+      select: { approvedAt: true },
+    })
+
     const updated = await prisma.volunteer_Hour_Log.update({
       where: { id: Number(id) },
       data: {
         approvalStatus: status,
         comment: comment ?? null,
+        approvedAt: status === 'PENDING'
+          ? null
+          : existing?.approvedAt ?? new Date(),
       },
     })
 

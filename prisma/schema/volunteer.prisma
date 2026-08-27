@@ -61,6 +61,17 @@ model Volunteer_Language {
 ///
 /// Only APPROVED logs count toward the hour totals shown in the admin member
 /// list; some UI sums all statuses, so figures can legitimately differ.
+///
+/// `program` is the grant-reporting dimension ("hours by program"). It's
+/// nullable and unset on every historical row, so the reports don't read it
+/// directly — `server/utils/reporting.ts` owns the fallback chain (explicit
+/// program → the volunteer's single volunteer area → unassigned). Setting it on
+/// a log is what makes that attribution exact rather than inferred.
+///
+/// `approvedAt` is stamped by the review endpoints when a log leaves PENDING,
+/// so the approval-latency stat measures submission→decision rather than
+/// submission→last-edit. Null on rows decided before it existed, and those rows
+/// are simply excluded from the latency median rather than guessed at.
 model Volunteer_Hour_Log {
   id             Int            @id @default(autoincrement())
   volunteer      Volunteer      @relation(fields: [volunteerId], references: [id])
@@ -71,11 +82,16 @@ model Volunteer_Hour_Log {
   date           DateTime
   hours          Float
   approvalStatus ApprovalStatus @default(PENDING)
+  program        VolunteerArea?
   comment        String?
+  approvedAt     DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([date])
+  @@index([approvalStatus])
+  @@index([volunteerId, date])
   @@map("volunteer_hour_logs")
 }
 

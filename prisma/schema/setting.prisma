@@ -1,0 +1,20 @@
+/// A single org-wide configuration value, edited by staff rather than deployed.
+///
+/// Deliberately a key/value table instead of a column per setting: these are
+/// values a coordinator changes a few times a year (the volunteer hourly rate
+/// is republished annually by Independent Sector), and a new one shouldn't cost
+/// a migration. The trade is that `value` is always a string — the typed
+/// accessors in `server/utils/appSettings.ts` own parsing and the defaults, so
+/// nothing else should read this table directly.
+///
+/// There is no row until someone saves a value; a missing row means "use the
+/// built-in default", which is why the accessors never insert on read.
+model AppSetting {
+  key   String @id
+  value String
+
+  updatedAt       DateTime @updatedAt
+  updatedByUserId String?
+
+  @@map("app_settings")
+}

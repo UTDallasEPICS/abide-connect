@@ -4,6 +4,7 @@ import { volunteerApplicationStepSchemas, volunteerApplicationSteps, type Volunt
 
 definePageMeta({
   layout: 'secondary',
+  backTo: '/volunteer',
 })
 
 /**
@@ -59,7 +60,7 @@ async function onSubmit(payload: FormSubmitEvent<Record<string, unknown>>) {
       method: 'POST',
       body: fullApplication,
     })
-    await navigateTo('/volunteer-application/completed')
+    await navigateTo('/volunteer-application/completed', { replace: true })
   }
   catch {
     errorMessage.value = 'Something went wrong submitting your application. Please try again.'
