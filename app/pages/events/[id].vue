@@ -150,10 +150,18 @@ const acceptsTimeBlocks = computed(() =>
 // Lightweight volunteer/attendee counts for the sidebar chip display.
 // NOTE: guessed endpoint — point this at whatever route actually serves
 // aggregate RSVP counts on your backend.
-const { data: rsvpCounts, refresh: refreshRsvpCounts } = await useFetch<{ volunteers: number, attendees: number }>(
-  `/api/events/${eventId}/rsvp-stats`,
-  { headers, default: () => ({ volunteers: 0, attendees: 0 }) },
+const { data: rsvpData, refresh: refreshRsvpCounts } = await useFetch<RSVPData>(
+  `/api/events/${eventId}/rsvp`,
+  {
+    headers,
+    key: `event-rsvp-counts-${eventId}`,
+  },
 )
+const rsvpCounts = computed(() => ({
+  volunteers: rsvpData.value?.volunteerCount ?? 0,
+  attendees: rsvpData.value?.attendeeCount ?? 0,
+}))
+
 const signUpPending = ref(false)
 const signUpError = ref('')
 // Where an unregistered visitor is sent to attend, and what brings them back
@@ -974,4 +982,6 @@ const cardClass = 'rounded-2xl bg-white shadow-sm dark:bg-gray-800'
 #map :deep(.maplibregl-canvas) {
   border-radius: inherit;
 }
+
 </style>
+
