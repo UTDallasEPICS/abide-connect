@@ -55,9 +55,7 @@
             :key="event.id"
             class="w-11/12 mx-auto my-4 cursor-pointer"
             :title="event.title"
-            :subtitle="
-              new Date(event.startTime).toLocaleString()
-            "
+            :subtitle="formatShortDateTime(event.startTime)"
             button-type="arrow"
             :event-id="event.eventId"
             @add="eventClick"
@@ -70,6 +68,7 @@
 </template>
 
 <script setup>
+import { formatShortDateTime } from '#shared/utils/eventTime'
 /**
  * Public mobile clinic locator: a map with a draggable sheet listing upcoming
  * stops and events. No account needed.
@@ -144,8 +143,7 @@ const setUpcomingItems = (items) => {
   upcomingEvents.value = items
     .map(item => ({
       ...item,
-      subtitle:
-                item.subtitle ?? new Date(item.startTime).toLocaleString(),
+      subtitle: item.subtitle ?? formatShortDateTime(item.startTime),
     }))
     .sort(
       (a, b) =>

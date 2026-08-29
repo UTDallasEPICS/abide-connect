@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import type { DateValue } from '@internationalized/date'
-import { getLocalTimeZone, today } from '@internationalized/date'
+import { today } from '@internationalized/date'
+import { ORG_TIME_ZONE } from '#shared/utils/timeZone'
+import { addZonedDays, zonedParts } from '#shared/utils/reportRange'
+import { formatEventTime, formatShortDate, zonedDayBounds } from '#shared/utils/eventTime'
 
 /**
  * The signed-in user's profile: their details, sign-ups, and hour logs.
@@ -11,7 +14,9 @@ import { getLocalTimeZone, today } from '@internationalized/date'
  * below is what toggles the volunteer-only sections.
  */
 
-const tz = getLocalTimeZone()
+// The calendar runs on the org's clock, not the reader's: the pips mark days
+// that events fall on here, and "today" is today at the clinic.
+const tz = ORG_TIME_ZONE
 
 // The session data bugs unuless we pass the cookie header to the fetch request
 const headers = useRequestHeaders(['cookie'])
@@ -23,7 +28,7 @@ const { data: user } = await useFetch('/api/user/me', { headers })
 
 const value = ref<DateValue>(today(tz))
 const isDateDisabled = (d: DateValue) =>
-  d.toDate(tz) < new Date(new Date().setHours(0, 0, 0, 0))
+  d.toDate(tz) < zonedDayBounds(new Date()).start
 
 // Upcoming events they signed up for, either as a volunteer or an attendee.
 interface UpcomingEvent {
@@ -42,7 +47,7 @@ const { data: upcomingEvents } = await useFetch<UpcomingEvent[]>(
   { headers, default: () => [] },
 )
 
-/** Local-time `YYYY-MM-DD`, the key the calendar pips are looked up by. */
+/** `YYYY-MM-DD` in the org's zone, the key the calendar pips are looked up by. */
 const toDateKey = (year: number, month: number, day: number) =>
   `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 
@@ -52,16 +57,15 @@ const signUpsByDate = computed(() => {
   const days = new Map<string, { volunteering: boolean, attending: boolean }>()
 
   for (const event of upcomingEvents.value ?? []) {
-    const cursor = new Date(event.startTime)
-    cursor.setHours(0, 0, 0, 0)
-    const last = new Date(event.endTime)
-    last.setHours(0, 0, 0, 0)
+    let cursor = zonedDayBounds(event.startTime).start
+    const last = zonedDayBounds(event.endTime).start
 
     // Always marks the start day, then walks to the end. Bounded so bad data
     // (an endTime before its startTime, or a wildly long range) can't hang the
     // render.
     for (let i = 0; i < 366; i++) {
-      const key = toDateKey(cursor.getFullYear(), cursor.getMonth() + 1, cursor.getDate())
+      const p = zonedParts(cursor)
+      const key = toDateKey(p.year, p.month, p.day)
       const day = days.get(key) ?? { volunteering: false, attending: false }
 
       if (event.isVolunteer) day.volunteering = true
@@ -70,7 +74,7 @@ const signUpsByDate = computed(() => {
       days.set(key, day)
 
       if (cursor >= last) break
-      cursor.setDate(cursor.getDate() + 1)
+      cursor = addZonedDays(cursor, 1)
     }
   }
 
@@ -107,19 +111,8 @@ const highlightForDay = (day: DateValue) => {
 
 const hasSignUps = computed(() => signUpsByDate.value.size > 0)
 
-const formatEventDate = (event: UpcomingEvent) => {
-  const start = new Date(event.startTime)
-  const date = start.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-  const time = start.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  })
-  return `${date} · ${time}`
-}
+const formatEventDate = (event: UpcomingEvent) =>
+  `${formatShortDate(event.startTime)} · ${formatEventTime(event.startTime)}`
 
 // Hour logs
 interface HourLog {

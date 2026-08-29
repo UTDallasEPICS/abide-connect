@@ -1,3 +1,4 @@
+import { ORG_TIME_ZONE } from '#shared/utils/timeZone'
 import { auth } from './auth'
 
 // Pushes Abide events to a single shared Google Calendar (the org calendar
@@ -10,7 +11,7 @@ import { auth } from './auth'
 const CALENDAR_API = 'https://www.googleapis.com/calendar/v3'
 
 // Timezone Abide operates in — used so Google renders event times correctly.
-const CALENDAR_TIME_ZONE = 'America/Chicago'
+const CALENDAR_TIME_ZONE = ORG_TIME_ZONE
 
 export interface CalendarEventInput {
   title: string

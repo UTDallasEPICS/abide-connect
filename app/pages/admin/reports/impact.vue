@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatShortDate } from '#shared/utils/eventTime'
 import type { ImpactReport } from '#shared/types/reports'
 import { formatCompact, formatCurrency } from '~/lib/chart'
 
@@ -330,7 +331,7 @@ function exportHref(dataset: 'logs' | 'volunteers' | 'programs') {
             <p class="mt-4 text-[11px] font-medium text-slate-500 dark:text-gray-400">
               In-kind value uses {{ formatCurrency(report.rate.hourlyRate) }} per volunteer hour —
               {{ report.rate.source }}<span v-if="report.rate.updatedAt">, last reviewed
-                {{ new Date(report.rate.updatedAt).toLocaleDateString('en-US', { dateStyle: 'medium' }) }}</span>.
+                {{ formatShortDate(report.rate.updatedAt) }}</span>.
             </p>
           </section>
         </div>
