@@ -1,6 +1,7 @@
 import { auth } from '#server/utils/auth'
 import prisma from '#server/utils/prisma'
 import { Prisma } from '#server/utils/generated/prisma/client'
+import { normalizeEmail } from '#server/utils/normalizeEmail'
 import type { H3Event } from 'h3'
 import { appendHeader, setHeader } from 'h3'
 
@@ -53,9 +54,15 @@ export default defineEventHandler(async (event) => {
     const {
       otp,
       name,
-      email,
+      email: rawEmail,
       phone,
     } = await readBody(event)
+
+    // Normalised before it is used for anything: it keys the verification row
+    // that `request-otp` wrote, and it is the address the account is created
+    // with. Better Auth looks users up by the lower-cased address, so storing
+    // it as typed would create an account that can never sign in again.
+    const email = normalizeEmail(rawEmail)
 
     // Reject anything that isn't a well-formed code before it reaches the
     // database — `otp` arrives straight off the request body, so it is not
