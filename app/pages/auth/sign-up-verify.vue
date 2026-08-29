@@ -2,7 +2,7 @@
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { verifyOtpFields, verifyOtpSchema, type VerifyOtpSchema } from '~/types/auth/login.type'
 import { errorMessage as toErrorMessage } from '~/lib/errorMessage'
-import { safeRedirect } from '~/lib/safeRedirect'
+import { resolveLandingRoute } from '~/lib/landingRoute'
 
 /**
  * Step two of sign-up: verify the emailed code and create the account.
@@ -17,7 +17,8 @@ import { safeRedirect } from '~/lib/safeRedirect'
  * `pendingSignUp`, because that object is spread wholesale into the request
  * body — a `redirect` field living in it would be posted to the API. It sends
  * the new account back to whatever they were trying to do (attend an event,
- * say) instead of the volunteer dashboard.
+ * say) instead of the landing page `resolveLandingRoute` would otherwise pick.
+ * It's held raw and sanitised there, alongside every other sign-in path.
  */
 
 definePageMeta({
@@ -28,7 +29,7 @@ definePageMeta({
 const errorMessage = ref<string | null>(null)
 const isLoading = ref(false)
 const pendingSignUp = ref<Record<string, unknown> | null>(null)
-const redirectTo = ref('/volunteer/')
+const pendingRedirect = ref<string | null>(null)
 
 const resendCooldown = ref(0)
 const isResending = ref(false)
@@ -56,7 +57,7 @@ onMounted(() => {
     return
   }
   pendingSignUp.value = JSON.parse(stored)
-  redirectTo.value = safeRedirect(sessionStorage.getItem('pendingSignUpRedirect'), '/volunteer/')
+  pendingRedirect.value = sessionStorage.getItem('pendingSignUpRedirect')
   startCooldown()
 })
 
@@ -99,7 +100,7 @@ async function onVerify(event: FormSubmitEvent<VerifyOtpSchema>) {
     sessionStorage.removeItem('pendingSignUp')
     sessionStorage.removeItem('pendingSignUpRedirect')
     await nextTick()
-    await navigateTo(redirectTo.value)
+    await navigateTo(await resolveLandingRoute(pendingRedirect.value))
   }
   catch (error: unknown) {
     console.log(error)

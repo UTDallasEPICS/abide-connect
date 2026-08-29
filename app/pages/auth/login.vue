@@ -9,7 +9,7 @@ import {
   type VerifyOtpSchema,
 } from '~/types/auth/login.type'
 import { errorMessage as toErrorMessage } from '~/lib/errorMessage'
-import { safeRedirect } from '~/lib/safeRedirect'
+import { resolveLandingRoute } from '~/lib/landingRoute'
 
 /**
  * Email-OTP login, as a two-step form on one route: request a code, then enter
@@ -22,7 +22,8 @@ import { safeRedirect } from '~/lib/safeRedirect'
  * A `?redirect=` query param survives the whole flow, including the hop to
  * sign-up: pages that turn a signed-out visitor away (an event's "Sign in to
  * register", say) set it so the user lands back where they were instead of on
- * the home page. It's run through `safeRedirect`, so an off-site value is
+ * their dashboard. Without one, `resolveLandingRoute` picks the landing page
+ * from the user's roles; it also sanitises the param, so an off-site value is
  * discarded rather than followed.
  *
  * The 30s resend cooldown is client-side only — it keeps the button from being
@@ -36,7 +37,6 @@ definePageMeta({
 })
 
 const route = useRoute()
-const redirectTo = computed(() => safeRedirect(route.query.redirect))
 const signUpLink = computed(() => ({
   path: '/auth/sign-up',
   query: route.query.redirect ? { redirect: route.query.redirect } : undefined,
@@ -106,7 +106,7 @@ async function onVerifyOtp(event: FormSubmitEvent<VerifyOtpSchema>) {
       },
     })
     await nextTick()
-    await navigateTo(redirectTo.value)
+    await navigateTo(await resolveLandingRoute(route.query.redirect))
   }
   catch (error: unknown) {
     errorMessage.value = toErrorMessage(error)
