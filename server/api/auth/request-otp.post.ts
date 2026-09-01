@@ -1,6 +1,7 @@
 import { transporter } from '#server/utils/auth'
 import { buildOtpEmail } from '#server/utils/otp-email'
 import prisma from '#server/utils/prisma'
+import { normalizeEmail } from '#server/utils/normalizeEmail'
 import { randomInt, randomBytes } from 'crypto'
 
 // Minimum seconds between OTP requests for the same email. Mirrors the resend
@@ -25,11 +26,16 @@ const RESEND_COOLDOWN_SECONDS = 30
  * The code is generated with `crypto.randomInt` rather than `Math.random`
  * because it's a security token — `Math.random` is predictable from prior
  * outputs.
+ *
+ * The address is normalised before the identifier is built: `signInEmailOTP`
+ * lower-cases the email before looking the row up, so a code issued under
+ * `sign-in-otp-Casey@Example.com` could never be found again.
  */
 
 export default defineEventHandler(async (event) => {
   try {
-    const { email } = await readBody(event)
+    const { email: rawEmail } = await readBody(event)
+    const email = normalizeEmail(rawEmail)
     const identifier = `sign-in-otp-${email}`
 
     const lastRequest = await prisma.verification.findFirst({

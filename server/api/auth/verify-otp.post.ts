@@ -1,4 +1,5 @@
 import { auth } from '#server/utils/auth'
+import { normalizeEmail } from '#server/utils/normalizeEmail'
 import { activeRoles } from '#server/utils/userRoles'
 import type { H3Event } from 'h3'
 import { appendHeader, setHeader } from 'h3'
@@ -35,8 +36,12 @@ const forwardAuthHeaders = (event: H3Event, headers?: Headers) => {
 }
 export default defineEventHandler(async (event) => {
   try {
-    // Read both the email and the OTP code the user typed in.
-    const { email, otp } = await readBody(event)
+    // Read both the email and the OTP code the user typed in. The address is
+    // normalised the same way `request-otp` normalised it when it wrote the
+    // verification row, so the two agree on the identifier whatever the user
+    // typed.
+    const { email: rawEmail, otp } = await readBody(event)
+    const email = normalizeEmail(rawEmail)
     const { response, headers } = await auth.api.signInEmailOTP({
       body: { email, otp },
       headers: event.headers,
