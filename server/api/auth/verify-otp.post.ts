@@ -1,5 +1,6 @@
 import { auth } from '#server/utils/auth'
 import { normalizeEmail } from '#server/utils/normalizeEmail'
+import { activeRoles } from '#server/utils/userRoles'
 import type { H3Event } from 'h3'
 import { appendHeader, setHeader } from 'h3'
 
@@ -11,6 +12,13 @@ import { appendHeader, setHeader } from 'h3'
  * this one assumes it already exists (the emailOTP plugin runs with
  * `disableSignUp: true`, so an unknown address fails here rather than
  * registering).
+ *
+ * `roles` rides along in the response so the login page can pick a landing page
+ * without a second request. It could ask `/api/user/roles` instead, but that
+ * request would race the session cookie this response is still in the middle of
+ * setting — and a roles call that comes back empty is indistinguishable from a
+ * user who has none, which silently lands everyone on the home page. The
+ * session is already in hand here, so there is nothing to race.
  */
 
 // Copies response headers from better-auth onto the H3 event.
@@ -42,7 +50,9 @@ export default defineEventHandler(async (event) => {
 
     forwardAuthHeaders(event, headers)
 
-    return { success: true, ...response }
+    const roles = response?.user?.id ? await activeRoles(response.user.id) : []
+
+    return { success: true, ...response, roles }
   }
   catch (error: unknown) {
     console.log(error)

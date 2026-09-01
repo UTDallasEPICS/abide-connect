@@ -15,7 +15,9 @@ import prisma from './prisma'
  * `requireRole` calls it for admin-level requests only. Volunteers and ordinary
  * users aren't re-checked: they have no elevated access to strip, and many of
  * them signed in by email OTP and have no Google grant to check in the first
- * place.
+ * place. Nor is a session that didn't come from Google in the first place — an
+ * admin holding both sign-in methods is checked on their Google sessions and
+ * bounded by the admin session cap on their OTP ones.
  */
 
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
@@ -159,8 +161,13 @@ async function revokeSessions(userId: string, outcome: ProbeOutcome) {
  * behind an admin session is no longer live. Returns normally when the grant is
  * good, when there is nothing to check against, or when a failure is still
  * inside the grace window.
+ *
+ * `sessionCreatedAt` is the acting session's — see the ownership check below.
  */
-export async function revalidateGoogleGrant(userId: string): Promise<void> {
+export async function revalidateGoogleGrant(
+  userId: string,
+  sessionCreatedAt: Date,
+): Promise<void> {
   // Escape hatch for local development and for a fast rollback in production
   // without a redeploy of the auth config.
   if (process.env.IDP_REVALIDATION === 'off') return
@@ -185,9 +192,13 @@ export async function revalidateGoogleGrant(userId: string): Promise<void> {
     }
   }
 
+  // Newest first. A user can accumulate more than one Google account row, and
+  // an unordered `findFirst` would probe an arbitrary one — reporting a long-
+  // dead token as the state of a live grant.
   const account = await prisma.account.findFirst({
     where: { userId, providerId: 'google' },
-    select: { refreshToken: true },
+    select: { refreshToken: true, updatedAt: true },
+    orderBy: { updatedAt: 'desc' },
   })
 
   // Nothing to revalidate against: an email-OTP sign-in has no Google account,
@@ -196,6 +207,25 @@ export async function revalidateGoogleGrant(userId: string): Promise<void> {
   // session cap in `auth.ts` is what bounds those.
   if (!account?.refreshToken) {
     markAlive(userId, now)
+    return
+  }
+
+  // The grant has to be the one this session actually rests on. Signing in
+  // through Google writes the account row as the session is created, so a
+  // session created *after* the row was last touched cannot have come from it.
+  // In practice that's an admin who signed in by email OTP while an old Google
+  // link still hangs off their account: probing that link answers a question
+  // about a grant they aren't using, and `revokeSessions` below deletes *every*
+  // session — so a refresh token that expired months ago would throw them back
+  // to the login page seconds after a perfectly good sign-in.
+  //
+  // Only this direction is sound. A row touched *after* the session proves
+  // nothing either way, since better-auth rewrites it whenever calendar sync
+  // refreshes the access token, so those sessions are still checked.
+  //
+  // Both timestamps are re-wrapped rather than trusted: an unreadable one gives
+  // NaN, every comparison against it is false, and the probe runs as before.
+  if (new Date(sessionCreatedAt).getTime() > new Date(account.updatedAt).getTime()) {
     return
   }
 

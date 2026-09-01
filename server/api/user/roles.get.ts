@@ -1,5 +1,5 @@
 import { auth } from '#server/utils/auth'
-import prisma from '#server/utils/prisma'
+import { activeRoles } from '#server/utils/userRoles'
 
 /**
  * Returns the current user's active roles, lowercased.
@@ -18,11 +18,5 @@ export default defineEventHandler(async (event) => {
     return []
   }
 
-  const userRoles = await prisma.user_Role.findMany({
-    where: { userId: session.user.id, active: true },
-  })
-
-  const rolesList = userRoles.map(r => r.role.toLowerCase())
-
-  return rolesList
+  return activeRoles(session.user.id)
 })

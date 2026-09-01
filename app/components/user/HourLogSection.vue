@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatLongDate } from '#shared/utils/eventTime'
 import DetailSection from '~/components/user/DetailSection.vue'
 import type { UserData } from '~/types/user/user-data'
 
@@ -43,11 +44,7 @@ const totalHours = computed(() =>
 )
 
 function formatDate(value: Date | string) {
-  return new Date(value).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
+  return formatLongDate(value)
 }
 </script>
 

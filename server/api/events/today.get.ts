@@ -1,10 +1,13 @@
+import { eventDateBadge, zonedDayBounds } from '#shared/utils/eventTime'
+
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const limit = Number(query.limit) || 20
   const now = new Date()
 
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
-  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
+  // "Today" is today in Central, not on the host clock — the server runs in
+  // UTC, where an evening event has already rolled into tomorrow.
+  const { start: startOfDay, end: endOfDay } = zonedDayBounds(now)
 
   const events = await prisma.event.findMany({
     where: {
@@ -23,7 +26,7 @@ export default defineEventHandler(async (event) => {
   })
 
   return events.map((e) => {
-    const start = new Date(e.startTime)
+    const badge = eventDateBadge(e.startTime)
     const asset = e.eventAssets[0]
     const image = asset
       ? `/api/events/${e.id}/images/${asset.imageUrl.split('/').pop()}`
@@ -33,8 +36,8 @@ export default defineEventHandler(async (event) => {
       title: e.title,
       url: `/events/${e.id}`,
       image,
-      day: start.getDate().toString().padStart(2, '0'),
-      month: start.toLocaleString('en-US', { month: 'short' }),
+      day: badge.day,
+      month: badge.month,
       location: e.location.address,
       going: e.participants.length + e.guestRSVPs.length,
       startTime: e.startTime,

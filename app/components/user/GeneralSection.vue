@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatLongDate } from '#shared/utils/eventTime'
 import DetailSection from '~/components/user/DetailSection.vue'
 import DetailField from '~/components/user/DetailField.vue'
 import type { UserData } from '~/types/user/user-data'
@@ -45,11 +46,7 @@ const draft = defineModel<GeneralDraft>({ required: true })
 
 const formattedCreatedAt = computed(() => {
   if (!props.userData) return ''
-  return new Date(props.userData.createdAt).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
+  return formatLongDate(props.userData.createdAt)
 })
 </script>
 

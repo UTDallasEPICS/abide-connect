@@ -1,3 +1,4 @@
+import { parseZonedDate } from '#shared/utils/eventTime'
 import prisma from '#server/utils/prisma'
 import { requireRole } from '~~/server/utils/requireRole'
 
@@ -28,8 +29,8 @@ export default defineEventHandler(async (event) => {
     data: {
       name: body.name,
       link: body.link,
-      startDate: new Date(body.startDate),
-      endDate: new Date(body.endDate),
+      startDate: parseZonedDate(body.startDate),
+      endDate: parseZonedDate(body.endDate),
       imageUrl: body.imageUrl,
     },
   })

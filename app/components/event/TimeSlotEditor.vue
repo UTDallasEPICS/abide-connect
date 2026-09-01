@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import {
-  formatSlotRange,
-  fromDateTimeLocal,
-  validateTimeSlot,
-} from '#shared/utils/timeSlot'
+import { formatTimeRange, fromDateTimeLocal } from '#shared/utils/eventTime'
+import { validateTimeSlot } from '#shared/utils/timeSlot'
 
 /**
  * Editor for the time blocks on an event.
@@ -18,7 +15,7 @@ import {
 interface TimeSlotRow {
   /** Present on blocks that already exist. Absent ones are created on save. */
   id: string | null
-  /** `datetime-local` strings, i.e. local wall-clock time. */
+  /** `datetime-local` strings, i.e. wall-clock time in the org's timezone. */
   startTime: string
   endTime: string
   capacity: number
@@ -136,7 +133,7 @@ function rowProblem(row: TimeSlotRow): string | null {
 }
 
 function rowRange(row: TimeSlotRow): string {
-  return formatSlotRange(fromDateTimeLocal(row.startTime), fromDateTimeLocal(row.endTime))
+  return formatTimeRange(fromDateTimeLocal(row.startTime), fromDateTimeLocal(row.endTime))
 }
 
 function removalWarning(row: TimeSlotRow): string {

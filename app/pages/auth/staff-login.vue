@@ -66,7 +66,10 @@ async function signInWithGoogle() {
   errorMessage.value = null
   const { data, error } = await authClient.signIn.social({
     provider: 'google',
-    callbackURL: window.location.origin + '/',
+    // Google needs a fixed return URL, but the right landing page depends on
+    // roles we can't read until the callback has run — /auth/complete resolves
+    // it there.
+    callbackURL: window.location.origin + '/auth/complete',
     disableRedirect: true,
   })
   if (error) {

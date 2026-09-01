@@ -47,7 +47,7 @@ export async function requireRole(event: H3Event, role: string) {
   // ceiling is rejected without spending a network round-trip on Google.
   if (role.toLowerCase() === 'admin') {
     await enforceAdminSessionAge(session.session.token, session.session.createdAt)
-    await revalidateGoogleGrant(session.user.id)
+    await revalidateGoogleGrant(session.user.id, session.session.createdAt)
   }
 
   return session

@@ -1,3 +1,4 @@
+import { parseZonedDate } from '#shared/utils/eventTime'
 import prisma from '#server/utils/prisma'
 import { auth } from '#server/utils/auth'
 
@@ -45,7 +46,7 @@ export default defineEventHandler(async (event) => {
         volunteerId: volunteer.id,
         eventId: eventId,
         eventName: eventName,
-        date: new Date(date),
+        date: parseZonedDate(date),
         hours: hours,
         approvalStatus: 'PENDING',
       },

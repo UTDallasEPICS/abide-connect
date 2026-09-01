@@ -3,6 +3,7 @@ import UpcomingEventCard from '~/components/event/UpcomingEventCard.vue';
 import SecondaryEventCard from '~/components/event/SecondaryEventCard.vue';
 import SecondaryEventCardSkeleton from '~/components/event/SecondaryEventCardSkeleton.vue';
 import WeekCalendar from '~/components/WeekCalendar.vue';
+import { zonedDateKey } from '#shared/utils/eventTime';
 
 interface UpcomingEvent {
   id: string;
@@ -122,17 +123,12 @@ const weekError = computed(() => !!weekFetchError.value);
 // --- Week Calendar: selected day + events happening that day ---
 const selectedDate = ref(new Date());
 
-function toLocalDateString(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
 const { data: dayEvents, pending: dayEventsPending } = await useFetch<UpcomingEvent[]>(
   '/api/events/by-day',
   {
-    query: computed(() => ({ date: toLocalDateString(selectedDate.value) })),
+    // The org's calendar day, not the reader's: `/api/events/by-day` reads this
+    // string in the same zone, and the two have to name the same day.
+    query: computed(() => ({ date: zonedDateKey(selectedDate.value) })),
     watch: [selectedDate],
   }
 );

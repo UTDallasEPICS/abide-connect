@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { zonedParts } from '#shared/utils/reportRange'
 import { ref, computed } from 'vue'
 
 definePageMeta({
@@ -36,21 +37,20 @@ const funds = computed(() => fundsData.value ?? [])
 /**
  * `MM/DD/YY` for the campaign table.
  *
- * BUG: `getDate() + 1` shifts every displayed date one day forward, and rolls
- * past the end of the month (31 Jan renders as `01/32/26`). The `+ 1` on
- * `getMonth()` above is correct — months are zero-based — but days are not, so
- * this looks like the fix being copied one line too far. It was probably
- * masking a timezone shift from parsing a date-only string as UTC; the real fix
- * is to read the UTC components rather than to add a day.
+ * This used to add a day to the day-of-month — which rolled past the end of a
+ * month, rendering 31 Jan as `01/32/26` — to paper over a campaign date that
+ * had been stored as midnight UTC and was then read on the browser's clock, an
+ * hour or six before the day it named. The dates are stored in the org's zone
+ * now (`parseZonedDate`, both write paths) and read back in it here, so the
+ * compensation is gone with the thing it was compensating for.
  */
 function formatShort(dateStr: string) {
   if (!dateStr) return ''
   const d = new Date(dateStr)
   if (isNaN(d.getTime())) return dateStr
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate() + 1).padStart(2, '0')
-  const yy = String(d.getFullYear()).slice(-2)
-  return `${mm}/${dd}/${yy}`
+  const { year, month, day } = zonedParts(d)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${pad(month)}/${pad(day)}/${String(year).slice(-2)}`
 }
 
 // New Fund Modal States
