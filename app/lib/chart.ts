@@ -8,6 +8,8 @@
  * the client — a chart that only appears after hydration is a blank card on the
  * first paint.
  */
+import { ORG_TIME_ZONE } from '#shared/utils/timeZone'
+import { formatShortDate } from '#shared/utils/eventTime'
 
 /**
  * Rounds a maximum up to a readable axis top.
@@ -125,14 +127,9 @@ export function formatPercent(value: number, places = 0): string {
   return `${value.toFixed(places)}%`
 }
 
-/** "Aug 13, 2026" from an ISO string, in the report's timezone. */
-export function formatIsoDate(iso: string, timeZone = 'America/Chicago'): string {
-  return new Date(iso).toLocaleDateString('en-US', {
-    timeZone,
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
+/** "Aug 13, 2026" from an ISO string, in the org's timezone like everything else. */
+export function formatIsoDate(iso: string, timeZone = ORG_TIME_ZONE): string {
+  return formatShortDate(new Date(iso), timeZone)
 }
 
 /**

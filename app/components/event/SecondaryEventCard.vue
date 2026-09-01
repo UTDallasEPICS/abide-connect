@@ -1,4 +1,6 @@
 <script setup>
+import { formatEventDateTime } from '#shared/utils/eventTime'
+
 const props = defineProps({
   id: {
     type: String,
@@ -36,19 +38,10 @@ const props = defineProps({
 
 const emit = defineEmits(['cancel'])
 
-const formattedDateTime = computed(() => {
-  const date = new Date(props.startTime)
-  const datePart = date.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'long',
-    day: 'numeric',
-  })
-  const timePart = date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  })
-  return `${datePart} • ${timePart}`
-})
+// Central, not the browser's zone: the event card badge in "Upcoming Events"
+// is rendered from the same helper server-side, and the two sections sit one
+// above the other on the home page.
+const formattedDateTime = computed(() => formatEventDateTime(props.startTime))
 
 const menuOpen = ref(false)
 const cardRef = ref(null)

@@ -10,7 +10,7 @@ import {
   strong,
 } from './email-theme'
 import type { DetailRow } from './email-theme'
-import { mapUrls } from './eventTime'
+import { mapUrls } from './eventLinks'
 
 /**
  * The two emails we send someone about an event they signed up for: the

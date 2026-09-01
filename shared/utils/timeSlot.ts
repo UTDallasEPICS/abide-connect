@@ -82,29 +82,10 @@ export function validateTimeSlots(slots: TimeSlotDraft[], event: SlotWindow): st
   })
 }
 
-/**
- * A `Date` as the string an `<input type="datetime-local">` expects.
- *
- * Built from local components on purpose: `toISOString()` returns UTC, so an
- * 8:00 AM block would render in the input as 1:00 PM for a Central-time admin.
+/*
+ * `toDateTimeLocal` / `fromDateTimeLocal` and the block's "10:00 AM - 11:00 AM"
+ * wording used to live here. They moved to `#shared/utils/eventTime`, which
+ * words every date in the org's timezone rather than the browser's — an admin
+ * elsewhere was otherwise typing and reading their own wall clock into an event
+ * that happens in Central.
  */
-export function toDateTimeLocal(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-    + `T${pad(date.getHours())}:${pad(date.getMinutes())}`
-}
-
-/**
- * The inverse. A `datetime-local` value carries no timezone, so `new Date()`
- * reads it as local wall-clock time — which is exactly what the admin typed.
- */
-export function fromDateTimeLocal(value: string): Date {
-  return new Date(value)
-}
-
-/** e.g. "10:00 AM - 11:00 AM". Browser-side only, so the timezone is right. */
-export function formatSlotRange(startTime: Date, endTime: Date): string {
-  const time = (d: Date) =>
-    d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-  return `${time(startTime)} - ${time(endTime)}`
-}

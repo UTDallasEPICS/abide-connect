@@ -1,4 +1,5 @@
 <script setup>
+import { formatShortDate } from '#shared/utils/eventTime'
 /**
  * Staff event management: create events and edit existing ones, split into
  * upcoming and past.
@@ -79,11 +80,7 @@ function getEventImage(event) {
 }
 
 function getEventDate(event) {
-  return new Date(event.startTime).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
+  return formatShortDate(event.startTime)
 }
 </script>
 

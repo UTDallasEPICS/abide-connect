@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatShortDate } from '#shared/utils/eventTime'
 import type { TrainingAttendee } from '~/components/event/TrainingApprovalList.vue'
 
 /**
@@ -47,11 +48,7 @@ const pendingVolunteers = computed(() =>
 )
 
 function formatDate(value: string) {
-  return new Date(value).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
+  return formatShortDate(value)
 }
 
 function summarize(training: TrainingEvent) {

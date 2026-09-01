@@ -1,16 +1,13 @@
+import { eventDateBadge, zonedWeekBounds } from '#shared/utils/eventTime'
+
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const limit = Number(query.limit) || 20
   const now = new Date()
 
-  // Start of this week (Sunday, local time)
-  const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
-  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay())
-
-  // End of this week (Saturday, local time, end of day)
-  const endOfWeek = new Date(startOfWeek)
-  endOfWeek.setDate(endOfWeek.getDate() + 6)
-  endOfWeek.setHours(23, 59, 59, 999)
+  // Sunday 00:00 through Saturday 23:59:59.999, read in Central rather than on
+  // the host clock (UTC in production, which would shift the week by a night).
+  const { start: startOfWeek, end: endOfWeek } = zonedWeekBounds(now)
 
   const events = await prisma.event.findMany({
     where: {
@@ -29,7 +26,7 @@ export default defineEventHandler(async (event) => {
   })
 
   return events.map((e) => {
-    const start = new Date(e.startTime)
+    const badge = eventDateBadge(e.startTime)
     const asset = e.eventAssets[0]
     const image = asset
       ? `/api/events/${e.id}/images/${asset.imageUrl.split('/').pop()}`
@@ -39,8 +36,8 @@ export default defineEventHandler(async (event) => {
       title: e.title,
       url: `/events/${e.id}`,
       image,
-      day: start.getDate().toString().padStart(2, '0'),
-      month: start.toLocaleString('en-US', { month: 'short' }),
+      day: badge.day,
+      month: badge.month,
       location: e.location.address,
       going: e.participants.length + e.guestRSVPs.length,
       startTime: e.startTime,

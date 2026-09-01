@@ -1,5 +1,5 @@
 import prisma from '#server/utils/prisma'
-import { formatEventWhen } from '#server/utils/eventTime'
+import { formatEventWhen } from '#shared/utils/eventTime'
 import { verifyRsvpCancelToken } from '#server/utils/rsvpCancelToken'
 
 /**

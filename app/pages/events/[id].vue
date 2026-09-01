@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatEventSchedule, fromDateTimeLocal, toDateTimeLocal } from '#shared/utils/eventTime'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useColorMode } from '#imports'
 import {
@@ -248,15 +249,15 @@ function enterEditMode() {
   editForm.value = {
     ...event.value,
     eventType: eventType.value,
-    startTime: event.value?.startTime ? formatForInput(event.value.startTime) : '',
-    endTime: event.value?.endTime ? formatForInput(event.value.endTime) : '',
+    startTime: event.value?.startTime ? toDateTimeLocal(event.value.startTime) : '',
+    endTime: event.value?.endTime ? toDateTimeLocal(event.value.endTime) : '',
     // Each existing block keeps its id so the save updates it in place. A
     // block that lost its id would be treated as new, and the row it replaced
     // would be deleted — taking every sign-up on it.
     timeSlots: timeSlots.value.map(slot => ({
       id: slot.id,
-      startTime: formatForInput(slot.startTime),
-      endTime: formatForInput(slot.endTime),
+      startTime: toDateTimeLocal(slot.startTime),
+      endTime: toDateTimeLocal(slot.endTime),
       capacity: slot.capacity,
       signupCount: slot.signupCount,
     })),
@@ -266,13 +267,6 @@ function enterEditMode() {
 function cancelEdit() {
   isEditMode.value = false
   filesToUpload.value = []
-}
-function formatForInput(isoString: string) {
-  // datetime-local expects LOCAL wall-clock time, so build it from local
-  // components rather than toISOString() (which is UTC and would show a shifted time).
-  const d = new Date(isoString)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 function onFilesChanged(files: File[]) {
   filesToUpload.value = files
@@ -292,8 +286,8 @@ async function saveChanges() {
             capacity: number
           }) => ({
             id: slot.id,
-            startTime: new Date(slot.startTime).toISOString(),
-            endTime: new Date(slot.endTime).toISOString(),
+            startTime: fromDateTimeLocal(slot.startTime).toISOString(),
+            endTime: fromDateTimeLocal(slot.endTime).toISOString(),
             capacity: Number(slot.capacity),
           })),
         }
@@ -304,8 +298,10 @@ async function saveChanges() {
         shortDesc: editForm.value.shortDesc,
         description: editForm.value.description,
         location: editForm.value.location?.address || editForm.value.location,
-        startTime: new Date(editForm.value.startTime).toISOString(),
-        endTime: new Date(editForm.value.endTime).toISOString(),
+        // The form holds wall-clock time in the org's zone (`toDateTimeLocal`
+        // put it there); read it back the same way or saving moves the event.
+        startTime: fromDateTimeLocal(editForm.value.startTime).toISOString(),
+        endTime: fromDateTimeLocal(editForm.value.endTime).toISOString(),
         eventType: editForm.value.eventType,
         ...timeSlotPayload,
       },
@@ -337,15 +333,9 @@ async function saveChanges() {
       || 'Could not save your changes. Please try again.'
   }
 }
-const formattedDate = computed(() => {
-  if (!event.value) return ''
-  const start = new Date(event.value.startTime)
-  const end = new Date(event.value.endTime)
-  const dateStr = start.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-  const startTime = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-  const endTime = end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-  return `${dateStr} • ${startTime} - ${endTime}`
-})
+const formattedDate = computed(() =>
+  event.value ? formatEventSchedule(event.value.startTime, event.value.endTime) : '',
+)
 // Video-ratio placeholders so the fallback matches the real event photos,
 // which are always displayed at aspect-video in the carousel below.
 const carouselItems = computed(() => {
