@@ -90,7 +90,9 @@ async function onVerify(event: FormSubmitEvent<VerifyOtpSchema>) {
   errorMessage.value = null
 
   try {
-    await $fetch('/api/auth/sign-up-verify', {
+    // As in /auth/login: the roles ride back with the new session rather than
+    // being fetched separately while the cookie is still being set.
+    const { roles } = await $fetch<{ roles: string[] }>('/api/auth/sign-up-verify', {
       method: 'POST',
       body: {
         otp: event.data.otp,
@@ -100,7 +102,7 @@ async function onVerify(event: FormSubmitEvent<VerifyOtpSchema>) {
     sessionStorage.removeItem('pendingSignUp')
     sessionStorage.removeItem('pendingSignUpRedirect')
     await nextTick()
-    await navigateTo(await resolveLandingRoute(pendingRedirect.value))
+    await navigateTo(await resolveLandingRoute(pendingRedirect.value, roles))
   }
   catch (error: unknown) {
     console.log(error)

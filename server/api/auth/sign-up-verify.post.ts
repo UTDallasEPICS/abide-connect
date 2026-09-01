@@ -1,5 +1,6 @@
 import { auth } from '#server/utils/auth'
 import prisma from '#server/utils/prisma'
+import { activeRoles } from '#server/utils/userRoles'
 import { Prisma } from '#server/utils/generated/prisma/client'
 import type { H3Event } from 'h3'
 import { appendHeader, setHeader } from 'h3'
@@ -134,7 +135,12 @@ export default defineEventHandler(async (event) => {
 
     forwardAuthHeaders(event, headers)
 
-    return { success: true, ...response }
+    // Same as `verify-otp.post.ts`: the landing page is chosen from these, so
+    // they travel with the session rather than in a follow-up request that would
+    // race the cookie being set.
+    const roles = response?.user?.id ? await activeRoles(response.user.id) : []
+
+    return { success: true, ...response, roles }
   }
   catch (error: unknown) {
     console.error('[sign-up-verify error]', error)

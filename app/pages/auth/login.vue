@@ -98,7 +98,9 @@ async function onVerifyOtp(event: FormSubmitEvent<VerifyOtpSchema>) {
   errorMessage.value = null
 
   try {
-    await $fetch('/api/auth/verify-otp', {
+    // `roles` comes back with the session so the landing page can be picked
+    // without a second request racing the cookie this response is setting.
+    const { roles } = await $fetch<{ roles: string[] }>('/api/auth/verify-otp', {
       method: 'POST',
       body: {
         email: pendingEmail.value,
@@ -106,7 +108,7 @@ async function onVerifyOtp(event: FormSubmitEvent<VerifyOtpSchema>) {
       },
     })
     await nextTick()
-    await navigateTo(await resolveLandingRoute(route.query.redirect))
+    await navigateTo(await resolveLandingRoute(route.query.redirect, roles))
   }
   catch (error: unknown) {
     errorMessage.value = toErrorMessage(error)
