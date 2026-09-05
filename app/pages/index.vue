@@ -44,7 +44,7 @@ const oneRowMinHeight = 'min-h-24'
 
 const skeletonCount = 6
 
-const onSignUpClick = () => navigateTo('/sign-up')
+const onSignUpClick = () => navigateTo('/auth/sign-up')
 const onSeeAllEventsClick = () => navigateTo('/events/list')
 const onVolunteerApplicationClick = () => navigateTo('/volunteer-application')
 
