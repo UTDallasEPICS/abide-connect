@@ -93,7 +93,29 @@ model Event_Time_Slot {
   startTime DateTime
   endTime   DateTime
   capacity  Int      @default(1)
+  /// What the volunteer will actually be doing on this shift — "Front desk
+  /// check-in", "Childcare", etc. Requested by the clinic so a
+  /// volunteer knows which shift to claim, rather than picking a time blind.
+  ///
+  /// Free text on purpose: staff name shifts differently per event, and a
+  /// fixed list would need maintaining by someone who can't edit the schema.
+  /// Null on blocks created before this existed, and on ones staff left blank,
+  /// so every reader has to handle a block with no role.
+  role      String?
+  /// Extra detail hanging off the role — where to park, who to ask for. Shown
+  /// under it, and meaningful only alongside one.
   note      String?
+  /// Which swatch this block is drawn in on the admin's timeline, as a palette
+  /// token ("sky") rather than a hex.
+  ///
+  /// A token because the palette is validated for contrast and colourblind
+  /// separation as a set — storing hexes would freeze today's exact values
+  /// into every historic row and make retuning them a data migration. The
+  /// names live in `shared/utils/timeSlot.ts`; an unrecognised one falls back
+  /// to the default, so a retired swatch degrades rather than breaks.
+  ///
+  /// Purely cosmetic, and admin-facing only — volunteers never see it.
+  color     String?
 
   signups Event_Time_Slot_Signup[]
 

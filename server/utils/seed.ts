@@ -56,7 +56,9 @@ type RawEvent = {
     startTime: string
     endTime: string
     capacity: number
+    role?: string
     note?: string
+    color?: string
   }[]
 }
 
@@ -186,7 +188,9 @@ async function main() {
             startTime: new Date(slot.startTime),
             endTime: new Date(slot.endTime),
             capacity: slot.capacity,
+            role: slot.role ?? null,
             note: slot.note ?? null,
+            color: slot.color ?? null,
           })),
         },
       },
