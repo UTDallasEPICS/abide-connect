@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import type { ButtonProps } from '@nuxt/ui'
 import {
   DEFAULT_SLOT_COLOR_TOKEN,
   SLOT_COLORS,
   SLOT_ROLE_MAX_LENGTH,
   formatSlotRange,
   fromDateTimeLocal,
+  slotColorHex,
   validateTimeSlot,
 } from '#shared/utils/timeSlot'
 
@@ -46,7 +48,11 @@ const props = withDefaults(defineProps<{
    * silently gain one just because an admin opened the form.
    */
   seedWhenEmpty?: boolean
-  color?: string
+  /**
+   * Passed straight to `UButton`, so it has to be that component's own
+   * colour union — a plain `string` is wider than what it accepts.
+   */
+  color?: ButtonProps['color']
 }>(), {
   seedWhenEmpty: false,
   color: 'primary',
@@ -154,6 +160,28 @@ function selectedColor(row: TimeSlotRow): string {
   return row.color ?? DEFAULT_SLOT_COLOR_TOKEN
 }
 
+/**
+ * The chosen swatch's name. The collapsed control shows this next to the dot,
+ * so the current colour is still readable to someone who can't tell the hues
+ * apart — the swatch grid alone was colour-only once it stopped being visible.
+ */
+function colorLabel(row: TimeSlotRow): string {
+  return SLOT_COLORS.find(c => c.token === selectedColor(row))?.label ?? 'Colour'
+}
+
+/** Which row's colour menu is open, by index. Null when none is. */
+const openColorRow = ref<number | null>(null)
+
+function toggleColorMenu(index: number) {
+  openColorRow.value = openColorRow.value === index ? null : index
+}
+
+/** Picking closes the menu — one choice, no reason to keep it open. */
+function pickColor(index: number, token: string) {
+  updateRow(index, { color: token })
+  openColorRow.value = null
+}
+
 function rowRange(row: TimeSlotRow): string {
   return formatSlotRange(fromDateTimeLocal(row.startTime), fromDateTimeLocal(row.endTime))
 }
@@ -235,7 +263,7 @@ const totalSpots = computed(() =>
             size="sm"
             variant="ghost"
             color="neutral"
-            @click="pendingRemoval = null"
+            @click="() => { pendingRemoval = null }"
           >
             Keep block
           </UButton>
@@ -321,24 +349,67 @@ const totalSpots = computed(() =>
             <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">
               Colour <span class="text-gray-400 dark:text-gray-500">(on the timeline above)</span>
             </label>
-            <div class="flex flex-wrap items-center gap-2">
-              <!-- `type="button"`: these sit inside the event form, where a
-                   bare button defaults to submit and would save the event on
-                   every swatch click. -->
+
+            <!-- Collapsed to the current swatch. Seven chips on every row made
+                 the form read as a wall of colour, so the set is shown on
+                 demand instead. -->
+            <!-- A plain inline dropdown rather than UPopover: that portals to
+                 <body> with no z-index of its own, which can land behind the
+                 create-event modal (z-50). This renders in normal flow, so it
+                 stacks and scrolls with the row it belongs to.
+
+                 `type="button"` throughout: these sit inside the event form,
+                 where a bare button defaults to submit and would save the
+                 event on every click. -->
+            <div
+              class="relative"
+              @keydown.escape="openColorRow = null"
+            >
               <button
-                v-for="swatch in SLOT_COLORS"
-                :key="swatch.token"
                 type="button"
-                class="w-6 h-6 rounded-full ring-offset-2 ring-offset-white dark:ring-offset-gray-800"
-                :class="selectedColor(row) === swatch.token
-                  ? 'ring-2 ring-gray-900 dark:ring-white'
-                  : 'ring-1 ring-black/15 dark:ring-white/25'"
-                :style="{ backgroundColor: swatch.hex }"
-                :aria-label="swatch.label"
-                :aria-pressed="selectedColor(row) === swatch.token"
-                :title="swatch.label"
-                @click="updateRow(index, { color: swatch.token })"
+                class="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-2.5 py-1.5 text-sm text-gray-700 dark:text-gray-200"
+                :aria-label="`Colour: ${colorLabel(row)}`"
+                :aria-expanded="openColorRow === index"
+                @click="toggleColorMenu(index)"
+              >
+                <span
+                  class="w-4 h-4 rounded-full ring-1 ring-black/15 dark:ring-white/25"
+                  :style="{ backgroundColor: slotColorHex(row.color) }"
+                />
+                {{ colorLabel(row) }}
+                <UIcon
+                  name="i-lucide-chevron-down"
+                  class="w-3 h-3 text-gray-400 dark:text-gray-500"
+                />
+              </button>
+
+              <!-- Catches the next click anywhere so the menu closes without a
+                   click-outside directive. Sits under the panel, over the page. -->
+              <div
+                v-if="openColorRow === index"
+                class="fixed inset-0 z-10"
+                @click="openColorRow = null"
               />
+
+              <div
+                v-if="openColorRow === index"
+                class="absolute left-0 top-full mt-1 z-20 flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 shadow-lg"
+              >
+                <button
+                  v-for="swatch in SLOT_COLORS"
+                  :key="swatch.token"
+                  type="button"
+                  class="w-6 h-6 rounded-full ring-offset-2 ring-offset-white dark:ring-offset-gray-800"
+                  :class="selectedColor(row) === swatch.token
+                    ? 'ring-2 ring-gray-900 dark:ring-white'
+                    : 'ring-1 ring-black/15 dark:ring-white/25'"
+                  :style="{ backgroundColor: swatch.hex }"
+                  :aria-label="swatch.label"
+                  :aria-pressed="selectedColor(row) === swatch.token"
+                  :title="swatch.label"
+                  @click="pickColor(index, swatch.token)"
+                />
+              </div>
             </div>
           </div>
         </div>

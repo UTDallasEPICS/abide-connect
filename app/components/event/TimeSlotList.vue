@@ -209,10 +209,15 @@ function removeVolunteer(slot: Slot, volunteerId: string) {
               {{ range(slot) }}
             </p>
             <!-- What the shift actually is. Blocks predating roles, and ones
-                 staff left blank, simply don't show a line here. -->
+                 staff left blank, simply don't show a line here.
+
+                 Deliberately no size class: it matches the time above rather
+                 than the note below, since the role names the shift and the
+                 note only annotates it. Adding `text-sm` here would flatten it
+                 back into the description. -->
             <p
               v-if="slot.role"
-              class="text-sm font-medium text-gray-700 dark:text-gray-200"
+              class="font-medium text-gray-700 dark:text-gray-200"
             >
               {{ slot.role }}
             </p>
