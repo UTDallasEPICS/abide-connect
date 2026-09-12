@@ -1,4 +1,5 @@
 <script setup>
+import { formatShortDate } from '#shared/utils/eventTime'
 /**
  * Staff event management: create events and edit existing ones, split into
  * upcoming and past.
@@ -17,6 +18,12 @@ import { useColorMode } from '#imports'
 
 const colorMode = useColorMode()
 const isDark = computed(() => colorMode.value === 'dark')
+
+definePageMeta({
+  layout: 'secondary',
+  backText: 'Admin',
+  backTo: '/admin',
+})
 
 const showAddModal = ref(false)
 
@@ -77,23 +84,19 @@ function getEventImage(event) {
 }
 
 function getEventDate(event) {
-  return new Date(event.startTime).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
+  return formatShortDate(event.startTime)
 }
 </script>
 
 <template>
-  <div class="flex flex-col relative">
-    <div class="flex-1 mt-12 mb-8 w-full overflow-y-auto">
+  <div class="relative flex flex-1 flex-col">
+    <PageContainer>
       <h1 class="text-center text-2xl font-bold tracking-wide pb-3 text-gray-900 dark:text-gray-100">
         EVENTS MANAGEMENT
       </h1>
 
       <!-- PAST EVENTS -->
-      <div class="px-5">
+      <div>
         <h2 class="text-xl font-semibold mb-3 text-gray-800 dark:text-gray-200">
           PAST EVENTS
         </h2>
@@ -136,7 +139,7 @@ function getEventDate(event) {
       </div>
 
       <!-- UPCOMING EVENTS -->
-      <div class="px-5 mt-6">
+      <div class="mt-6">
         <div class="flex items-center justify-between">
           <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">
             UPCOMING EVENTS
@@ -200,7 +203,7 @@ function getEventDate(event) {
           </button>
         </div>
       </div>
-    </div>
+    </PageContainer>
 
     <!-- Manual Modal with Teleport -->
     <Teleport to="body">

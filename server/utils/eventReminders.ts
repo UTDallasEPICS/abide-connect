@@ -2,7 +2,7 @@ import prisma from './prisma'
 import { sendPushToUsers } from './push'
 import { buildEventReminderEmail } from './event-email'
 import { cancelUrlFor, eventEmailDetails, sendEventEmail } from './eventMailer'
-import { formatEventTime } from './eventTime'
+import { formatEventTime } from '#shared/utils/eventTime'
 import type { ReminderChannel, ReminderKind } from './generated/prisma/client'
 
 /**

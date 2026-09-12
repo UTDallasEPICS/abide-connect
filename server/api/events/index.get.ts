@@ -33,7 +33,6 @@ export default defineEventHandler(async (event) => {
     // the pages, so they never reach a browser that shouldn't see them.
     const visibleEvents = allEvents.filter(e => canViewEvent(e, viewer))
 
-    console.log(`Fetched ${visibleEvents.length} of ${allEvents.length} events`)
     return visibleEvents
   }
   catch (error) {

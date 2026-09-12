@@ -14,7 +14,7 @@ import prisma from '#server/utils/prisma'
 export default eventHandler(async (event) => {
   try {
     const session = await auth.api.getSession({ headers: event.headers })
-    if (!session) {
+    if (!session?.user) {
       throw createError({
         statusCode: 401,
         statusMessage: 'Unauthorized',

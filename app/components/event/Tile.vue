@@ -21,11 +21,6 @@ const iconName = computed(() =>
     ? 'i-heroicons-arrow-right-20-solid'
     : 'i-heroicons-plus',
 )
-
-// Unused — callers pass a ready-made `imageUrl` prop instead. Safe to remove.
-function getAssetUrl(imageUrl: string) {
-  return `/api/events/${imageUrl}`
-}
 </script>
 
 <template>

@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { formatTimeRange, fromDateTimeLocal } from '#shared/utils/eventTime'
 import {
-  formatSlotRange,
-  fromDateTimeLocal,
   intervalsOverlap,
   slotColorHex,
   validateTimeSlot,
@@ -153,7 +152,7 @@ const bars = computed<Bar[]>(() => {
       100 - left,
     )
 
-    const range = formatSlotRange(start, end)
+    const range = formatTimeRange(start, end)
     const role = row.role?.trim()
     const spots = `${row.capacity} spot${row.capacity === 1 ? '' : 's'}`
 

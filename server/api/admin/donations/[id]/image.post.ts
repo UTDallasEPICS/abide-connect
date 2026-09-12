@@ -2,7 +2,7 @@ import path from 'path'
 import fs from 'fs'
 import { randomUUID } from 'crypto'
 import prisma from '#server/utils/prisma'
-import { requireRole } from '~~/server/utils/requireRole';
+import { requireRole } from '~~/server/utils/requireRole'
 
 /**
  * Attaches (or replaces) a donation campaign's image. Admin only.
@@ -16,6 +16,8 @@ import { requireRole } from '~~/server/utils/requireRole';
  * escape the directory via `../` or collide with an existing file.
  */
 export default defineEventHandler(async (event) => {
+  await requireRole(event, 'admin')
+
   const id = getRouterParam(event, 'id')
   const form = await readMultipartFormData(event)
 

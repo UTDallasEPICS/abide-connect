@@ -20,6 +20,6 @@
  * `server/middleware/`; restoring a global check means filling this in, but
  * beware it would then run on every request including static/public routes.
  */
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async () => {
 
 })

@@ -1,44 +1,51 @@
 <script setup lang="ts">
 /**
- * Back-button header for the `secondary` layout.
+ * Back-button header shown by the `secondary` layout.
  *
- * Uses `router.back()` rather than a fixed parent route, so the user returns
- * wherever they came from. The caveat is that a page opened directly (deep
- * link, refresh) has no history to go back to and the button does nothing.
+ * Pages reached from within a flow (settings sub-pages, the volunteer
+ * application, admin sub-pages) opt into `secondary`, which drops the bottom
+ * tab bar: those screens are a detour out of the tabs, so the only way onward
+ * is back. The tab destinations and the events browse pages under them use
+ * `default` instead and get the back control from `NavTop`.
  *
- * The label beside the arrow comes from the page's own
- * `definePageMeta({ backText: '…' })`, and is omitted when unset.
+ * The arrow itself is `NavBackButton`, shared with `NavTop`, and the right of
+ * the bar carries whatever the page registered with `useNavActions`, same as
+ * there.
+ *
+ * Height and chrome match `NavTop` (h-19, translucent, shadow on scroll) so the
+ * two headers read as the same bar.
  */
-const router = useRouter()
-const route = useRoute()
+const isScrolled = ref(false)
+const handleScroll = () => {
+  isScrolled.value = window.scrollY > 0
+}
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll, { passive: true })
+  handleScroll()
+})
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
 </script>
 
 <template>
   <UHeader
     :ui="{
       toggle: 'hidden',
-      root: 'border-b-0 shadow-none'
+      root: 'border-none',
     }"
-    class="text-teal-700 fixed top-0 z-50 h-19 w-full bg-white dark:bg-gray-900"
+    :toggle="false"
+    class="fixed top-0 z-50 h-19 w-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg transition-shadow duration-200"
+    :class="isScrolled ? 'shadow-sm' : 'shadow-none'"
   >
     <template #left>
-      
-      <UButton
-        color="neutral"
-        variant="ghost"
-        class="gap-1"
-        @click="router.back()"
-      >
-        <span class="text-lg">&lt;</span>
-      </UButton>
+      <NavBackButton />
+    </template>
 
-      <span
-        v-if="route.meta.backText"
-        class="font-normal"
-      >
-        {{ route.meta.backText }}
-      </span>
-
+    <template #right>
+      <div class="flex items-center gap-0.5">
+        <NavActions />
+      </div>
     </template>
 
     <template #toggle />

@@ -1,3 +1,4 @@
+import { formatShortDate } from '#shared/utils/eventTime'
 import prisma from '#server/utils/prisma'
 import { auth } from '#server/utils/auth'
 
@@ -41,17 +42,13 @@ export default defineEventHandler(async (event) => {
   const logs = await prisma.volunteer_Hour_Log.findMany({
     where: { volunteerId: volunteer.id },
     include: { event: true },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
   })
 
   const formattedLogs = logs.map(log => ({
     id: String(log.id),
-    event: log.event.title, 
-    date: log.date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    }), 
+    event: log.event.title,
+    date: formatShortDate(log.date),
     hours: log.hours,
     approvalStatus: log.approvalStatus,
     comment: log.comment ?? '',

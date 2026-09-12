@@ -1,5 +1,4 @@
 import prisma from '#server/utils/prisma'
-import type { Language, Availability } from '#server/utils/generated/prisma/client'
 import { Prisma } from '#server/utils/generated/prisma/client'
 
 /**
@@ -22,7 +21,7 @@ export default defineEventHandler(async (event) => {
     } = await readBody(event)
 
     await prisma.$transaction(async (tx) => {
-      const createdUser = await tx.user.create({
+      await tx.user.create({
         data: {
           name: name as string | undefined,
           email: email as string,
@@ -41,10 +40,10 @@ export default defineEventHandler(async (event) => {
     }
 
     const statusCode = (error as { statusCode?: number }).statusCode ?? 500
-    const statusMessage =
-      (error as { body?: { message?: string } }).body?.message
-      ?? (error as { message?: string }).message
-      ?? 'An unexpected error occurred'
+    const statusMessage
+      = (error as { body?: { message?: string } }).body?.message
+        ?? (error as { message?: string }).message
+        ?? 'An unexpected error occurred'
 
     throw createError({ statusCode, statusMessage })
   }

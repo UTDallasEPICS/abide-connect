@@ -1,7 +1,8 @@
 import { auth } from '#server/utils/auth'
 import prisma from '#server/utils/prisma'
-import type { Language, Availability } from '#server/utils/generated/prisma/client'
+import { activeRoles } from '#server/utils/userRoles'
 import { Prisma } from '#server/utils/generated/prisma/client'
+import { normalizeEmail } from '#server/utils/normalizeEmail'
 import type { H3Event } from 'h3'
 import { appendHeader, setHeader } from 'h3'
 
@@ -54,9 +55,15 @@ export default defineEventHandler(async (event) => {
     const {
       otp,
       name,
-      email,
+      email: rawEmail,
       phone,
     } = await readBody(event)
+
+    // Normalised before it is used for anything: it keys the verification row
+    // that `request-otp` wrote, and it is the address the account is created
+    // with. Better Auth looks users up by the lower-cased address, so storing
+    // it as typed would create an account that can never sign in again.
+    const email = normalizeEmail(rawEmail)
 
     // Reject anything that isn't a well-formed code before it reaches the
     // database — `otp` arrives straight off the request body, so it is not
@@ -104,12 +111,11 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: 'Invalid or expired code' })
     }
 
-
     // The transaction wraps a single statement and so buys nothing today; it's
     // a seam left for the related rows (volunteer profile, notification
     // preferences) that sign-up is expected to grow.
     await prisma.$transaction(async (tx) => {
-      const createdUser = await tx.user.create({
+      await tx.user.create({
         data: {
           name: name as string | undefined,
           email: email as string,
@@ -122,7 +128,6 @@ export default defineEventHandler(async (event) => {
           },
         },
       })
-
     })
 
     // The OTP row is still present — signInEmailOTP validates it a second time,
@@ -137,7 +142,12 @@ export default defineEventHandler(async (event) => {
 
     forwardAuthHeaders(event, headers)
 
-    return { success: true, ...response }
+    // Same as `verify-otp.post.ts`: the landing page is chosen from these, so
+    // they travel with the session rather than in a follow-up request that would
+    // race the cookie being set.
+    const roles = response?.user?.id ? await activeRoles(response.user.id) : []
+
+    return { success: true, ...response, roles }
   }
   catch (error: unknown) {
     console.error('[sign-up-verify error]', error)
@@ -147,11 +157,11 @@ export default defineEventHandler(async (event) => {
     }
 
     const statusCode = (error as { statusCode?: number }).statusCode ?? 500
-    const statusMessage =
-      (error as { body?: { message?: string } }).body?.message
-      ?? (error as { statusMessage?: string }).statusMessage
-      ?? (error as { message?: string }).message
-      ?? 'An unexpected error occurred'
+    const statusMessage
+      = (error as { body?: { message?: string } }).body?.message
+        ?? (error as { statusMessage?: string }).statusMessage
+        ?? (error as { message?: string }).message
+        ?? 'An unexpected error occurred'
 
     throw createError({ statusCode, statusMessage })
   }

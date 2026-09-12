@@ -1,5 +1,6 @@
+import { formatShortDate } from '#shared/utils/eventTime'
 import prisma from '#server/utils/prisma'
-import { requireRole } from '~~/server/utils/requireRole';
+import { requireRole } from '~~/server/utils/requireRole'
 
 /**
  * Every volunteer's hour logs, newest first, for the admin review queue.
@@ -15,7 +16,7 @@ import { requireRole } from '~~/server/utils/requireRole';
  * `Event` row.
  */
 export default eventHandler(async (event) => {
-  const session = await requireRole(event, 'admin');
+  await requireRole(event, 'admin')
 
   try {
     const logs = await prisma.volunteer_Hour_Log.findMany({
@@ -39,11 +40,7 @@ export default eventHandler(async (event) => {
         ?? log.volunteer.user?.email
         ?? 'Unknown',
       event: log.event?.title ?? log.eventName ?? 'Manual submission',
-      date: log.date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      }),
+      date: formatShortDate(log.date),
       hours: log.hours,
       status: log.approvalStatus,
       comment: log.comment ?? '',

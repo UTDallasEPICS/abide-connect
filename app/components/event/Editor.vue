@@ -14,16 +14,31 @@ import { eventTypeFromFlags } from '#shared/utils/eventType'
  * still changed the event's images.
  */
 
-const props = defineProps({
-  event: {
-    type: Object,
-    default: null,
-  },
-})
+interface EventAsset {
+  id: string
+  imageUrl: string
+}
+
+interface EditableEvent {
+  id?: string
+  title?: string
+  shortDesc?: string
+  description?: string
+  location?: { address: string }
+  startTime?: string
+  endTime?: string
+  eventAssets?: EventAsset[]
+  eventType?: string
+  [key: string]: unknown
+}
+
+const props = defineProps<{
+  event: EditableEvent | null
+}>()
 
 const emit = defineEmits(['save', 'delete'])
 
-const editedEvent = ref<any>({})
+const editedEvent = ref<EditableEvent>({})
 const filesToUpload = ref<File[]>([])
 // Build asset list for the uploader from the real event assets
 const eventAssets = ref<{ imageUrl: string, isPreview?: boolean, fileName?: string }[]>([])
@@ -34,7 +49,7 @@ watch(() => props.event, (newEvent) => {
     editedEvent.value = { ...newEvent, eventType: eventTypeFromFlags(newEvent) }
     // Map existing server assets to uploader format
     // imageUrl in DB is just the fileName (after the upload fix)
-    eventAssets.value = (newEvent.eventAssets || []).map((a: any) => ({
+    eventAssets.value = (newEvent.eventAssets || []).map((a: EventAsset) => ({
       imageUrl: `/api/events/${newEvent.id}/images/${a.imageUrl}`,
       fileName: a.imageUrl,
       isPreview: false,
@@ -78,7 +93,7 @@ function deleteEvent() {
 
 <template>
   <div class="space-y-4">
-    <h3 class="text-xl font-semibold">
+    <h3 class="text-xl font-semibold dark:text-gray-100">
       Edit Event
     </h3>
 

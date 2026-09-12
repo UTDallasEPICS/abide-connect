@@ -88,11 +88,11 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 409, statusMessage: 'A volunteer profile already exists for this account' })
     }
     const statusCode = (error as { statusCode?: number }).statusCode ?? 500
-    const statusMessage =
-      (error as { body?: { message?: string } }).body?.message
-      ?? (error as { statusMessage?: string }).statusMessage
-      ?? (error as { message?: string }).message
-      ?? 'An unexpected error occurred'
+    const statusMessage
+      = (error as { body?: { message?: string } }).body?.message
+        ?? (error as { statusMessage?: string }).statusMessage
+        ?? (error as { message?: string }).message
+        ?? 'An unexpected error occurred'
     throw createError({ statusCode, statusMessage })
   }
 })

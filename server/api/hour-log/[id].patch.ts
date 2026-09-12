@@ -1,4 +1,6 @@
-import { requireRole } from '~~/server/utils/requireRole';
+import { parseZonedDate } from '#shared/utils/eventTime'
+import { requireRole } from '~~/server/utils/requireRole'
+import type { ApprovalStatus, VolunteerArea } from '#server/utils/generated/prisma/client'
 
 /**
  * `Prefer Not To Say` → `PREFER_NOT_TO_SAY`. Inverse of the `humanize` in
@@ -6,8 +8,8 @@ import { requireRole } from '~~/server/utils/requireRole';
  * so an edit form round-trips the display value back here and it has to be
  * converted to the enum again.
  */
-function dehumanize(value: string): string {
-  return value.toUpperCase().split(' ').join('_');
+function dehumanize(value: string): ApprovalStatus {
+  return value.toUpperCase().split(' ').join('_') as ApprovalStatus
 }
 
 /**
@@ -20,23 +22,40 @@ function dehumanize(value: string): string {
  *
  * `id` is `Number`-cast because `Volunteer_Hour_Log.id` is an autoincrement int
  * while route params always arrive as strings.
+ *
+ * `program` is the grant-reporting dimension read by `/admin/reports/impact`;
+ * setting it here is what turns an inferred attribution into a stated one.
+ * `approvedAt` follows the same rule as the review queue — stamped once, on the
+ * first decision, and cleared if the log goes back to PENDING.
  */
 export default defineEventHandler(async (event) => {
-  await requireRole(event, 'Admin');
-  const id = getRouterParam(event, 'id');
+  await requireRole(event, 'Admin')
+  const id = getRouterParam(event, 'id')
 
   if (!id) {
-    throw createError({ statusCode: 400, statusMessage: 'Hour log id is required' });
+    throw createError({ statusCode: 400, statusMessage: 'Hour log id is required' })
   }
 
   const body = await readBody<{
-    eventId?: string | null;
-    eventName?: string;
-    hours?: number;
-    date?: string;
-    approvalStatus?: string;
-    comment?: string;
-  }>(event);
+    eventId?: string | null
+    eventName?: string
+    hours?: number
+    date?: string
+    approvalStatus?: string
+    program?: string | null
+    comment?: string
+  }>(event)
+
+  const nextStatus = body.approvalStatus !== undefined
+    ? dehumanize(body.approvalStatus)
+    : undefined
+
+  const existing = nextStatus === undefined
+    ? null
+    : await prisma.volunteer_Hour_Log.findUnique({
+        where: { id: Number(id) },
+        select: { approvedAt: true },
+      })
 
   const updated = await prisma.volunteer_Hour_Log.update({
     where: { id: Number(id) },
@@ -44,11 +63,15 @@ export default defineEventHandler(async (event) => {
       ...(body.eventId !== undefined && { eventId: body.eventId || null }),
       ...(body.eventName !== undefined && { eventName: body.eventName || null }),
       ...(body.hours !== undefined && { hours: body.hours }),
-      ...(body.date !== undefined && { date: new Date(body.date) }),
-      ...(body.approvalStatus !== undefined && { approvalStatus: dehumanize(body.approvalStatus) as any }),
+      ...(body.date !== undefined && { date: parseZonedDate(body.date) }),
+      ...(body.program !== undefined && { program: body.program as VolunteerArea || null }),
+      ...(nextStatus !== undefined && {
+        approvalStatus: nextStatus,
+        approvedAt: nextStatus === 'PENDING' ? null : existing?.approvedAt ?? new Date(),
+      }),
       ...(body.comment !== undefined && { comment: body.comment || null }),
     },
-  });
+  })
 
-  return updated;
-});
+  return updated
+})

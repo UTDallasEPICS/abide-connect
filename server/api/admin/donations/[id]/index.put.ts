@@ -1,5 +1,6 @@
+import { parseZonedDate } from '#shared/utils/eventTime'
 import prisma from '#server/utils/prisma'
-import { requireRole } from '~~/server/utils/requireRole';
+import { requireRole } from '~~/server/utils/requireRole'
 
 /**
  * Replaces a donation campaign's fields. Admin only.
@@ -10,7 +11,8 @@ import { requireRole } from '~~/server/utils/requireRole';
  * point the record at a file that isn't there.
  */
 export default defineEventHandler(async (event) => {
-  const session = await requireRole(event, 'admin');
+  await requireRole(event, 'admin')
+
   const id = getRouterParam(event, 'id')
 
   if (!id) {
@@ -27,8 +29,8 @@ export default defineEventHandler(async (event) => {
     data: {
       name: body.name,
       link: body.link,
-      startDate: new Date(body.startDate),
-      endDate: new Date(body.endDate),
+      startDate: parseZonedDate(body.startDate),
+      endDate: parseZonedDate(body.endDate),
       imageUrl: body.imageUrl,
     },
   })

@@ -8,16 +8,16 @@
  * everything exported from `server/utils/`.
  */
 export default defineEventHandler(async (event) => {
-  const session = await auth.api.getSession({ headers: event.headers });
-  event.context.session = session;
+  const session = await auth.api.getSession({ headers: event.headers })
+  event.context.session = session
 
   if (!session?.session) {
-    return;
+    return
   }
 
   const user = await prisma.user.findUnique({
     where: { id: session?.user.id },
   })
 
-  return user;
+  return user
 })

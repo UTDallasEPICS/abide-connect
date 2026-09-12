@@ -7,6 +7,7 @@ import type {
   ApprovalStatus,
   Certification,
   UserRole,
+  VolunteerArea,
 } from './generated/prisma/client.ts'
 import { PrismaClient } from './generated/prisma/client.ts'
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
@@ -86,6 +87,10 @@ type RawVolunteer = {
   ethinicity?: string
   languages?: string[]
   availabilities?: string[]
+  // Declared areas of service. Also the fallback the hours report attributes
+  // by when a log carries no explicit `program` — see `attributeProgram` in
+  // `server/utils/reporting.ts`, which only infers when there is exactly one.
+  volunteerAreas?: string[]
   certifications: string[]
   hourLogs: {
     event: {
@@ -94,7 +99,16 @@ type RawVolunteer = {
     date: string
     hours: number
     approvalStatus: string
+    // Grant-reporting dimension. Deliberately absent on some fixtures so the
+    // report's inference-and-fallback path gets exercised too.
+    program?: string
     comment?: string
+    // When the volunteer submitted the log, and when an admin decided it.
+    // Both are explicit rather than defaulted because approval latency is
+    // measured as `approvedAt - createdAt`; letting `createdAt` default to
+    // now() against a backdated `approvedAt` yields negative latencies.
+    createdAt?: string
+    approvedAt?: string
   }[]
 }
 
@@ -167,7 +181,7 @@ async function main() {
           },
         },
         eventAssets: {
-          create: event.eventAssets.map((imageUrl) => ({ imageUrl })),
+          create: event.eventAssets.map(imageUrl => ({ imageUrl })),
         },
         timeSlots: {
           create: (event.timeSlots ?? []).map(slot => ({
@@ -200,7 +214,7 @@ async function main() {
         phone: user.phone,
         imageURL: user.imageURL,
         RSVPs: {
-          create: user.RSVPs.map((rsvp) => ({
+          create: user.RSVPs.map(rsvp => ({
             isVolunteer: rsvp.isVolunteer ?? false,
             event: { connect: { id: rsvp.id } },
           })),
@@ -253,29 +267,39 @@ async function main() {
           : undefined,
         languages: volunteer.languages
           ? {
-              create: volunteer.languages.map((lang) => ({
+              create: volunteer.languages.map(lang => ({
                 language: lang as Language,
               })),
             }
           : undefined,
         availabilities: volunteer.availabilities
           ? {
-              create: volunteer.availabilities.map((avail) => ({
+              create: volunteer.availabilities.map(avail => ({
                 availability: avail as Availability,
               })),
             }
           : undefined,
+        volunteerAreas: volunteer.volunteerAreas
+          ? {
+              create: volunteer.volunteerAreas.map(area => ({
+                volunteerArea: area as VolunteerArea,
+              })),
+            }
+          : undefined,
         certifications: {
-          create: volunteer.certifications.map((cert) => ({
+          create: volunteer.certifications.map(cert => ({
             certification: cert as Certification,
           })),
         },
         hourLogs: {
-          create: volunteer.hourLogs.map((log) => ({
+          create: volunteer.hourLogs.map(log => ({
             date: new Date(log.date),
             hours: log.hours,
             approvalStatus: log.approvalStatus as ApprovalStatus,
+            program: log.program as VolunteerArea | undefined,
             comment: log.comment,
+            createdAt: log.createdAt ? new Date(log.createdAt) : undefined,
+            approvedAt: log.approvedAt ? new Date(log.approvedAt) : undefined,
             event: { connect: { id: log.event.id } },
           })),
         },

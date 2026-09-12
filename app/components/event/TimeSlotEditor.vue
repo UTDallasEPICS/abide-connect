@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import type { ButtonProps } from '@nuxt/ui'
+import { formatTimeRange, fromDateTimeLocal } from '#shared/utils/eventTime'
 import {
   DEFAULT_SLOT_COLOR_TOKEN,
   SLOT_COLORS,
   SLOT_ROLE_MAX_LENGTH,
-  formatSlotRange,
-  fromDateTimeLocal,
   slotColorHex,
   validateTimeSlot,
 } from '#shared/utils/timeSlot'
@@ -23,7 +22,7 @@ import {
 interface TimeSlotRow {
   /** Present on blocks that already exist. Absent ones are created on save. */
   id: string | null
-  /** `datetime-local` strings, i.e. local wall-clock time. */
+  /** `datetime-local` strings, i.e. wall-clock time in the org's timezone. */
   startTime: string
   endTime: string
   capacity: number
@@ -183,7 +182,7 @@ function pickColor(index: number, token: string) {
 }
 
 function rowRange(row: TimeSlotRow): string {
-  return formatSlotRange(fromDateTimeLocal(row.startTime), fromDateTimeLocal(row.endTime))
+  return formatTimeRange(fromDateTimeLocal(row.startTime), fromDateTimeLocal(row.endTime))
 }
 
 function removalWarning(row: TimeSlotRow): string {

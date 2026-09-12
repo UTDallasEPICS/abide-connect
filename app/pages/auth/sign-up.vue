@@ -2,7 +2,6 @@
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { SignUpSchema } from '~/types/auth/sign-up.type'
 import { signUpFields, signUpSchema } from '~/types/auth/sign-up.type'
-import { authProviders } from '~/types/auth/providers.type'
 import { errorMessage as toErrorMessage } from '~/lib/errorMessage'
 
 /**
@@ -22,6 +21,11 @@ import { errorMessage as toErrorMessage } from '~/lib/errorMessage'
  * ends up in the sign-up request body. It's how someone sent here from an event
  * they wanted to attend gets returned to that event once the account exists.
  */
+
+definePageMeta({
+  layout: 'secondary',
+  backTo: '/auth/login',
+})
 
 const route = useRoute()
 // Bouncing between sign-up and login must not lose where the user was headed.
@@ -68,11 +72,13 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center p-8 my-8 ">
+  <PageContainer
+    width="form"
+    class="flex flex-1 flex-col items-center justify-center"
+  >
     <UAuthForm
-      class="w-full max-w-md"
+      class="w-full"
       :fields="signUpFields"
-      :providers="authProviders"
       :schema="signUpSchema"
       title="Let's get you started to be a Volunteer!"
       icon="i-lucide-user"
@@ -104,5 +110,5 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
         >Terms of Service</ULink>.
       </template>
     </UAuthForm>
-  </div>
+  </PageContainer>
 </template>

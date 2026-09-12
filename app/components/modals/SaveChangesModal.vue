@@ -6,20 +6,27 @@
  * be abandoned mid-request; failures surface as an in-dialog alert so the user
  * can retry without losing their edits.
  */
-const props = defineProps<{
-  open: boolean;
-  loading?: boolean;
-  error?: string | null;
-}>();
+defineProps<{
+  open: boolean
+  loading?: boolean
+  error?: string | null
+}>()
 const emit = defineEmits<{
-  'update:open': [value: boolean];
-  confirm: [];
-}>();
+  'update:open': [value: boolean]
+  'confirm': []
+}>()
 </script>
+
 <template>
-  <UModal :open="open" title="Review changes" @update:open="(v) => !loading && emit('update:open', v)">
+  <UModal
+    :open="open"
+    title="Review changes"
+    @update:open="(v) => !loading && emit('update:open', v)"
+  >
     <template #body>
-      <p class="font-normal text-sm">Are you sure you want to save these changes? This action can not be undone.</p>
+      <p class="font-normal text-sm">
+        Are you sure you want to save these changes? This action can not be undone.
+      </p>
       <UAlert
         v-if="error"
         class="mt-3"

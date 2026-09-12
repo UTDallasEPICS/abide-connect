@@ -2,7 +2,7 @@
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { verifyOtpFields, verifyOtpSchema, type VerifyOtpSchema } from '~/types/auth/login.type'
 import { errorMessage as toErrorMessage } from '~/lib/errorMessage'
-import { safeRedirect } from '~/lib/safeRedirect'
+import { resolveLandingRoute } from '~/lib/landingRoute'
 
 /**
  * Step two of sign-up: verify the emailed code and create the account.
@@ -17,13 +17,19 @@ import { safeRedirect } from '~/lib/safeRedirect'
  * `pendingSignUp`, because that object is spread wholesale into the request
  * body — a `redirect` field living in it would be posted to the API. It sends
  * the new account back to whatever they were trying to do (attend an event,
- * say) instead of the volunteer dashboard.
+ * say) instead of the landing page `resolveLandingRoute` would otherwise pick.
+ * It's held raw and sanitised there, alongside every other sign-in path.
  */
+
+definePageMeta({
+  layout: 'secondary',
+  backTo: '/auth/sign-up',
+})
 
 const errorMessage = ref<string | null>(null)
 const isLoading = ref(false)
 const pendingSignUp = ref<Record<string, unknown> | null>(null)
-const redirectTo = ref('/volunteer/')
+const pendingRedirect = ref<string | null>(null)
 
 const resendCooldown = ref(0)
 const isResending = ref(false)
@@ -36,7 +42,8 @@ function startCooldown() {
   cooldownTimer = setInterval(() => {
     if (resendCooldown.value > 0) {
       resendCooldown.value--
-    } else {
+    }
+    else {
       clearInterval(cooldownTimer!)
       cooldownTimer = null
     }
@@ -50,7 +57,7 @@ onMounted(() => {
     return
   }
   pendingSignUp.value = JSON.parse(stored)
-  redirectTo.value = safeRedirect(sessionStorage.getItem('pendingSignUpRedirect'), '/volunteer/')
+  pendingRedirect.value = sessionStorage.getItem('pendingSignUpRedirect')
   startCooldown()
 })
 
@@ -68,9 +75,11 @@ async function resendOtp() {
       body: { email: pendingSignUp.value.email },
     })
     startCooldown()
-  } catch (err: unknown) {
+  }
+  catch (err: unknown) {
     resendError.value = toErrorMessage(err)
-  } finally {
+  }
+  finally {
     isResending.value = false
   }
 }
@@ -81,7 +90,9 @@ async function onVerify(event: FormSubmitEvent<VerifyOtpSchema>) {
   errorMessage.value = null
 
   try {
-    await $fetch('/api/auth/sign-up-verify', {
+    // As in /auth/login: the roles ride back with the new session rather than
+    // being fetched separately while the cookie is still being set.
+    const { roles } = await $fetch<{ roles: string[] }>('/api/auth/sign-up-verify', {
       method: 'POST',
       body: {
         otp: event.data.otp,
@@ -91,7 +102,7 @@ async function onVerify(event: FormSubmitEvent<VerifyOtpSchema>) {
     sessionStorage.removeItem('pendingSignUp')
     sessionStorage.removeItem('pendingSignUpRedirect')
     await nextTick()
-    await navigateTo(redirectTo.value)
+    await navigateTo(await resolveLandingRoute(pendingRedirect.value, roles))
   }
   catch (error: unknown) {
     console.log(error)
@@ -104,9 +115,12 @@ async function onVerify(event: FormSubmitEvent<VerifyOtpSchema>) {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center p-8 min-h-screen">
+  <PageContainer
+    width="form"
+    class="flex flex-1 flex-col items-center justify-center"
+  >
     <UAuthForm
-      class="w-full max-w-md"
+      class="w-full"
       :schema="verifyOtpSchema"
       :fields="verifyOtpFields"
       title="Check your email"
@@ -134,7 +148,10 @@ async function onVerify(event: FormSubmitEvent<VerifyOtpSchema>) {
       <template #footer>
         <div class="flex flex-col items-center gap-2 w-full">
           <div class="text-sm">
-            <span v-if="resendCooldown > 0" class="text-muted">Resend code in {{ resendCooldown }}s</span>
+            <span
+              v-if="resendCooldown > 0"
+              class="text-muted"
+            >Resend code in {{ resendCooldown }}s</span>
             <UButton
               v-else
               variant="link"
@@ -160,5 +177,5 @@ async function onVerify(event: FormSubmitEvent<VerifyOtpSchema>) {
         </div>
       </template>
     </UAuthForm>
-  </div>
+  </PageContainer>
 </template>

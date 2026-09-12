@@ -8,33 +8,34 @@
  * click or Escape, so an in-flight request can't be abandoned halfway.
  */
 const props = withDefaults(defineProps<{
-  open: boolean;
-  title: string;
-  description: string;
-  confirmLabel?: string;
-  confirmColor?: 'primary' | 'error' | 'neutral' | 'warning' | 'success';
-  icon?: string;
-  loading?: boolean;
-  error?: string | null;
+  open: boolean
+  title: string
+  description: string
+  confirmLabel?: string
+  confirmColor?: 'primary' | 'error' | 'neutral' | 'warning' | 'success'
+  icon?: string
+  loading?: boolean
+  error?: string | null
 }>(), {
   confirmLabel: 'Confirm',
   confirmColor: 'error',
   icon: 'i-lucide-alert-triangle',
   loading: false,
   error: null,
-});
+})
 const emit = defineEmits<{
-  (e: 'update:open', value: boolean): void;
-  (e: 'confirm'): void;
-}>();
+  (e: 'update:open', value: boolean): void
+  (e: 'confirm'): void
+}>()
 function handleConfirm() {
-  emit('confirm');
+  emit('confirm')
 }
 function handleOpenUpdate(v: boolean) {
-  if (props.loading) return;
-  emit('update:open', v);
+  if (props.loading) return
+  emit('update:open', v)
 }
 </script>
+
 <template>
   <UModal
     :open="open"
@@ -43,12 +44,18 @@ function handleOpenUpdate(v: boolean) {
   >
     <template #body>
       <div class="flex items-start gap-3">
-        <UIcon :name="icon" class="text-red-700 text-2xl mt-0.5" />
+        <UIcon
+          :name="icon"
+          class="text-red-700 dark:text-red-400 text-2xl mt-0.5"
+        />
         <div class="flex flex-col gap-1">
-          <p class="font-normal text-sm text-gray-400">
+          <p class="font-normal text-sm text-gray-400 dark:text-gray-400">
             {{ description }}
           </p>
-          <p v-if="error" class="text-sm text-red-700 font-medium">
+          <p
+            v-if="error"
+            class="text-sm text-red-700 dark:text-red-400 font-medium"
+          >
             {{ error }}
           </p>
         </div>

@@ -43,7 +43,7 @@ async function submitLog() {
         date: form.value.date,
         hours: form.value.hours,
         comment: form.value.comment || null,
-      }
+      },
     })
     emit('save')
   }

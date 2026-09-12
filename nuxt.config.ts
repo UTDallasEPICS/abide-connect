@@ -14,11 +14,6 @@ export default defineNuxtConfig({
     '~/assets/css/main.css',
     '~/assets/css/carousel-theme.css',
   ],
-  cron: {
-    runOnInit: true,
-    timeZone: 'America/Chicago',
-    jobsDir: 'cron'
-  },
   ui: {
     theme: {
       colors: [
@@ -41,6 +36,14 @@ export default defineNuxtConfig({
       ],
     },
   },
+  runtimeConfig: {
+    public: {
+      // VAPID public key, needed client-side to create a push subscription.
+      // Safe to expose — the private key stays on the server (server/utils/push.ts).
+      vapidPublicKey: process.env.VAPID_PUBLIC_KEY ?? '',
+    },
+  },
+  compatibilityDate: '2025-07-15',
   nitro: {
     externals: {
       // web-push and its ASN.1 dependencies are CommonJS. Left external,
@@ -50,18 +53,15 @@ export default defineNuxtConfig({
       inline: ['web-push', 'asn1.js', 'bn.js'],
     },
   },
-  runtimeConfig: {
-    public: {
-      // VAPID public key, needed client-side to create a push subscription.
-      // Safe to expose — the private key stays on the server (server/utils/push.ts).
-      vapidPublicKey: process.env.VAPID_PUBLIC_KEY ?? '',
-    },
-  },
-  compatibilityDate: '2025-07-15',
   vite: {
     optimizeDeps: {
-      include: ['maplibre-gl', 'vue3-carousel', 'better-auth/vue', 'zod'],
+      include: ['maplibre-gl', 'vue3-carousel', 'better-auth/vue', 'zod', '@internationalized/date'],
     },
+  },
+  cron: {
+    runOnInit: true,
+    timeZone: 'America/Chicago',
+    jobsDir: 'cron',
   },
   eslint: {
     config: {
@@ -113,6 +113,7 @@ export default defineNuxtConfig({
     workbox: {
       navigateFallback: '/',
       globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
+      maximumFileSizeToCacheInBytes: 4194304,
       // push-sw.js is imported into the service worker below, so it must not
       // also be precached as a page asset.
       globIgnores: ['**/push-sw.js'],

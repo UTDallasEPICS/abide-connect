@@ -1,4 +1,4 @@
-import { requireRole } from '~~/server/utils/requireRole';
+import { requireRole } from '~~/server/utils/requireRole'
 
 /**
  * Removes someone's sign-up on their behalf, from the admin member-detail page.
@@ -9,15 +9,15 @@ import { requireRole } from '~~/server/utils/requireRole';
  * `GuestRSVP` and cancelled through the event route instead.
  */
 export default defineEventHandler(async (event) => {
-  await requireRole(event, 'Admin');
+  await requireRole(event, 'Admin')
 
-  const userId = getRouterParam(event, 'userId');
-  const eventId = getRouterParam(event, 'eventId');
+  const userId = getRouterParam(event, 'userId')
+  const eventId = getRouterParam(event, 'eventId')
   if (!userId || !eventId) {
-    throw createError({ statusCode: 400, statusMessage: 'User id and event id are required' });
+    throw createError({ statusCode: 400, statusMessage: 'User id and event id are required' })
   }
 
-  await prisma.rSVP.delete({ where: { userId_eventId: { userId, eventId } } });
+  await prisma.rSVP.delete({ where: { userId_eventId: { userId, eventId } } })
 
-  return { success: true };
-});
+  return { success: true }
+})

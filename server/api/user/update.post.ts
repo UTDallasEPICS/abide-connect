@@ -1,5 +1,13 @@
 import { readBody, defineEventHandler, createError } from 'h3'
 import { requireRole } from '#server/utils/requireRole'
+import type {
+  Gender,
+  Ethinicity,
+  Language,
+  Availability,
+  VolunteerArea,
+  Certification,
+} from '#server/utils/generated/prisma/client'
 
 type UpdateUserBody = {
   userId?: string
@@ -7,12 +15,12 @@ type UpdateUserBody = {
   adminNote?: string | null
   isActive?: boolean
 
-  gender?: string | null
-  ethinicity?: string | null
-  languages?: string[]
-  availabilities?: string[]
-  volunteerAreas?: string[]
-  certifications?: string[]
+  gender?: Gender | null
+  ethinicity?: Ethinicity | null
+  languages?: Language[]
+  availabilities?: Availability[]
+  volunteerAreas?: VolunteerArea[]
+  certifications?: Certification[]
   otherVolunteerArea?: string | null
   otherCertification?: string | null
 
@@ -94,8 +102,8 @@ export default defineEventHandler(async (event) => {
       updatedVolunteer = await tx.volunteer.update({
         where: { userId },
         data: {
-          ...enumField('gender', body.gender as any),
-          ...enumField('ethinicity', body.ethinicity as any),
+          ...enumField('gender', body.gender),
+          ...enumField('ethinicity', body.ethinicity),
           ...field('otherVolunteerAreaDescription', body.otherVolunteerArea),
           ...field('otherCertificationDescription', body.otherCertification),
           ...field('emergencyContactName1', body.emergencyContactName1),
@@ -115,7 +123,7 @@ export default defineEventHandler(async (event) => {
         await tx.volunteer_Language.deleteMany({ where: { volunteerId } })
         if (body.languages.length) {
           await tx.volunteer_Language.createMany({
-            data: body.languages.map((language) => ({ volunteerId, language: language as any })),
+            data: body.languages.map(language => ({ volunteerId, language })),
           })
         }
       }
@@ -124,7 +132,7 @@ export default defineEventHandler(async (event) => {
         await tx.volunteer_Availability.deleteMany({ where: { volunteerId } })
         if (body.availabilities.length) {
           await tx.volunteer_Availability.createMany({
-            data: body.availabilities.map((availability) => ({ volunteerId, availability: availability as any })),
+            data: body.availabilities.map(availability => ({ volunteerId, availability })),
           })
         }
       }
@@ -133,7 +141,7 @@ export default defineEventHandler(async (event) => {
         await tx.volunteer_VolunteerArea.deleteMany({ where: { volunteerId } })
         if (body.volunteerAreas.length) {
           await tx.volunteer_VolunteerArea.createMany({
-            data: body.volunteerAreas.map((volunteerArea) => ({ volunteerId, volunteerArea: volunteerArea as any })),
+            data: body.volunteerAreas.map(volunteerArea => ({ volunteerId, volunteerArea })),
           })
         }
       }
@@ -142,7 +150,7 @@ export default defineEventHandler(async (event) => {
         await tx.volunteer_Certification.deleteMany({ where: { volunteerId } })
         if (body.certifications.length) {
           await tx.volunteer_Certification.createMany({
-            data: body.certifications.map((certification) => ({ volunteerId, certification: certification as any })),
+            data: body.certifications.map(certification => ({ volunteerId, certification })),
           })
         }
       }

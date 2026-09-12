@@ -1,6 +1,5 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { requireRole } from '~~/server/utils/requireRole';
 
 /**
  * Streams a donation campaign's image off disk.
