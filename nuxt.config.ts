@@ -3,6 +3,7 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/ui',
     '@nuxt/eslint',
+    '@nuxt/fonts',
     'nuxt-maplibre',
     '@vite-pwa/nuxt',
     'nuxt-cron',
@@ -103,6 +104,38 @@ export default defineNuxtConfig({
     config: {
       stylistic: true,
     },
+  },
+  /**
+   * Poppins used to arrive via an `@import url(fonts.googleapis.com/...)` at
+   * the top of app/assets/css/main.css. Because it was an `@import` in the
+   * entry stylesheet, every page paid a DNS lookup + TLS handshake + CSS
+   * round-trip to a third party before it could paint, and it requested all
+   * nine weights in both styles.
+   *
+   * Declaring it here instead makes @nuxt/fonts download the woff2 files at
+   * build time and serve them from `/_fonts` on our own origin, with
+   * `font-display: swap` and unicode-range subsetting. Nothing in the built
+   * CSS points at fonts.googleapis.com any more.
+   *
+   * Weights are the ones the app actually uses — `font-light` (300) through
+   * `font-extrabold` (800); there is no `font-thin`/`font-black` anywhere.
+   * Italic is here for the two `italic` spans (HourLogSection, TimeSlotEditor);
+   * a face is only fetched if something on the page renders in it.
+   */
+  fonts: {
+    // Tailwind v4 holds the stack in a custom property (`--font-poppins` in
+    // the `@theme` block of main.css) and emits `font-family: var(...)`, so
+    // the default scanner — which only reads literal `font-family` values —
+    // would never see "Poppins" and would inject no @font-face at all.
+    processCSSVariables: 'font-prefixed-only',
+    families: [
+      {
+        name: 'Poppins',
+        provider: 'google',
+        weights: [300, 400, 500, 600, 700, 800],
+        styles: ['normal', 'italic'],
+      },
+    ],
   },
 
 
