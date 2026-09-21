@@ -4,6 +4,7 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     '@nuxt/eslint',
     '@nuxt/fonts',
+    '@nuxt/image',
     'nuxt-maplibre',
     '@vite-pwa/nuxt',
     'nuxt-cron',
@@ -138,6 +139,29 @@ export default defineNuxtConfig({
     ],
   },
 
+  /**
+   * ipx reads straight out of `public/`, so the landing page's hero and
+   * service images get resized + webp'd at request time with no extra
+   * pipeline. Event images are served by `/api/events/:id/images/:name`,
+   * which is a Nitro route and not on ipx's filesystem — those are handled by
+   * cache headers and an upload-time resize instead (see that route and
+   * `images/upload.post.ts`).
+   */
+  image: {
+    quality: 80,
+    // NB: `format` is deliberately not set here — as a module option it only
+    // feeds <NuxtPicture>, and ipx does NOT fall back to content negotiation
+    // (a request with `Accept: image/webp` and no `f_webp` modifier still
+    // comes back as the source format). Each <NuxtImg> carries format="webp".
+    screens: {
+      xs: 320,
+      sm: 640,
+      md: 768,
+      lg: 1024,
+      xl: 1280,
+      xxl: 1536,
+    },
+  },
 
   pwa: {
     registerType: 'autoUpdate',

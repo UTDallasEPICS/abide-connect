@@ -42,6 +42,10 @@ const avatarInitials = computed(() => {
   const count = Math.min(3, props.going)
   return Array.from({ length: count }, () => randomInitials())
 })
+
+// See app/composables/useEventImageProvider.ts — images served by the API
+// route can't go through ipx.
+const imageProvider = computed(() => eventImageProvider(props.image))
 </script>
 
 <template>
@@ -61,12 +65,25 @@ const avatarInitials = computed(() => {
 
     <!-- Image with date badge -->
     <div class="relative h-28 w-full overflow-hidden">
-      <img
+      <!--
+        The thumbnail is 7rem tall in a carousel slide, never more than a few
+        hundred pixels wide. Explicit dimensions so the card reserves its box
+        before the image lands; these cards sit below the fold everywhere they
+        are used, so they are always lazy.
+      -->
+      <NuxtImg
         :src="image"
+        :provider="imageProvider"
         :alt="title"
+        :width="448"
+        :height="224"
+        format="webp"
+        sizes="xs:100vw sm:320px"
+        loading="lazy"
+        decoding="async"
         draggable="false"
         class="h-full w-full select-none object-cover"
-      >
+      />
       <div
         class="absolute left-3 top-3 flex w-12 select-none flex-col items-center rounded-lg border border-gray-100 bg-white/90 py-1 backdrop-blur-lg dark:border-gray-600 dark:bg-gray-800/90"
       >

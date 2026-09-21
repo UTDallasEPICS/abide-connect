@@ -42,12 +42,23 @@ defineProps({
 
     <!-- Image -->
     <div class="relative h-44 w-full overflow-hidden sm:h-60">
-      <img
+      <!--
+        Card is full-width on mobile and 16rem (256px) from `sm` up, so that
+        is all the resolution these ever need — the sources are 500–1140px
+        PNGs. Below the fold on every viewport, hence unconditionally lazy.
+      -->
+      <NuxtImg
         :src="image"
         :alt="title"
+        :width="512"
+        :height="480"
+        format="webp"
+        sizes="xs:100vw sm:256px"
+        loading="lazy"
+        decoding="async"
         draggable="false"
         class="h-full w-full select-none object-cover"
-      >
+      />
     </div>
 
     <!-- Details -->
