@@ -48,9 +48,17 @@ const onSignUpClick = () => navigateTo('/auth/sign-up')
 const onSeeAllEventsClick = () => navigateTo('/events/list')
 const onVolunteerApplicationClick = () => navigateTo('/volunteer-application')
 
-const headers = useRequestHeaders(['cookie'])
-const { data: user } = await useFetch('/api/user/me', { headers })
-const { data: volunteer } = await useFetch<VolunteerMe | null>('/api/volunteer/me', { headers })
+// Both of these run client-side only (`server: false`). Nothing else on this
+// page reads the session during SSR, so that keeps the rendered HTML identical
+// for a signed-in and a signed-out visitor — which is what lets `'/'` be cached
+// with `swr` in nuxt.config.ts. Move either one back to the server and the
+// cache starts handing a signed-in page to anonymous visitors.
+//
+// The cost is that the "Your Events" section and the sign-up strip below it
+// appear after hydration rather than in the first paint. The `immediate: false`
+// + watch pattern on the dependent fetches already handles arriving late.
+const { data: user } = useLazyFetch('/api/user/me', { server: false })
+const { data: volunteer } = useLazyFetch<VolunteerMe | null>('/api/volunteer/me', { server: false })
 
 const showYourEventsSection = computed(() => !!user.value)
 
@@ -62,6 +70,12 @@ const {
   error: yourEventsFetchError,
   status: yourEventsStatus,
 } = useLazyFetch<UserUpcomingEvent[]>('/api/user/upcoming-events', {
+  // Explicit key so the `refreshNuxtData` calls below actually find this
+  // fetch. Without one, useFetch keys itself on a hash of the URL and its
+  // options ("$f" + hash(...)), which no caller can spell — and since `user`
+  // now resolves client-side, `immediate` is always false on first render and
+  // the watch is the only thing that ever starts this request.
+  key: '/api/user/upcoming-events',
   default: () => [],
   server: false,
   immediate: showYourEventsSection.value,
@@ -177,6 +191,9 @@ const {
   error: trainingFetchError,
   status: trainingStatus,
 } = useLazyFetch<UpcomingEvent[]>('/api/events/training', {
+  // See the note on the "Your Events" fetch above — the watch below refreshes
+  // by this key, so it has to be set explicitly.
+  key: '/api/events/training',
   query: { limit: 9 },
   default: () => [],
   server: false,
@@ -206,7 +223,7 @@ watch(showTrainingSection, (shouldShow) => {
     <PageContainer>
       <!-- Carousel -->
       <UCarousel
-        v-slot="{ item }"
+        v-slot="{ item, index }"
         loop
         dots
         class="rounded-2xl shadow-xl overflow-hidden mb-8"
@@ -217,11 +234,26 @@ watch(showTrainingSection, (shouldShow) => {
           dot: 'w-2 h-2 bg-black/30 data-[state=active]:bg-white transition-colors shadow-lg',
         }"
       >
-        <img
+        <!--
+          The originals are 1–2 MP PNG/JPEG (image3.JPG is 4032x3024, 2.3 MB).
+          NuxtImg re-encodes to webp at the width actually needed. Only the
+          first slide is the LCP candidate, so it loads eagerly at high
+          priority and the rest stay lazy — the carousel doesn't advance for
+          6 seconds.
+        -->
+        <NuxtImg
           :src="item"
+          :width="1600"
+          :height="900"
+          format="webp"
+          sizes="xs:100vw sm:640px md:768px lg:1024px xl:1280px"
+          :loading="index === 0 ? 'eager' : 'lazy'"
+          :fetchpriority="index === 0 ? 'high' : 'auto'"
+          :preload="index === 0"
+          decoding="async"
           class="w-full aspect-video object-cover rounded-2xl"
           alt=""
-        >
+        />
       </UCarousel>
 
       <!-- Your Events — hidden entirely once loaded with zero events -->
