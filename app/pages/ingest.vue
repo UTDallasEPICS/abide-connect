@@ -70,7 +70,16 @@ const csvText = ref('')
 const pending = ref(false)
 const errorMessage = ref('')
 const result = ref<IngestResult | null>(null)
-const filter = ref<'all' | 'warnings' | 'new' | 'existing'>('all')
+type Filter = 'all' | 'warnings' | 'new' | 'existing'
+
+const filter = ref<Filter>('all')
+
+const FILTERS: { id: Filter, label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'warnings', label: 'Warnings' },
+  { id: 'new', label: 'New' },
+  { id: 'existing', label: 'Existing' },
+]
 
 const ACTION_LABELS: Record<ApplicantReport['action'], string> = {
   CREATE: 'New account + profile',
@@ -258,21 +267,20 @@ function formatDate(value: string | null) {
               <h2 class="font-medium">
                 {{ committed ? 'Result' : 'Preview' }}
               </h2>
-              <UButtonGroup size="xs">
+              <!-- A plain flex row, not UButtonGroup: this build of @nuxt/ui
+                   ships no such component, and an unresolved one renders as an
+                   empty custom element with the filters silently missing. -->
+              <div class="flex flex-wrap gap-1">
                 <UButton
-                  v-for="option in [
-                    { id: 'all', label: 'All' },
-                    { id: 'warnings', label: 'Warnings' },
-                    { id: 'new', label: 'New' },
-                    { id: 'existing', label: 'Existing' },
-                  ]"
+                  v-for="option in FILTERS"
                   :key="option.id"
+                  size="xs"
                   :variant="filter === option.id ? 'solid' : 'outline'"
-                  @click="filter = option.id as typeof filter"
+                  @click="filter = option.id"
                 >
                   {{ option.label }}
                 </UButton>
-              </UButtonGroup>
+              </div>
             </div>
           </template>
 
