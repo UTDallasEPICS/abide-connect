@@ -36,6 +36,7 @@ export default defineNuxtConfig({
       ],
     },
   },
+
   runtimeConfig: {
     public: {
       // VAPID public key, needed client-side to create a push subscription.
@@ -43,7 +44,42 @@ export default defineNuxtConfig({
       vapidPublicKey: process.env.VAPID_PUBLIC_KEY ?? '',
     },
   },
+
+  /**
+   * Response caching for the parts of the app that are the same for everybody.
+   *
+   * `swr` caches the rendered response and serves it to every caller for the
+   * TTL, so a new event shows up within the TTL rather than instantly — that
+   * is the trade being made here, and it is why the TTLs are short.
+   *
+   * IMPORTANT: the cache key is the URL. It does not include the session
+   * cookie, so anything whose body varies by who is asking must NOT be listed
+   * here or one caller's response gets replayed to the next. That rules out
+   * `/api/events` and `/api/events/list` and `/api/events/:id` (audience
+   * filtered through `getEventViewer` — volunteer-only and training events),
+   * everything under `/api/events/:id/rsvp|my-rsvp|time-slots`, all of
+   * `/api/auth/*` and `/api/user/*`, and the `/events/*` pages, which SSR the
+   * viewer's roles and RSVP state. Hence the explicit list below instead of a
+   * `/api/events/**` glob.
+   */
+  routeRules: {
+    // Public event feeds: no session read, no audience filtering.
+    '/api/events/upcoming': { swr: 60 },
+    '/api/events/today': { swr: 60 },
+    '/api/events/week': { swr: 60 },
+    '/api/events/by-day': { swr: 60 },
+    '/api/events/training': { swr: 60 },
+    '/api/mobile-clinic/schedule': { swr: 60 },
+
+    // The landing page fetches everything session-dependent client-side
+    // (`server: false` in app/pages/index.vue), so its HTML is the same for a
+    // signed-in and a signed-out visitor.
+    '/': { swr: 60 },
+    // mobileClinic.vue does all of its fetching in onMounted.
+    '/mobileClinic': { swr: 300 },
+  },
   compatibilityDate: '2025-07-15',
+
   nitro: {
     externals: {
       // web-push and its ASN.1 dependencies are CommonJS. Left external,
@@ -68,6 +104,7 @@ export default defineNuxtConfig({
       stylistic: true,
     },
   },
+
 
   pwa: {
     registerType: 'autoUpdate',
