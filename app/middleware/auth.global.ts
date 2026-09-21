@@ -18,6 +18,10 @@ const routeRoles: Record<string, RouteRoleConfig> = {
   // an error.
   '/volunteer': { role: 'user' },
   '/volunteer-application': { role: 'user' },
+  // Not linked from anywhere and not under /admin, but an unlisted URL is not
+  // an access control — the CSV importer is admin-only like everything else,
+  // and its endpoint checks again server-side.
+  '/ingest': { role: 'admin' },
 }
 
 // Logs the role check on every guarded navigation. Currently on in production

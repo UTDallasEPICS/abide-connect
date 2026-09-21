@@ -30,9 +30,24 @@ model Volunteer {
   hourLogs       Volunteer_Hour_Log[]
   events         RSVP[]
   slotSignups    Event_Time_Slot_Signup[]
+  applications   Volunteer_Application[]
 
   otherVolunteerAreaDescription String?
   otherCertificationDescription String?
+
+  /// What the volunteer actually wrote for race/ethnicity and languages, kept
+  /// verbatim alongside the enum columns above.
+  ///
+  /// Both questions are free text on the paper/Monday form but enums here, and
+  /// the enums cannot represent everything people write: "Two or more races",
+  /// "Black/Indigenous", "Italian-American", or a language the `Language` enum
+  /// has no member for (Telugu, Amharic, ASL, Yoruba, Farsi, Bengali...). The
+  /// importer maps what it can and falls back to `OTHER`, which would otherwise
+  /// throw the answer away — a lossy demographic figure is worse than none in a
+  /// grant report. Null for anyone who filled in the in-app form, where the
+  /// answer came from a dropdown and the enum is already exact.
+  ethinicityRaw String?
+  languagesRaw  String?
 
   emergencyContactName1  String?
   emergencyContactPhone1 String?
@@ -122,6 +137,93 @@ model Volunteer_Certification {
   @@map("volunteer_certifications")
 }
 
+/// One submitted volunteer application, kept as a record of what the person
+/// actually answered and when.
+///
+/// `Volunteer` is a living profile — staff edit it, volunteers update it, and
+/// it says nothing about when or on what terms someone applied. This model is
+/// the opposite: an append-only row per submission, never rewritten. It exists
+/// because the historical applications (exported from Monday.com) carry things
+/// the profile has nowhere to put — the legal acknowledgements, the signature
+/// image, the training answers, and above all `submittedAt`, without which
+/// every imported volunteer looks like they applied on the day of the import.
+///
+/// Several rows can point at one `Volunteer`: people reapply, and 35 of the 262
+/// addresses in the first import had submitted more than once. The profile
+/// reflects their most recent non-empty answers; every submission is still here.
+///
+/// `(email, submittedAt)` is unique, which is what makes importing the same
+/// file twice a no-op rather than a duplicate set. The email is stored on the
+/// row (not just reached through `volunteer.user`) so that key survives a row
+/// whose volunteer could not be created, and so re-running an import can match
+/// before any `User` exists.
+///
+/// `rawRow` is the entire source record as JSON. Mapping free text onto enums
+/// is lossy and the mapper will be wrong about someone; this is what makes that
+/// recoverable without going back to Monday.com, which is being retired.
+model Volunteer_Application {
+  id          String     @id @default(uuid())
+  /// `SetNull` rather than cascade so a profile deleted by staff doesn't
+  /// silently take the application history with it. A volunteer deleting their
+  /// own account is the other case, and `user/me.delete.ts` removes these rows
+  /// outright — keeping someone's name, email and signature after they asked
+  /// for the account to be erased is not an archive, it's a leak.
+  volunteer   Volunteer? @relation(fields: [volunteerId], references: [id], onDelete: SetNull)
+  volunteerId String?
+
+  /// When the applicant submitted, not when the row was written here.
+  submittedAt DateTime
+  /// Where the row came from: `MONDAY_CSV` for an import, `APP` for the
+  /// in-app form.
+  source      String
+
+  firstName String?
+  lastName  String?
+  /// Normalised (trimmed, lower-cased) like every other stored address — see
+  /// `server/utils/normalizeEmail.ts`.
+  email     String
+  phone     String?
+
+  /// Free text as submitted. The enum-mapped equivalents live on `Volunteer`.
+  ethinicityRaw       String?
+  languagesRaw        String?
+  /// The single free-text field the Monday form collected; the profile splits
+  /// it into name/phone pairs and that split is a guess.
+  emergencyContactRaw String?
+
+  volunteeredBefore     Boolean?
+  attendedTraining      Boolean?
+  trainingDate          DateTime?
+  preferredTrainingDate String?
+
+  /// The acknowledgements, as answered. Null where the form of the day didn't
+  /// ask — 79 of the earliest submissions never saw the health and safety
+  /// question, which is not the same as declining it.
+  ageEligibility            Boolean?
+  healthSafety              Boolean?
+  backgroundCheckConsent    Boolean?
+  ongoingEducationCommitment Boolean?
+  acceptanceDiscretion      Boolean?
+  missionValues             Boolean?
+
+  /// Monday.com `protected_static` URLs. They will stop resolving when that
+  /// board is retired, so treat them as a pointer to fetch and re-host, not as
+  /// a durable asset.
+  codeOfConductSignatureURL String?
+  signatureURL              String?
+  submissionLink            String?
+
+  /// The source record verbatim, as a JSON object of column → value.
+  rawRow String
+
+  importedAt       DateTime @default(now())
+  importedByUserId String?
+
+  @@unique([email, submittedAt])
+  @@index([volunteerId])
+  @@map("volunteer_applications")
+}
+
 enum Gender {
   MALE
   FEMALE
@@ -148,6 +250,11 @@ enum Ethinicity {
   NATIVE_HAWAIIAN_OR_OTHER_PACIFIC_ISLANDER
   MIDDLE_EASTERN_OR_NORTH_AFRICAN
   HISPANIC
+  /// Someone who named more than one of the categories above. Distinct from
+  /// OTHER, which is "none of these" — including the answers that are not an
+  /// ethnicity at all (four people typed the city they live in).
+  TWO_OR_MORE
+  OTHER
 }
 
 /// Shared by `Volunteer.approvalStatus` (cleared to volunteer?) and
@@ -186,6 +293,11 @@ enum Language {
   INDONESIAN
   MALAY
   FILIPINO
+  /// A language this enum has no member for. The importer sets it whenever it
+  /// cannot place a fragment of the free-text answer, and the words themselves
+  /// survive on `Volunteer.languagesRaw` — Telugu alone accounts for twelve
+  /// volunteers, so silently dropping them would misreport who can interpret.
+  OTHER
 }
 
 enum VolunteerArea {
