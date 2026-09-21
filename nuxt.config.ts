@@ -149,6 +149,18 @@ export default defineNuxtConfig({
    */
   image: {
     quality: 80,
+    ipx: {
+      // ipx defaults to `max-age=60` (see its `userOptions.maxAge ?? 60`),
+      // which would have browsers re-fetch every optimised image once a
+      // minute and throw away most of the point of optimising them. A week,
+      // matching the event image route.
+      //
+      // This has to be set here rather than as a routeRule: ipx is mounted as
+      // Node middleware and writes its own headers straight to the raw
+      // response, so a `/_ipx/**` header rule does not reach it (verified —
+      // the rule was silently ignored).
+      maxAge: 604800,
+    },
     // NB: `format` is deliberately not set here — as a module option it only
     // feeds <NuxtPicture>, and ipx does NOT fall back to content negotiation
     // (a request with `Accept: image/webp` and no `f_webp` modifier still
