@@ -1,6 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
+    './modules/ipx-cache',
     '@nuxt/ui',
     '@nuxt/eslint',
     '@nuxt/fonts',
@@ -83,6 +84,16 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
 
   nitro: {
+    storage: {
+      // File-backed cache for the ipx image handler (modules/ipx-cache.ts).
+      // The `base` is relative: the fs driver resolves it against the process
+      // cwd, which is the project root in dev and /app in the deployment
+      // container (WORKDIR /app, .output copied in place).
+      ipxCache: {
+        driver: 'fs',
+        base: './.cache/ipx',
+      },
+    },
     externals: {
       // web-push and its ASN.1 dependencies are CommonJS. Left external,
       // Nitro's dev server loads them through Node's ESM loader and every
@@ -140,27 +151,20 @@ export default defineNuxtConfig({
   },
 
   /**
-   * ipx reads straight out of `public/`, so the landing page's hero and
-   * service images get resized + webp'd at request time with no extra
-   * pipeline. Event images are served by `/api/events/:id/images/:name`,
-   * which is a Nitro route and not on ipx's filesystem — those are handled by
-   * cache headers and an upload-time resize instead (see that route and
-   * `images/upload.post.ts`).
+   * Optimised images are served by our own `/_ipx` handler
+   * (modules/ipx-cache.ts + modules/runtime/ipx-cache.ts), registered before
+   * `@nuxt/image` so its built-in — uncached — ipx handler is skipped.
+   * The handler reads straight out of `public/` and mirrors every encoded
+   * variant to the `ipxCache` nitro storage bucket, so a repeat request
+   * (including a hard reload, which sends `cache-control: no-cache`) is
+   * served from disk with no second sharp pass. This is what made the landing
+   * page take ~6s: every image re-encoded on every cold load. Event images
+   * are served by `/api/events/:id/images/:name`, which is a Nitro route and
+   * not on ipx's filesystem — those are handled by cache headers and an
+   * upload-time resize instead (see that route and `images/upload.post.ts`).
    */
   image: {
     quality: 80,
-    ipx: {
-      // ipx defaults to `max-age=60` (see its `userOptions.maxAge ?? 60`),
-      // which would have browsers re-fetch every optimised image once a
-      // minute and throw away most of the point of optimising them. A week,
-      // matching the event image route.
-      //
-      // This has to be set here rather than as a routeRule: ipx is mounted as
-      // Node middleware and writes its own headers straight to the raw
-      // response, so a `/_ipx/**` header rule does not reach it (verified —
-      // the rule was silently ignored).
-      maxAge: 604800,
-    },
     // NB: `format` is deliberately not set here — as a module option it only
     // feeds <NuxtPicture>, and ipx does NOT fall back to content negotiation
     // (a request with `Accept: image/webp` and no `f_webp` modifier still
