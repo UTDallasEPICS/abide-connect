@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatMonthDay } from '#shared/utils/eventTime'
 /**
  * Bell button in `NavTop` that opens the notification list as a dropdown.
  *
@@ -107,7 +108,7 @@ const formatTime = (timestamp: string) => {
   if (diffHours < 24) return `${diffHours}h ago`
   if (diffDays < 7) return `${diffDays}d ago`
 
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return formatMonthDay(date)
 }
 </script>
 

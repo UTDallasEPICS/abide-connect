@@ -65,6 +65,15 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { addZonedDays, zonedParts } from '#shared/utils/reportRange'
+import { zonedDateKey, zonedWeekBounds } from '#shared/utils/eventTime'
+
+/**
+ * Every day here is a day in the org's timezone, not the reader's. The strip
+ * picks which day's events to show, and the endpoint behind that list reads the
+ * date in the org's zone — a reader abroad would otherwise highlight their own
+ * "today" and get the events of a different day.
+ */
 
 const props = defineProps({
   modelValue: {
@@ -86,14 +95,7 @@ const monthNames = [
 ]
 
 function startOfWeek(date) {
-  const d = new Date(date)
-  d.setHours(0, 0, 0, 0)
-  d.setDate(d.getDate() - d.getDay())
-  return d
-}
-
-function dateKey(d) {
-  return d.toDateString()
+  return zonedWeekBounds(date).start
 }
 
 function ordinalSuffix(n) {
@@ -108,27 +110,27 @@ function ordinalSuffix(n) {
 const weekDays = computed(() => {
   const start = startOfWeek(anchorDate.value)
   return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(start)
-    d.setDate(start.getDate() + i)
+    const d = addZonedDays(start, i)
+    const p = zonedParts(d)
     return {
-      date: d.getDate(),
-      dayShort: dayShortNames[d.getDay()],
-      dateString: dateKey(d),
+      date: p.day,
+      dayShort: dayShortNames[p.weekday],
+      dateString: zonedDateKey(d),
       fullDate: d,
     }
   })
 })
 
 const headerLabel = computed(() => {
-  const d = selectedDate.value
+  const p = zonedParts(selectedDate.value)
   const weekdayFull = [
     'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
-  ][d.getDay()]
-  return `${weekdayFull} ${monthNames[d.getMonth()]} ${d.getDate()}${ordinalSuffix(d.getDate())}`
+  ][p.weekday]
+  return `${weekdayFull} ${monthNames[p.month - 1]} ${p.day}${ordinalSuffix(p.day)}`
 })
 
 function isSelected(day) {
-  return day.dateString === dateKey(selectedDate.value)
+  return day.dateString === zonedDateKey(selectedDate.value)
 }
 
 function selectDay(day) {
@@ -137,13 +139,11 @@ function selectDay(day) {
 }
 
 function shiftWeek(direction) {
-  const d = new Date(anchorDate.value)
-  d.setDate(d.getDate() + direction * 7)
+  const d = addZonedDays(anchorDate.value, direction * 7)
   anchorDate.value = d
 
   // Keep the same weekday position (e.g. still "Wednesday") in the new week
-  const newSelected = startOfWeek(d)
-  newSelected.setDate(newSelected.getDate() + selectedDate.value.getDay())
+  const newSelected = addZonedDays(startOfWeek(d), zonedParts(selectedDate.value).weekday)
   selectedDate.value = newSelected
   emit('update:modelValue', newSelected)
 }

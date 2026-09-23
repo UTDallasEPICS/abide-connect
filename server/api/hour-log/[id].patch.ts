@@ -1,3 +1,4 @@
+import { parseZonedDate } from '#shared/utils/eventTime'
 import { requireRole } from '~~/server/utils/requireRole'
 import type { ApprovalStatus, VolunteerArea } from '#server/utils/generated/prisma/client'
 
@@ -62,7 +63,7 @@ export default defineEventHandler(async (event) => {
       ...(body.eventId !== undefined && { eventId: body.eventId || null }),
       ...(body.eventName !== undefined && { eventName: body.eventName || null }),
       ...(body.hours !== undefined && { hours: body.hours }),
-      ...(body.date !== undefined && { date: new Date(body.date) }),
+      ...(body.date !== undefined && { date: parseZonedDate(body.date) }),
       ...(body.program !== undefined && { program: body.program as VolunteerArea || null }),
       ...(nextStatus !== undefined && {
         approvalStatus: nextStatus,

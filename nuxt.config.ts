@@ -1,8 +1,11 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
+    './modules/ipx-cache',
     '@nuxt/ui',
     '@nuxt/eslint',
+    '@nuxt/fonts',
+    '@nuxt/image',
     'nuxt-maplibre',
     '@vite-pwa/nuxt',
     'nuxt-cron',
@@ -36,6 +39,7 @@ export default defineNuxtConfig({
       ],
     },
   },
+
   runtimeConfig: {
     public: {
       // VAPID public key, needed client-side to create a push subscription.
@@ -43,8 +47,53 @@ export default defineNuxtConfig({
       vapidPublicKey: process.env.VAPID_PUBLIC_KEY ?? '',
     },
   },
+
+  /**
+   * Response caching for the parts of the app that are the same for everybody.
+   *
+   * `swr` caches the rendered response and serves it to every caller for the
+   * TTL, so a new event shows up within the TTL rather than instantly — that
+   * is the trade being made here, and it is why the TTLs are short.
+   *
+   * IMPORTANT: the cache key is the URL. It does not include the session
+   * cookie, so anything whose body varies by who is asking must NOT be listed
+   * here or one caller's response gets replayed to the next. That rules out
+   * `/api/events` and `/api/events/list` and `/api/events/:id` (audience
+   * filtered through `getEventViewer` — volunteer-only and training events),
+   * everything under `/api/events/:id/rsvp|my-rsvp|time-slots`, all of
+   * `/api/auth/*` and `/api/user/*`, and the `/events/*` pages, which SSR the
+   * viewer's roles and RSVP state. Hence the explicit list below instead of a
+   * `/api/events/**` glob.
+   */
+  routeRules: {
+    // Public event feeds: no session read, no audience filtering.
+    '/api/events/upcoming': { swr: 60 },
+    '/api/events/today': { swr: 60 },
+    '/api/events/week': { swr: 60 },
+    '/api/events/by-day': { swr: 60 },
+    '/api/events/training': { swr: 60 },
+    '/api/mobile-clinic/schedule': { swr: 60 },
+
+    // The landing page fetches everything session-dependent client-side
+    // (`server: false` in app/pages/index.vue), so its HTML is the same for a
+    // signed-in and a signed-out visitor.
+    '/': { swr: 60 },
+    // mobileClinic.vue does all of its fetching in onMounted.
+    '/mobileClinic': { swr: 300 },
+  },
   compatibilityDate: '2025-07-15',
+
   nitro: {
+    storage: {
+      // File-backed cache for the ipx image handler (modules/ipx-cache.ts).
+      // The `base` is relative: the fs driver resolves it against the process
+      // cwd, which is the project root in dev and /app in the deployment
+      // container (WORKDIR /app, .output copied in place).
+      ipxCache: {
+        driver: 'fs',
+        base: './.cache/ipx',
+      },
+    },
     externals: {
       // web-push and its ASN.1 dependencies are CommonJS. Left external,
       // Nitro's dev server loads them through Node's ESM loader and every
@@ -66,6 +115,67 @@ export default defineNuxtConfig({
   eslint: {
     config: {
       stylistic: true,
+    },
+  },
+  /**
+   * Poppins used to arrive via an `@import url(fonts.googleapis.com/...)` at
+   * the top of app/assets/css/main.css. Because it was an `@import` in the
+   * entry stylesheet, every page paid a DNS lookup + TLS handshake + CSS
+   * round-trip to a third party before it could paint, and it requested all
+   * nine weights in both styles.
+   *
+   * Declaring it here instead makes @nuxt/fonts download the woff2 files at
+   * build time and serve them from `/_fonts` on our own origin, with
+   * `font-display: swap` and unicode-range subsetting. Nothing in the built
+   * CSS points at fonts.googleapis.com any more.
+   *
+   * Weights are the ones the app actually uses — `font-light` (300) through
+   * `font-extrabold` (800); there is no `font-thin`/`font-black` anywhere.
+   * Italic is here for the two `italic` spans (HourLogSection, TimeSlotEditor);
+   * a face is only fetched if something on the page renders in it.
+   */
+  fonts: {
+    // Tailwind v4 holds the stack in a custom property (`--font-poppins` in
+    // the `@theme` block of main.css) and emits `font-family: var(...)`, so
+    // the default scanner — which only reads literal `font-family` values —
+    // would never see "Poppins" and would inject no @font-face at all.
+    processCSSVariables: 'font-prefixed-only',
+    families: [
+      {
+        name: 'Poppins',
+        provider: 'google',
+        weights: [300, 400, 500, 600, 700, 800],
+        styles: ['normal', 'italic'],
+      },
+    ],
+  },
+
+  /**
+   * Optimised images are served by our own `/_ipx` handler
+   * (modules/ipx-cache.ts + modules/runtime/ipx-cache.ts), registered before
+   * `@nuxt/image` so its built-in — uncached — ipx handler is skipped.
+   * The handler reads straight out of `public/` and mirrors every encoded
+   * variant to the `ipxCache` nitro storage bucket, so a repeat request
+   * (including a hard reload, which sends `cache-control: no-cache`) is
+   * served from disk with no second sharp pass. This is what made the landing
+   * page take ~6s: every image re-encoded on every cold load. Event images
+   * are served by `/api/events/:id/images/:name`, which is a Nitro route and
+   * not on ipx's filesystem — those are handled by cache headers and an
+   * upload-time resize instead (see that route and `images/upload.post.ts`).
+   */
+  image: {
+    quality: 80,
+    // NB: `format` is deliberately not set here — as a module option it only
+    // feeds <NuxtPicture>, and ipx does NOT fall back to content negotiation
+    // (a request with `Accept: image/webp` and no `f_webp` modifier still
+    // comes back as the source format). Each <NuxtImg> carries format="webp".
+    screens: {
+      xs: 320,
+      sm: 640,
+      md: 768,
+      lg: 1024,
+      xl: 1280,
+      xxl: 1536,
     },
   },
 

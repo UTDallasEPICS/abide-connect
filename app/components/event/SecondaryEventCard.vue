@@ -1,4 +1,6 @@
 <script setup>
+import { formatEventDateTime } from '#shared/utils/eventTime'
+
 const props = defineProps({
   id: {
     type: String,
@@ -36,19 +38,14 @@ const props = defineProps({
 
 const emit = defineEmits(['cancel'])
 
-const formattedDateTime = computed(() => {
-  const date = new Date(props.startTime)
-  const datePart = date.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'long',
-    day: 'numeric',
-  })
-  const timePart = date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  })
-  return `${datePart} • ${timePart}`
-})
+// Central, not the browser's zone: the event card badge in "Upcoming Events"
+// is rendered from the same helper server-side, and the two sections sit one
+// above the other on the home page.
+const formattedDateTime = computed(() => formatEventDateTime(props.startTime))
+
+// See app/composables/useEventImageProvider.ts — images served by the API
+// route can't go through ipx.
+const imageProvider = computed(() => eventImageProvider(props.image))
 
 const menuOpen = ref(false)
 const cardRef = ref(null)
@@ -102,12 +99,20 @@ const isLarge = computed(() => props.size === 'lg')
         class="shrink-0 overflow-hidden rounded-xl"
         :class="isLarge ? 'h-20 w-20' : 'h-16 w-16'"
       >
-        <img
+        <!-- 4rem/5rem square thumbnail; 2x for retina is 160px. -->
+        <NuxtImg
           :src="image"
+          :provider="imageProvider"
           :alt="title"
+          :width="160"
+          :height="160"
+          format="webp"
+          sizes="160px"
+          loading="lazy"
+          decoding="async"
           draggable="false"
           class="h-full w-full select-none object-cover"
-        >
+        />
       </div>
       <div
         class="flex min-w-0 flex-1 flex-col justify-between"

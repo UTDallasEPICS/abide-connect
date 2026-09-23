@@ -4,6 +4,7 @@ import { volunteerApplicationStepSchemas, volunteerApplicationSteps, type Volunt
 
 definePageMeta({
   layout: 'secondary',
+  backTo: '/volunteer',
 })
 
 /**
@@ -59,7 +60,7 @@ async function onSubmit(payload: FormSubmitEvent<Record<string, unknown>>) {
       method: 'POST',
       body: fullApplication,
     })
-    await navigateTo('/volunteer-application/completed')
+    await navigateTo('/volunteer-application/completed', { replace: true })
   }
   catch {
     errorMessage.value = 'Something went wrong submitting your application. Please try again.'
@@ -75,9 +76,12 @@ function goToPreviousStep() {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center p-8 my-8 mb-64">
+  <PageContainer
+    width="form"
+    class="flex flex-1 flex-col items-center justify-center"
+  >
     <UAuthForm
-      class="w-full max-w-md"
+      class="w-full"
       :fields="volunteerApplicationSteps[currentStepIndex]"
       :schema="volunteerApplicationStepSchemas[currentStepIndex]"
       :loading="isLoading && isLastStep"
@@ -162,6 +166,5 @@ function goToPreviousStep() {
         />
       </template>
     </UAuthForm>
-    <br>
-  </div>
+  </PageContainer>
 </template>

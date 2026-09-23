@@ -1,3 +1,4 @@
+import { parseZonedDate } from '#shared/utils/eventTime'
 import { requireRole } from '~~/server/utils/requireRole'
 import type { ApprovalStatus, VolunteerArea } from '#server/utils/generated/prisma/client'
 
@@ -54,7 +55,7 @@ export default defineEventHandler(async (event) => {
       volunteerId: volunteer.id,
       eventId: body.eventId || null,
       eventName: body.eventName || null,
-      date: new Date(body.date),
+      date: parseZonedDate(body.date),
       hours: body.hours,
       approvalStatus: body.approvalStatus ?? 'PENDING',
       // Optional: left null, the reports attribute these hours by falling back

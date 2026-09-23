@@ -22,6 +22,11 @@ import { errorMessage as toErrorMessage } from '~/lib/errorMessage'
  * they wanted to attend gets returned to that event once the account exists.
  */
 
+definePageMeta({
+  layout: 'secondary',
+  backTo: '/auth/login',
+})
+
 const route = useRoute()
 // Bouncing between sign-up and login must not lose where the user was headed.
 const loginLink = computed(() => ({
@@ -67,9 +72,12 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center min-h-screen">
+  <PageContainer
+    width="form"
+    class="flex flex-1 flex-col items-center justify-center"
+  >
     <UAuthForm
-      class="w-full max-w-md"
+      class="w-full"
       :fields="signUpFields"
       :schema="signUpSchema"
       title="Let's get you started to be a Volunteer!"
@@ -102,5 +110,5 @@ async function onSubmit(payload: FormSubmitEvent<SignUpSchema>) {
         >Terms of Service</ULink>.
       </template>
     </UAuthForm>
-  </div>
+  </PageContainer>
 </template>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatShortDateTime } from '#shared/utils/eventTime'
 import DetailSection from '~/components/user/DetailSection.vue'
 import type { UserData } from '~/types/user/user-data'
 
@@ -33,13 +34,7 @@ const drafts = defineModel<Record<string, RsvpDraft>>({ required: true })
 const badgeStyle = 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
 
 function formatDateTime(value: Date | string) {
-  return new Date(value).toLocaleString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  })
+  return formatShortDateTime(value)
 }
 </script>
 

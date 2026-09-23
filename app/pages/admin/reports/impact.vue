@@ -1,6 +1,13 @@
 <script setup lang="ts">
+import { formatShortDate } from '#shared/utils/eventTime'
 import type { ImpactReport } from '#shared/types/reports'
 import { formatCompact, formatCurrency } from '~/lib/chart'
+
+definePageMeta({
+  layout: 'secondary',
+  backText: 'Reports',
+  backTo: '/admin/reports',
+})
 
 /**
  * The leadership and funder view of volunteer contribution.
@@ -55,8 +62,8 @@ function exportHref(dataset: 'logs' | 'volunteers' | 'programs') {
 </script>
 
 <template>
-  <div class="flex flex-col w-full min-h-screen bg-slate-50 dark:bg-gray-900 pb-24">
-    <div class="px-4 sm:px-6 mt-20 max-w-5xl w-full mx-auto">
+  <div class="flex flex-1 flex-col bg-slate-50 dark:bg-gray-900">
+    <PageContainer width="wide">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold text-[#313131] dark:text-white">
@@ -324,11 +331,11 @@ function exportHref(dataset: 'logs' | 'volunteers' | 'programs') {
             <p class="mt-4 text-[11px] font-medium text-slate-500 dark:text-gray-400">
               In-kind value uses {{ formatCurrency(report.rate.hourlyRate) }} per volunteer hour —
               {{ report.rate.source }}<span v-if="report.rate.updatedAt">, last reviewed
-                {{ new Date(report.rate.updatedAt).toLocaleDateString('en-US', { dateStyle: 'medium' }) }}</span>.
+                {{ formatShortDate(report.rate.updatedAt) }}</span>.
             </p>
           </section>
         </div>
       </div>
-    </div>
+    </PageContainer>
   </div>
 </template>

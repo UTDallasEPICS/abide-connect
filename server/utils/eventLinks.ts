@@ -1,52 +1,13 @@
 /**
- * Date wording and absolute links shared by everything that talks to a
- * participant about an event — the reminder cron, the sign-up confirmation
- * email, and the push payloads.
+ * Absolute links for everything that talks to a participant about an event —
+ * the reminder cron, the sign-up confirmation email, and the push payloads.
+ *
+ * The date *wording* these messages use is not here: it comes from
+ * `#shared/utils/eventTime`, the one module that formats a date in this app, so
+ * an email and the page it links to say the same thing. This file used to own a
+ * second `formatEventDateTime` alongside that one, which is a trap in server
+ * code where `server/utils/*` is auto-imported.
  */
-
-/**
- * Timezone every message is worded in. Abide operates in one place, so times
- * are formatted for that place rather than per-recipient — matching the `cron`
- * block in nuxt.config.ts, which schedules the reminder job in the same zone.
- */
-export const TIME_ZONE = 'America/Chicago'
-
-/** "Tuesday, March 4 at 9:00 AM" — the headline date in emails. */
-export function formatEventDateTime(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: TIME_ZONE,
-  }).format(date).replace(/, (\d{1,2}:\d{2})/, ' at $1')
-}
-
-/** "9:00 AM" — used where the surrounding copy already supplies the day. */
-export function formatEventTime(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: TIME_ZONE,
-  }).format(date)
-}
-
-/**
- * "Tuesday, March 4 at 9:00 AM – 12:00 PM", collapsing to the start alone when
- * the end is missing or not on the same day — a multi-day range spelled out in
- * one line reads worse than just telling people when to turn up.
- */
-export function formatEventWhen(start: Date, end?: Date | null): string {
-  const startText = formatEventDateTime(start)
-  if (!end || !isSameDay(start, end)) return startText
-  return `${startText} – ${formatEventTime(end)}`
-}
-
-function isSameDay(a: Date, b: Date): boolean {
-  const format = new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE, dateStyle: 'short' })
-  return format.format(a) === format.format(b)
-}
 
 /** `20260304T150000Z` — the timestamp format Google Calendar links expect. */
 function toCalendarStamp(date: Date): string {

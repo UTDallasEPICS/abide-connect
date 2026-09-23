@@ -11,6 +11,7 @@
  * this module escapes on your behalf except where a helper takes plain text and
  * says so.
  */
+import { zonedParts } from '#shared/utils/reportRange'
 
 /** Palette lifted from the OTP email, which set the house style. */
 export const emailColors = {
@@ -118,7 +119,7 @@ export function renderEmailShell(options: EmailShellOptions): string {
         <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px; width:100%;">
           <tr>
             <td align="center" style="padding:20px 32px;">
-              <p style="margin:0; font-size:12px; line-height:1.6; color:${emailColors.muted};">&copy; ${new Date().getFullYear()} Abide Connect. All rights reserved.</p>
+              <p style="margin:0; font-size:12px; line-height:1.6; color:${emailColors.muted};">&copy; ${zonedParts(new Date()).year} Abide Connect. All rights reserved.</p>
             </td>
           </tr>
         </table>

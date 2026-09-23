@@ -44,13 +44,21 @@ const oneRowMinHeight = 'min-h-24'
 
 const skeletonCount = 6
 
-const onSignUpClick = () => navigateTo('/sign-up')
+const onSignUpClick = () => navigateTo('/auth/sign-up')
 const onSeeAllEventsClick = () => navigateTo('/events/list')
 const onVolunteerApplicationClick = () => navigateTo('/volunteer-application')
 
-const headers = useRequestHeaders(['cookie'])
-const { data: user } = await useFetch('/api/user/me', { headers })
-const { data: volunteer } = await useFetch<VolunteerMe | null>('/api/volunteer/me', { headers })
+// Both of these run client-side only (`server: false`). Nothing else on this
+// page reads the session during SSR, so that keeps the rendered HTML identical
+// for a signed-in and a signed-out visitor — which is what lets `'/'` be cached
+// with `swr` in nuxt.config.ts. Move either one back to the server and the
+// cache starts handing a signed-in page to anonymous visitors.
+//
+// The cost is that the "Your Events" section and the sign-up strip below it
+// appear after hydration rather than in the first paint. The `immediate: false`
+// + watch pattern on the dependent fetches already handles arriving late.
+const { data: user } = useLazyFetch('/api/user/me', { server: false })
+const { data: volunteer } = useLazyFetch<VolunteerMe | null>('/api/volunteer/me', { server: false })
 
 const showYourEventsSection = computed(() => !!user.value)
 
@@ -62,6 +70,12 @@ const {
   error: yourEventsFetchError,
   status: yourEventsStatus,
 } = useLazyFetch<UserUpcomingEvent[]>('/api/user/upcoming-events', {
+  // Explicit key so the `refreshNuxtData` calls below actually find this
+  // fetch. Without one, useFetch keys itself on a hash of the URL and its
+  // options ("$f" + hash(...)), which no caller can spell — and since `user`
+  // now resolves client-side, `immediate` is always false on first render and
+  // the watch is the only thing that ever starts this request.
+  key: '/api/user/upcoming-events',
   default: () => [],
   server: false,
   immediate: showYourEventsSection.value,
@@ -177,6 +191,9 @@ const {
   error: trainingFetchError,
   status: trainingStatus,
 } = useLazyFetch<UpcomingEvent[]>('/api/events/training', {
+  // See the note on the "Your Events" fetch above — the watch below refreshes
+  // by this key, so it has to be set explicitly.
+  key: '/api/events/training',
   query: { limit: 9 },
   default: () => [],
   server: false,
@@ -202,240 +219,253 @@ watch(showTrainingSection, (shouldShow) => {
 </script>
 
 <template>
-  <div class="mt-20 min-h-screen pb-20">
-    <div class="w-full max-w-(--ui-container) mx-auto">
-      <div class="lg:px-10 px-5">
-        <!-- Carousel -->
-        <UCarousel
-          v-slot="{ item }"
-          loop
-          dots
-          class="rounded-2xl shadow-xl overflow-hidden mb-8"
-          :autoplay="{ delay: 6000 }"
-          :items="items"
-          :ui="{
-            dots: 'bottom-3 gap-1.5',
-            dot: 'w-2 h-2 bg-black/30 data-[state=active]:bg-white transition-colors shadow-lg',
-          }"
-        >
-          <img
-            :src="item"
-            class="w-full aspect-video object-cover rounded-2xl"
-            alt=""
+  <div>
+    <PageContainer>
+      <!-- Carousel -->
+      <UCarousel
+        v-slot="{ item, index }"
+        loop
+        dots
+        class="rounded-2xl shadow-xl overflow-hidden mb-8"
+        :autoplay="{ delay: 6000 }"
+        :items="items"
+        :ui="{
+          dots: 'bottom-3 gap-1.5',
+          dot: 'w-2 h-2 bg-black/30 data-[state=active]:bg-white transition-colors shadow-lg',
+        }"
+      >
+        <!--
+          The originals are 1–2 MP PNG/JPEG (image3.JPG is 4032x3024, 2.3 MB).
+          NuxtImg re-encodes to webp at the width actually needed. Only the
+          first slide is the LCP candidate, so it loads eagerly at high
+          priority and the rest stay lazy — the carousel doesn't advance for
+          6 seconds.
+        -->
+        <NuxtImg
+          :src="item"
+          :width="1600"
+          :height="900"
+          format="webp"
+          sizes="xs:100vw sm:640px md:768px lg:1024px xl:1280px"
+          :loading="index === 0 ? 'eager' : 'lazy'"
+          :fetchpriority="index === 0 ? 'high' : 'auto'"
+          :preload="index === 0"
+          decoding="async"
+          class="w-full aspect-video object-cover rounded-2xl"
+          alt=""
+        />
+      </UCarousel>
+
+      <!-- Your Events — hidden entirely once loaded with zero events -->
+      <section
+        v-if="showYourEventsBlock"
+        class="mb-8"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <div
+            v-if="yourEventsPending"
+            class="h-5 w-32 animate-pulse rounded bg-gray-200"
+          />
+          <h3
+            v-else
+            class="uppercase font-gray-900"
           >
-        </UCarousel>
+            Your Events
+          </h3>
+        </div>
 
-        <!-- Your Events — hidden entirely once loaded with zero events -->
-        <section
-          v-if="showYourEventsBlock"
-          class="mb-8"
-        >
-          <div class="flex items-center justify-between mb-2">
-            <div
-              v-if="yourEventsPending"
-              class="h-5 w-32 animate-pulse rounded bg-gray-200"
+        <div :class="oneRowMinHeight">
+          <div
+            v-if="yourEventsPending"
+            class="flex flex-col gap-3"
+          >
+            <SecondaryEventCardSkeleton
+              v-for="n in 1"
+              :key="n"
             />
-            <h3
-              v-else
-              class="uppercase font-gray-900"
-            >
-              Your Events
-            </h3>
           </div>
+          <p
+            v-if="yourEventsError"
+            class="text-red-600 text-sm"
+          >
+            Failed to load your events. Please try again later.
+          </p>
 
-          <div :class="oneRowMinHeight">
-            <div
-              v-if="yourEventsPending"
-              class="flex flex-col gap-3"
-            >
-              <SecondaryEventCardSkeleton
-                v-for="n in 1"
-                :key="n"
+          <template v-if="!yourEventsPending && !yourEventsError">
+            <div class="flex flex-col gap-3">
+              <SecondaryEventCard
+                v-for="item in yourEvents"
+                :id="item.id"
+                :key="item.id"
+                :url="item.url"
+                :title="item.title"
+                :image="item.image"
+                :start-time="item.startTime"
+                :location="item.location"
+                @cancel="handleCancelRsvp"
               />
             </div>
-            <p
-              v-if="yourEventsError"
-              class="text-red-600 text-sm"
-            >
-              Failed to load your events. Please try again later.
-            </p>
+          </template>
+        </div>
+      </section>
 
-            <template v-if="!yourEventsPending && !yourEventsError">
-              <div class="flex flex-col gap-3">
-                <SecondaryEventCard
-                  v-for="item in yourEvents"
-                  :id="item.id"
-                  :key="item.id"
-                  :url="item.url"
-                  :title="item.title"
-                  :image="item.image"
-                  :start-time="item.startTime"
-                  :location="item.location"
-                  @cancel="handleCancelRsvp"
-                />
-              </div>
-            </template>
-          </div>
-        </section>
-
-        <!-- Upcoming Events -->
-        <section class="mb-8">
-          <div class="flex items-center justify-between mb-2">
-            <div
-              v-if="pending"
-              class="h-5 w-40 animate-pulse rounded bg-gray-200"
+      <!-- Upcoming Events -->
+      <section class="mb-8">
+        <div class="flex items-center justify-between mb-2">
+          <div
+            v-if="pending"
+            class="h-5 w-40 animate-pulse rounded bg-gray-200"
+          />
+          <h3
+            v-else
+            class="uppercase font-gray-900"
+          >
+            Upcomming Events
+          </h3>
+          <UButton
+            color="neutral"
+            variant="outline"
+            size="sm"
+            class="flex items-center gap-1.5 rounded-full bg-transparent px-3.5 py-1.5 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+            @click="onSeeAllEventsClick"
+          >
+            <UIcon
+              name="i-lucide-search"
+              class="w-4 h-4"
             />
-            <h3
-              v-else
-              class="uppercase font-gray-900"
-            >
-              Upcomming Events
-            </h3>
-            <UButton
-              color="neutral"
-              variant="outline"
-              size="sm"
-              class="flex items-center gap-1.5 rounded-full bg-transparent px-3.5 py-1.5 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-              @click="onSeeAllEventsClick"
-            >
-              <UIcon
-                name="i-lucide-search"
-                class="w-4 h-4"
-              />
-              <span>See All</span>
-            </UButton>
-          </div>
+            <span>See All</span>
+          </UButton>
+        </div>
 
-          <div :class="oneRowMinHeight">
-            <div
-              v-if="pending"
-              class="flex gap-4 overflow-x-hidden"
-            >
-              <EventCardSkeleton
-                v-for="n in skeletonCount"
-                :key="n"
-              />
-            </div>
-            <p
-              v-if="error"
-              class="text-red-600 text-sm"
-            >
-              Failed to load events. Please try again later.
-            </p>
-
-            <template v-if="!pending && !error">
-              <UCarousel
-                v-if="upcomingEvents.length"
-                v-slot="{ item }"
-                drag-free
-                :items="upcomingEvents"
-                :ui="{
-                  viewport: 'overflow-visible lg:overflow-x-hidden',
-                  container: 'gap-1',
-                  item: 'basis-auto',
-                }"
-              >
-                <EventCard
-                  :url="item.url"
-                  :title="item.title"
-                  :image="item.image"
-                  :day="item.day"
-                  :month="item.month"
-                  :location="item.location"
-                  :going="item.going"
-                />
-              </UCarousel>
-              <p
-                v-else
-                class="text-gray-400 font-normal"
-              >
-                No events found
-              </p>
-            </template>
-          </div>
-        </section>
-
-        <!-- Training Events -->
-        <section
-          v-if="showTrainingSection"
-          class="mb-8"
-        >
-          <div class="flex items-center justify-between mb-2">
-            <div
-              v-if="trainingPending"
-              class="h-5 w-36 animate-pulse rounded bg-gray-200"
+        <div :class="oneRowMinHeight">
+          <div
+            v-if="pending"
+            class="flex gap-4 overflow-x-hidden"
+          >
+            <EventCardSkeleton
+              v-for="n in skeletonCount"
+              :key="n"
             />
-            <h3
-              v-else
-              class="uppercase font-gray-900"
-            >
-              Training Events
-            </h3>
-            <UButton
-              color="neutral"
-              variant="outline"
-              size="sm"
-              class="flex items-center gap-1.5 rounded-full bg-transparent px-3.5 py-1.5 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-              @click="onSeeAllEventsClick"
-            >
-              <UIcon
-                name="i-lucide-search"
-                class="w-4 h-4"
-              />
-              <span>See All</span>
-            </UButton>
           </div>
+          <p
+            v-if="error"
+            class="text-red-600 text-sm"
+          >
+            Failed to load events. Please try again later.
+          </p>
 
-          <div :class="oneRowMinHeight">
-            <div
-              v-if="trainingPending"
-              class="flex gap-4 overflow-x-hidden"
+          <template v-if="!pending && !error">
+            <UCarousel
+              v-if="upcomingEvents.length"
+              v-slot="{ item }"
+              drag-free
+              :items="upcomingEvents"
+              :ui="{
+                viewport: 'overflow-visible lg:overflow-x-hidden',
+                container: 'gap-1',
+                item: 'basis-auto',
+              }"
             >
-              <EventCardSkeleton
-                v-for="n in skeletonCount"
-                :key="n"
+              <EventCard
+                :url="item.url"
+                :title="item.title"
+                :image="item.image"
+                :day="item.day"
+                :month="item.month"
+                :location="item.location"
+                :going="item.going"
               />
-            </div>
+            </UCarousel>
             <p
-              v-if="trainingError"
-              class="text-red-600 text-sm"
+              v-else
+              class="text-gray-400 font-normal"
             >
-              Failed to load training events. Please try again later.
+              No events found
             </p>
+          </template>
+        </div>
+      </section>
 
-            <template v-if="!trainingPending && !trainingError">
-              <UCarousel
-                v-if="trainingEvents.length"
-                v-slot="{ item }"
-                drag-free
-                :items="trainingEvents"
-                :ui="{
-                  viewport: 'overflow-visible lg:overflow-x-hidden',
-                  container: 'gap-1',
-                  item: 'basis-auto',
-                }"
-              >
-                <EventCard
-                  :url="item.url"
-                  :title="item.title"
-                  :image="item.image"
-                  :day="item.day"
-                  :month="item.month"
-                  :location="item.location"
-                  :going="item.going"
-                />
-              </UCarousel>
-              <p
-                v-else
-                class="text-gray-400 font-normal"
-              >
-                No events found
-              </p>
-            </template>
+      <!-- Training Events -->
+      <section
+        v-if="showTrainingSection"
+        class="mb-8"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <div
+            v-if="trainingPending"
+            class="h-5 w-36 animate-pulse rounded bg-gray-200"
+          />
+          <h3
+            v-else
+            class="uppercase font-gray-900"
+          >
+            Training Events
+          </h3>
+          <UButton
+            color="neutral"
+            variant="outline"
+            size="sm"
+            class="flex items-center gap-1.5 rounded-full bg-transparent px-3.5 py-1.5 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+            @click="onSeeAllEventsClick"
+          >
+            <UIcon
+              name="i-lucide-search"
+              class="w-4 h-4"
+            />
+            <span>See All</span>
+          </UButton>
+        </div>
+
+        <div :class="oneRowMinHeight">
+          <div
+            v-if="trainingPending"
+            class="flex gap-4 overflow-x-hidden"
+          >
+            <EventCardSkeleton
+              v-for="n in skeletonCount"
+              :key="n"
+            />
           </div>
-        </section>
-      </div>
-    </div>
+          <p
+            v-if="trainingError"
+            class="text-red-600 text-sm"
+          >
+            Failed to load training events. Please try again later.
+          </p>
+
+          <template v-if="!trainingPending && !trainingError">
+            <UCarousel
+              v-if="trainingEvents.length"
+              v-slot="{ item }"
+              drag-free
+              :items="trainingEvents"
+              :ui="{
+                viewport: 'overflow-visible lg:overflow-x-hidden',
+                container: 'gap-1',
+                item: 'basis-auto',
+              }"
+            >
+              <EventCard
+                :url="item.url"
+                :title="item.title"
+                :image="item.image"
+                :day="item.day"
+                :month="item.month"
+                :location="item.location"
+                :going="item.going"
+              />
+            </UCarousel>
+            <p
+              v-else
+              class="text-gray-400 font-normal"
+            >
+              No events found
+            </p>
+          </template>
+        </div>
+      </section>
+    </PageContainer>
 
     <!-- Sign Up -->
     <div
@@ -467,45 +497,43 @@ watch(showTrainingSection, (shouldShow) => {
       />
     </div>
 
-    <div class="w-full max-w-(--ui-container) mx-auto">
-      <div class="lg:px-10 px-5">
-        <section>
-          <h3 class="uppercase font-gray-900 mb-4">
-            Services
-          </h3>
-          <div class="flex flex-col gap-4 sm:flex-row sm:gap-5">
-            <ServiceComponent
-              title="Prenatal Care"
-              description="Experience comprehensive prenatal care tailored to your unique needs at our clinic, where you'll be supported by a bilingual team of women of color."
-              footer-text="Learn more about prental care"
-              image="/images/PrenatalCare.png"
-              url="https://www.abidewomen.org/prenatalcare"
-            />
-            <ServiceComponent
-              title="Postpartum Care and Doula Support"
-              description="Experience compassionate postpartum care designed to support your recovery and well-being after childbirth."
-              footer-text="Explore postpartum care"
-              image="/images/PostpartumCare.png"
-              url="https://www.abidewomen.org/postpartumcare"
-            />
-            <ServiceComponent
-              title="Childbirth Education"
-              description="Empower yourself with essential knowledge and skills for a healthy pregnancy, labor, and postpartum experience in our supportive, culturally-sensitive classes."
-              footer-text="View upcoming class times"
-              image="/images/ChildbirthEducation.png"
-              url="https://www.abidewomen.org/childbirthed"
-            />
-            <ServiceComponent
-              title="Donate"
-              description="Every contribution to Abide Women's Health Services fuels our mission to enhance maternal and infant health outcomes in communities that face the lowest quality of care."
-              footer-text="Give now"
-              image="/images/Donate.png"
-              url="https://www.abidewomen.org/donate"
-            />
-          </div>
-        </section>
-      </div>
-    </div>
+    <PageContainer>
+      <section>
+        <h3 class="uppercase font-gray-900 mb-4">
+          Services
+        </h3>
+        <div class="flex flex-col gap-4 sm:flex-row sm:gap-5">
+          <ServiceComponent
+            title="Prenatal Care"
+            description="Experience comprehensive prenatal care tailored to your unique needs at our clinic, where you'll be supported by a bilingual team of women of color."
+            footer-text="Learn more about prental care"
+            image="/images/PrenatalCare.png"
+            url="https://www.abidewomen.org/prenatalcare"
+          />
+          <ServiceComponent
+            title="Postpartum Care and Doula Support"
+            description="Experience compassionate postpartum care designed to support your recovery and well-being after childbirth."
+            footer-text="Explore postpartum care"
+            image="/images/PostpartumCare.png"
+            url="https://www.abidewomen.org/postpartumcare"
+          />
+          <ServiceComponent
+            title="Childbirth Education"
+            description="Empower yourself with essential knowledge and skills for a healthy pregnancy, labor, and postpartum experience in our supportive, culturally-sensitive classes."
+            footer-text="View upcoming class times"
+            image="/images/ChildbirthEducation.png"
+            url="https://www.abidewomen.org/childbirthed"
+          />
+          <ServiceComponent
+            title="Donate"
+            description="Every contribution to Abide Women's Health Services fuels our mission to enhance maternal and infant health outcomes in communities that face the lowest quality of care."
+            footer-text="Give now"
+            image="/images/Donate.png"
+            url="https://www.abidewomen.org/donate"
+          />
+        </div>
+      </section>
+    </PageContainer>
 
     <!-- Unregister confirmation -->
     <ConfirmModal

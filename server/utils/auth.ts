@@ -98,6 +98,26 @@ export const auth = betterAuth({
       },
     },
   },
+  /**
+   * Session lifetime, spelled out rather than left to better-auth's defaults so
+   * that changing it is a deliberate act.
+   *
+   * These are the values better-auth would pick anyway: a session lives 7 days
+   * and slides forward another 7 whenever it's used and is more than a day old.
+   * So an ordinary volunteer or donor who keeps coming back stays signed in and
+   * never sees a login screen.
+   *
+   * Admin sessions are *not* allowed to renew indefinitely like that, but this
+   * is the wrong place to express it — `disableSessionRefresh` here is global
+   * and would log everybody out weekly. The admin ceiling is enforced instead by
+   * `enforceAdminSessionAge` in `sessionPolicy.ts`, which is per-request and can
+   * see who is asking. Loosening anything here without reading that leaves
+   * privileged sessions renewing forever, which is what it exists to prevent.
+   */
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    updateAge: 60 * 60 * 24, // slide forward at most once a day
+  },
   database: prismaAdapter(prisma, {
     provider: 'sqlite',
   }),

@@ -50,6 +50,14 @@ function matchesRoute(path: string, route: string): boolean {
  * browser. Cookies are forwarded explicitly so the calls work during SSR,
  * where there's no ambient credential context.
  *
+ * Both calls use `$fetch`, never `useFetch` — the same reason spelled out in
+ * `auth.ts`. `useAsyncData` memoises by key, and with no component instance to
+ * own the entry (which is the case in middleware) it skips the refetch once the
+ * entry reads `success` and never disposes it. A single cached "no session",
+ * picked up from a guarded route visited while signed out, would then outlive
+ * the sign-in and bounce the user back to login on every client-side navigation
+ * until a hard reload.
+ *
  * Two sequential round-trips per guarded navigation (session, then roles);
  * they can't be parallelised as written since the roles call is skipped when
  * there's no session.
@@ -67,9 +75,12 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const unauthorizedPage = config.unauthorizedPage ?? DEFAULT_UNAUTHORIZED_PAGE
 
   const headers = useRequestHeaders(['cookie'])
-  const { data: session } = await useFetch('/api/auth/get-session', { headers })
+  const session = await $fetch<{ session?: unknown } | null>('/api/auth/get-session', {
+    headers,
+    cache: 'no-store',
+  })
 
-  if (!session.value?.session) {
+  if (!session?.session) {
     return navigateTo(DEFAULT_LOGIN_PAGE)
   }
 

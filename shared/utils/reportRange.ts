@@ -11,9 +11,14 @@
  * 31st land in the next month, and a Sunday-evening shift reads as Monday.
  * Nothing in this file uses the host's local timezone.
  */
+import { ORG_TIME_ZONE } from './timeZone'
 
-/** The org's timezone. The cron in `nuxt.config.ts` already assumes it. */
-export const REPORT_TIME_ZONE = 'America/Chicago'
+/**
+ * The org's timezone, under the name the report code reads it by. The cron in
+ * `nuxt.config.ts` already assumes it, and so does every date the app displays
+ * — see `shared/utils/timeZone.ts`, which owns the value.
+ */
+export const REPORT_TIME_ZONE = ORG_TIME_ZONE
 
 /** A half-open interval: `start` is included, `end` is not. */
 export interface DateRange {

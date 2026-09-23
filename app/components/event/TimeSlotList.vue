@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { VolunteerStatus } from '#shared/utils/eventType'
-import { formatSlotRange } from '#shared/utils/timeSlot'
+import { formatTimeRange } from '#shared/utils/eventTime'
 
 /**
  * The time blocks on an event, as volunteers and staff see them.
@@ -101,7 +101,7 @@ function errorText(err: unknown, fallback: string) {
 }
 
 function range(slot: Slot) {
-  return formatSlotRange(new Date(slot.startTime), new Date(slot.endTime))
+  return formatTimeRange(slot.startTime, slot.endTime)
 }
 
 function hasPassed(slot: Slot) {

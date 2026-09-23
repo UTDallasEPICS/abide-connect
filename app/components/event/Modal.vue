@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { useColorMode } from '#imports'
 import type { EventType } from '#shared/utils/eventType'
-import { fromDateTimeLocal, validateTimeSlots } from '#shared/utils/timeSlot'
+import { fromDateTimeLocal } from '#shared/utils/eventTime'
+import { validateTimeSlots } from '#shared/utils/timeSlot'
 
 const colorMode = useColorMode()
 const isDark = computed(() => colorMode.value === 'dark')
@@ -103,8 +104,10 @@ async function saveEvent() {
         shortDesc: newEvent.value.shortDesc,
         description: newEvent.value.description,
         location: newEvent.value.location,
-        startTime: new Date(newEvent.value.startTime).toISOString(),
-        endTime: new Date(newEvent.value.endTime).toISOString(),
+        // Read as the org's wall clock, like the blocks below and like the
+        // validation above — `new Date()` would read the admin's own zone.
+        startTime: fromDateTimeLocal(newEvent.value.startTime).toISOString(),
+        endTime: fromDateTimeLocal(newEvent.value.endTime).toISOString(),
         eventType: newEvent.value.eventType,
         mobileClinicId: newEvent.value.mobileClinicId,
         // Created in the same transaction as the event itself.

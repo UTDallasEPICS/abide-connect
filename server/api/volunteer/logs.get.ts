@@ -1,3 +1,4 @@
+import { formatShortDate } from '#shared/utils/eventTime'
 import prisma from '#server/utils/prisma'
 import { auth } from '#server/utils/auth'
 
@@ -47,11 +48,7 @@ export default defineEventHandler(async (event) => {
   const formattedLogs = logs.map(log => ({
     id: String(log.id),
     event: log.event.title,
-    date: log.date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }),
+    date: formatShortDate(log.date),
     hours: log.hours,
     approvalStatus: log.approvalStatus,
     comment: log.comment ?? '',
