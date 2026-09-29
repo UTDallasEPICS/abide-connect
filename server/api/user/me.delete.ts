@@ -13,6 +13,13 @@ import prisma from '#server/utils/prisma'
  * Volunteer_Hour_Log rows go with the account. They're per-volunteer records
  * rather than an aggregate Abide reports on, and leaving orphaned rows behind
  * would break the volunteerId foreign key.
+ *
+ * Volunteer_Application rows go too, and are matched on the email as well as
+ * the volunteer id. That relation is `onDelete: SetNull`, so nothing here would
+ * fail if they were left — but they carry the person's name, phone, emergency
+ * contact and signature, and keeping that after someone asks for their account
+ * to be erased is not an archive. The email match catches a submission imported
+ * before its profile existed.
  */
 export default defineEventHandler(async (event) => {
   const session = await auth.api.getSession({ headers: event.headers })
@@ -21,11 +28,16 @@ export default defineEventHandler(async (event) => {
   }
 
   const userId = session.user.id
+  const email = session.user.email
 
   await prisma.$transaction(async (tx) => {
     const volunteer = await tx.volunteer.findUnique({
       where: { userId },
       select: { id: true },
+    })
+
+    await tx.volunteer_Application.deleteMany({
+      where: { OR: [{ email }, ...(volunteer ? [{ volunteerId: volunteer.id }] : [])] },
     })
 
     if (volunteer) {
