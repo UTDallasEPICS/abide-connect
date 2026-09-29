@@ -79,7 +79,9 @@ export default defineEventHandler(async (event) => {
         startTime: slot.startTime,
         endTime: slot.endTime,
         capacity: slot.capacity,
+        role: slot.role,
         note: slot.note,
+        color: slot.color,
         signupCount,
         // Deliberately not clamped at zero: an admin is allowed to cut
         // capacity below the number of people already signed up, and the UI

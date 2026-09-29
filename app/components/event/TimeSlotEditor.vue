@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import type { ButtonProps } from '@nuxt/ui'
 import { formatTimeRange, fromDateTimeLocal } from '#shared/utils/eventTime'
-import { validateTimeSlot } from '#shared/utils/timeSlot'
+import {
+  DEFAULT_SLOT_COLOR_TOKEN,
+  SLOT_COLORS,
+  SLOT_ROLE_MAX_LENGTH,
+  slotColorHex,
+  validateTimeSlot,
+} from '#shared/utils/timeSlot'
 
 /**
  * Editor for the time blocks on an event.
@@ -19,6 +26,12 @@ interface TimeSlotRow {
   startTime: string
   endTime: string
   capacity: number
+  /** What the volunteer will be doing. Absent on blocks made before this. */
+  role?: string | null
+  /** Extra detail hanging off the role. */
+  note?: string | null
+  /** A `SLOT_COLORS` token. Null renders as the default swatch. */
+  color?: string | null
   /** Confirmed signups, from the API. Drives the removal warning. */
   signupCount?: number
 }
@@ -34,7 +47,11 @@ const props = withDefaults(defineProps<{
    * silently gain one just because an admin opened the form.
    */
   seedWhenEmpty?: boolean
-  color?: string
+  /**
+   * Passed straight to `UButton`, so it has to be that component's own
+   * colour union — a plain `string` is wider than what it accepts.
+   */
+  color?: ButtonProps['color']
 }>(), {
   seedWhenEmpty: false,
   color: 'primary',
@@ -60,6 +77,15 @@ function updateRow(index: number, patch: Partial<TimeSlotRow>) {
   commit(props.modelValue.map((row, i) => (i === index ? { ...row, ...patch } : row)))
 }
 
+/**
+ * A random swatch for a new block. Skips the previous block's colour when it
+ * can, so two blocks added back to back don't come out looking like one.
+ */
+function randomColorToken(avoid?: string | null): string {
+  const pool = SLOT_COLORS.filter(c => c.token !== avoid)
+  return pool[Math.floor(Math.random() * pool.length)]!.token
+}
+
 function addRow() {
   if (!hasWindow.value) return
 
@@ -70,7 +96,13 @@ function addRow() {
 
   commit([
     ...props.modelValue,
-    { id: null, startTime: start, endTime: props.eventEnd, capacity: 1 },
+    {
+      id: null,
+      startTime: start,
+      endTime: props.eventEnd,
+      capacity: 1,
+      color: randomColorToken(last?.color),
+    },
   ])
 }
 
@@ -105,7 +137,7 @@ watch(
     // Create flow: the event now has times and no blocks, so give it the
     // default one spanning the whole thing.
     if (props.seedWhenEmpty && moved.length === 0 && start && end) {
-      commit([{ id: null, startTime: start, endTime: end, capacity: 1 }])
+      commit([{ id: null, startTime: start, endTime: end, capacity: 1, color: randomColorToken() }])
       return
     }
 
@@ -123,6 +155,7 @@ function rowProblem(row: TimeSlotRow): string | null {
       startTime: fromDateTimeLocal(row.startTime),
       endTime: fromDateTimeLocal(row.endTime),
       capacity: Number(row.capacity),
+      role: row.role,
     },
     slotWindow.value,
   )
@@ -130,6 +163,37 @@ function rowProblem(row: TimeSlotRow): string | null {
   // The shared rules return a sentence fragment so each caller can name the
   // block its own way; here the row itself is the subject.
   return problem ? `This block ${problem}.` : null
+}
+
+/**
+ * Which swatch shows as chosen. An unpainted block isn't drawn colourless —
+ * it's drawn in the default — so the picker says so rather than showing
+ * nothing selected.
+ */
+function selectedColor(row: TimeSlotRow): string {
+  return row.color ?? DEFAULT_SLOT_COLOR_TOKEN
+}
+
+/**
+ * The chosen swatch's name. The collapsed control is just the dot, so this is
+ * its accessible name and hover tooltip — the current colour stays readable to
+ * someone who can't tell the hues apart.
+ */
+function colorLabel(row: TimeSlotRow): string {
+  return SLOT_COLORS.find(c => c.token === selectedColor(row))?.label ?? 'Color'
+}
+
+/** Which row's colour menu is open, by index. Null when none is. */
+const openColorRow = ref<number | null>(null)
+
+function toggleColorMenu(index: number) {
+  openColorRow.value = openColorRow.value === index ? null : index
+}
+
+/** Picking closes the menu — one choice, no reason to keep it open. */
+function pickColor(index: number, token: string) {
+  updateRow(index, { color: token })
+  openColorRow.value = null
 }
 
 function rowRange(row: TimeSlotRow): string {
@@ -163,7 +227,6 @@ const totalSpots = computed(() =>
       <UButton
         icon="i-lucide-plus"
         size="sm"
-        variant="soft"
         :color="color"
         :disabled="!hasWindow"
         @click="addRow"
@@ -187,6 +250,15 @@ const totalSpots = computed(() =>
       hours cover its full length.
     </p>
 
+    <!-- The same blocks, drawn against the event's window. Read-only: it
+         mirrors the rows below rather than offering a second way to edit
+         them. -->
+    <EventTimeSlotTimeline
+      :slots="modelValue"
+      :event-start="eventStart"
+      :event-end="eventEnd"
+    />
+
     <div
       v-for="(row, index) in modelValue"
       :key="row.id ?? `new-${index}`"
@@ -205,7 +277,7 @@ const totalSpots = computed(() =>
             size="sm"
             variant="ghost"
             color="neutral"
-            @click="pendingRemoval = null"
+            @click="() => { pendingRemoval = null }"
           >
             Keep block
           </UButton>
@@ -259,6 +331,103 @@ const totalSpots = computed(() =>
             :aria-label="`Remove the ${rowRange(row)} block`"
             @click="requestRemoval(index)"
           />
+        </div>
+
+        <div class="mt-2 space-y-2">
+          <div class="flex items-end gap-2">
+            <div class="flex-1 min-w-0">
+              <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                Role / Task
+              </label>
+              <UInput
+                :model-value="row.role ?? ''"
+                :maxlength="SLOT_ROLE_MAX_LENGTH"
+                placeholder="e.g. Front desk check-in"
+                class="w-full"
+                @update:model-value="value => updateRow(index, { role: String(value) })"
+              />
+            </div>
+
+            <div class="shrink-0">
+              <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                Color
+              </label>
+
+              <!-- Collapsed to the current swatch. Seven chips on every row made
+                 the form read as a wall of colour, so the set is shown on
+                 demand instead. -->
+              <!-- A plain inline dropdown rather than UPopover: that portals to
+                 <body> with no z-index of its own, which can land behind the
+                 create-event modal (z-50). This renders in normal flow, so it
+                 stacks and scrolls with the row it belongs to.
+
+                 `type="button"` throughout: these sit inside the event form,
+                 where a bare button defaults to submit and would save the
+                 event on every click. -->
+              <div
+                class="relative"
+                @keydown.escape="openColorRow = null"
+              >
+                <button
+                  type="button"
+                  class="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-2.5 py-1.5 text-sm text-gray-700 dark:text-gray-200"
+                  :aria-label="`Color: ${colorLabel(row)}`"
+                  :title="colorLabel(row)"
+                  :aria-expanded="openColorRow === index"
+                  @click="toggleColorMenu(index)"
+                >
+                  <span
+                    class="w-4 h-4 rounded-full ring-1 ring-black/15 dark:ring-white/25"
+                    :style="{ backgroundColor: slotColorHex(row.color) }"
+                  />
+                  <UIcon
+                    name="i-lucide-chevron-down"
+                    class="w-3 h-3 text-gray-400 dark:text-gray-500"
+                  />
+                </button>
+
+                <!-- Catches the next click anywhere so the menu closes without a
+                   click-outside directive. Sits under the panel, over the page. -->
+                <div
+                  v-if="openColorRow === index"
+                  class="fixed inset-0 z-10"
+                  @click="openColorRow = null"
+                />
+
+                <div
+                  v-if="openColorRow === index"
+                  class="absolute right-0 top-full mt-1 z-20 flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 shadow-lg"
+                >
+                  <button
+                    v-for="swatch in SLOT_COLORS"
+                    :key="swatch.token"
+                    type="button"
+                    class="w-6 h-6 rounded-full ring-offset-2 ring-offset-white dark:ring-offset-gray-800"
+                    :class="selectedColor(row) === swatch.token
+                      ? 'ring-2 ring-gray-900 dark:ring-white'
+                      : 'ring-1 ring-black/15 dark:ring-white/25'"
+                    :style="{ backgroundColor: swatch.hex }"
+                    :aria-label="swatch.label"
+                    :aria-pressed="selectedColor(row) === swatch.token"
+                    :title="swatch.label"
+                    @click="pickColor(index, swatch.token)"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+              Note <span class="text-gray-400 dark:text-gray-500">(optional)</span>
+            </label>
+            <UInput
+              :model-value="row.note ?? ''"
+              placeholder="Anything else the volunteer should know"
+              class="w-full"
+              @update:model-value="value => updateRow(index, { note: String(value) })"
+            />
+          </div>
         </div>
 
         <p
