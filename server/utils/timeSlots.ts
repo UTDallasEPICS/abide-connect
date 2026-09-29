@@ -3,6 +3,7 @@ import {
   type EventAudienceFlags,
 } from '#shared/utils/eventType'
 import {
+  SLOT_COLORS,
   validateTimeSlots,
   type SlotWindow,
   type TimeSlotDraft,
@@ -20,6 +21,30 @@ import {
 /** A block from a request body. `id` is null for blocks the admin just added. */
 export interface ParsedTimeSlot extends TimeSlotDraft {
   id: string | null
+}
+
+/**
+ * An optional free-text field as the database should hold it.
+ *
+ * A cleared input arrives as `''`, which would otherwise be stored as an empty
+ * string and read back as present-but-blank — so every reader would need to
+ * test truthiness rather than just null. Collapsing it here keeps "unset" to a
+ * single representation.
+ */
+function optionalText(value: unknown): string | null {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null
+}
+
+/**
+ * A swatch token, or null for anything not in the palette.
+ *
+ * Deliberately not a 400: colour is decoration, so an unknown token — a stale
+ * client, or a swatch since retired — should cost the block its colour, never
+ * the admin their save.
+ */
+function parseSlotColor(value: unknown): string | null {
+  const token = optionalText(value)
+  return SLOT_COLORS.some(c => c.token === token) ? token : null
 }
 
 /**
@@ -50,9 +75,9 @@ export function parseTimeSlotPayload(raw: unknown): ParsedTimeSlot[] {
       capacity: rawCapacity === undefined || rawCapacity === null || rawCapacity === ''
         ? 1
         : Number(rawCapacity),
-      note: typeof slot.note === 'string' && slot.note.trim().length > 0
-        ? slot.note.trim()
-        : null,
+      role: optionalText(slot.role),
+      note: optionalText(slot.note),
+      color: parseSlotColor(slot.color),
     }
   })
 }

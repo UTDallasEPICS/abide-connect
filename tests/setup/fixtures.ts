@@ -31,7 +31,15 @@ export async function resetDatabase() {
   await prisma.rSVP.deleteMany()
   await prisma.event.deleteMany()
   await prisma.location.deleteMany()
+  await prisma.volunteer_Application.deleteMany()
   await prisma.volunteer_VolunteerArea.deleteMany()
+  // The other three join tables have the same non-cascading FK to `Volunteer`
+  // as `volunteer_VolunteerArea`, so leaving them would make the delete below
+  // fail for any fixture that set them — which nothing did until the importer
+  // tests started writing languages, availability and certifications.
+  await prisma.volunteer_Language.deleteMany()
+  await prisma.volunteer_Availability.deleteMany()
+  await prisma.volunteer_Certification.deleteMany()
   await prisma.volunteer.deleteMany()
   await prisma.user_Role.deleteMany()
   await prisma.user.deleteMany()
