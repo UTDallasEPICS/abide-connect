@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import UpcomingEventCard from '~/components/event/UpcomingEventCard.vue';
 import SecondaryEventCard from '~/components/event/SecondaryEventCard.vue';
 import SecondaryEventCardSkeleton from '~/components/event/SecondaryEventCardSkeleton.vue';
 import WeekCalendar from '~/components/WeekCalendar.vue';
-import { zonedDateKey } from '#shared/utils/eventTime';
+import type { DateValue } from '@internationalized/date';
+import { today } from '@internationalized/date';
+import { ORG_TIME_ZONE } from '#shared/utils/timeZone';
+import { addZonedDays, zonedParts } from '#shared/utils/reportRange';
+import { zonedDateKey, zonedDayBounds } from '#shared/utils/eventTime';
 
 interface UpcomingEvent {
   id: string;
@@ -36,15 +39,50 @@ function onSeeAllWeekEventsClick() {
   navigateTo('/events/list');
 }
 
-// --- Events Today (also powers the carousel) ---
+// --- Upcoming Events Calendar ---
+// The calendar runs on the org's clock, not the reader's: a highlighted day is
+// a day an event falls on at the clinic, and "today" is today there.
+const tz = ORG_TIME_ZONE;
+const calendarDate = ref<DateValue>(today(tz));
+const isDateDisabled = (d: DateValue) => d.toDate(tz) < zonedDayBounds(new Date()).start;
+
 const {
-  data: todayEvents,
-  pending: todayPending,
-  error: todayFetchError,
-} = await useFetch<UpcomingEvent[]>('/api/events/today', {
-  query: { limit: 20 },
+  data: upcomingEvents,
+  pending: upcomingPending,
+  error: upcomingFetchError,
+} = await useFetch<(UpcomingEvent & { endTime: string })[]>('/api/events/upcoming', {
+  // 50 is the most the cached feed will honour (see server/utils/cacheKey.ts).
+  query: { limit: 50 },
 });
-const todayError = computed(() => !!todayFetchError.value);
+const upcomingError = computed(() => !!upcomingFetchError.value);
+
+/** `YYYY-MM-DD` in the org's zone, the key the highlights are looked up by. */
+const toDateKey = (year: number, month: number, day: number) =>
+  `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+// Every day an upcoming event falls on. An event marks each day it spans, not
+// just its first — same walk as the calendar on /volunteer.
+const eventDates = computed(() => {
+  const days = new Set<string>();
+
+  for (const event of upcomingEvents.value ?? []) {
+    let cursor = zonedDayBounds(event.startTime).start;
+    const last = zonedDayBounds(event.endTime ?? event.startTime).start;
+
+    // Bounded so bad data (an endTime before its startTime, or a wildly long
+    // range) can't hang the render.
+    for (let i = 0; i < 366; i++) {
+      const p = zonedParts(cursor);
+      days.add(toDateKey(p.year, p.month, p.day));
+      if (cursor >= last) break;
+      cursor = addZonedDays(cursor, 1);
+    }
+  }
+
+  return days;
+});
+
+const hasEventOn = (day: DateValue) => eventDates.value.has(toDateKey(day.year, day.month, day.day));
 
 // --- Your Events ---
 const headers = useRequestHeaders(['cookie']);
@@ -137,51 +175,55 @@ const { data: dayEvents, pending: dayEventsPending } = await useFetch<UpcomingEv
 
 <template>
   <PageContainer>
-    <!-- Today's Events (carousel) -->
+    <!-- Upcoming Events Calendar -->
     <section class="mb-8">
       <div class="flex items-center justify-between mb-2">
-        <div v-if="todayPending" class="h-5 w-40 animate-pulse rounded bg-gray-200" />
-        <h3 v-else class="uppercase font-gray-900">Today's Events</h3>
+        <div v-if="upcomingPending" class="h-5 w-40 animate-pulse rounded bg-gray-200" />
+        <h3 v-else class="uppercase font-gray-900">Upcoming Events</h3>
       </div>
 
-      <!-- Loading skeleton -->
-      <div v-if="todayPending" class="aspect-[21/9] w-full animate-pulse rounded-2xl bg-gray-200" />
-      <!-- Error state -->
-      <div
-        v-else-if="todayError"
-        class="flex aspect-[21/9] w-full items-center justify-center rounded-2xl bg-gray-50 text-sm text-red-400"
-      >
-        Failed to load today's events.
-      </div>
-      <!-- Empty state -->
-      <div
-        v-else-if="!todayEvents?.length"
-        class="flex aspect-[21/9] w-full items-center justify-center rounded-2xl bg-gray-50 text-sm text-gray-400"
-      >
-        No events today
-      </div>
-      <!-- Carousel -->
-      <UCarousel
-        v-else
-        loop
-        dots
-        :items="todayEvents"
-        :autoplay="{ delay: 6000 }"
-        v-slot="{ item }"
-        :ui="{
-          dots: 'relative -mt-4 gap-1.5',
-          dot: 'w-2 h-2 rounded-full bg-gray-300 data-[state=active]:bg-gray-900 transition-colors',
-        }"
-      >
-        <UpcomingEventCard
-          :url="item.url"
-          :image="item.image"
-          :day="item.day"
-          :month="item.month"
-          :title="item.title"
-          :location="item.location"
-        />
-      </UCarousel>
+      <div v-if="upcomingPending" class="h-80 w-full animate-pulse rounded-2xl bg-gray-200" />
+      <UCard v-else>
+        <UCalendar
+          v-model="calendarDate"
+          color="brand4"
+          :is-date-disabled="isDateDisabled"
+          locale="en-US"
+          weekday-format="short"
+          :first-day-of-week="0"
+          class="rounded-2xl"
+        >
+          <template #day="{ day }">
+            <span
+              v-if="hasEventOn(day)"
+              class="absolute inset-0 flex items-center justify-center rounded-full font-semibold bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300"
+            >
+              {{ day.day }}
+              <span class="sr-only">, has events</span>
+            </span>
+            <template v-else>
+              {{ day.day }}
+            </template>
+          </template>
+        </UCalendar>
+
+        <p v-if="upcomingError" class="pt-3 text-center text-sm text-red-400">
+          Failed to load upcoming events.
+        </p>
+        <!-- Key for the shaded days; pointless when nothing is marked. -->
+        <div
+          v-else-if="eventDates.size"
+          class="flex items-center justify-center gap-4 pt-3 text-xs text-gray-500 dark:text-gray-400"
+        >
+          <span class="flex items-center gap-1.5">
+            <span class="size-3 rounded-full bg-sky-100 dark:bg-sky-900/50" />
+            Event scheduled
+          </span>
+        </div>
+        <p v-else class="pt-3 text-center text-sm text-gray-400">
+          No upcoming events
+        </p>
+      </UCard>
     </section>
 
     <!-- Week Calendar (temporarily disabled) -->

@@ -36,6 +36,7 @@ export default defineEventHandler(async (event) => {
       location: e.location.address,
       going: e.participants.length + e.guestRSVPs.length,
       startTime: e.startTime,
+      endTime: e.endTime,
     }
   })
 })
