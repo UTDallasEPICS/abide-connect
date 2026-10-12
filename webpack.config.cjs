@@ -79,8 +79,27 @@ module.exports = (env) => {
   webpack.chainWebpack((config) => {
     config
       .plugin('nuxt-native-app-identifier')
-      .use(NuxtNativeAppIdentifierPlugin, [{ appId: "org.nuxtnative.app" }])
+      .use(NuxtNativeAppIdentifierPlugin, [{ appId: "org.abidewomen.connect" }])
   })
+
+  // ForkTsCheckerWebpackPlugin type-checks the *entire* `app/` TypeScript
+  // program, so while the frontend is still mid-migration its expected,
+  // not-yet-migrated errors (web-only APIs like ResizeObserver/Notification,
+  // `@nuxt/ui` types, the `#server`/`#shared`/`#app` aliases, Nuxt
+  // auto-import globals) are turned into hard webpack errors that fail every
+  // native build before Gradle even runs -- even though the native entry only
+  // bundles the pages that have actually been migrated. ts-loader itself is
+  // already `transpileOnly` (see the comment above), so the emitted bundle is
+  // unaffected either way; disabling this only removes in-build *reporting*.
+  // Type errors are still caught by `pnpm lint` / `vue-tsc` on the web side.
+  //
+  // Order 20 runs after the block above (order 10) has already registered the
+  // plugin via @nativescript/webpack's own queue. Delete this block once the
+  // migration is complete (or scope it to migrated paths) to restore native
+  // type-checking.
+  webpack.chainWebpack((config) => {
+    config.plugins.delete('ForkTsCheckerWebpackPlugin')
+  }, { order: 20 })
 
   return webpack.resolveConfig()
 }

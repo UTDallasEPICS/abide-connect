@@ -438,3 +438,90 @@ export PATH=$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tool
   page/route so a first APK can compile, then continue App Shell & Navigation.
 
 **Phase 2 (App Shell)**: Migrated layouts (default.vue, secondary.vue) to NativeScript GridLayout structure. Migrated nav components (Top, Bottom, BackButton, Actions, NotificationMenu) to NativeScript primitives - simplified NotificationMenu for MVP.
+
+## First runnable APK (toolchain bring-up)
+
+Goal: prove the whole Android pipeline (webpack → Gradle → SDK → APK) works
+independently of migration progress, so emulator/device testing can start now.
+Four real bugs were found and fixed to get there.
+
+### 1. `ForkTsCheckerWebpackPlugin` hard-failed every native build
+The native build type-checks the **entire `app/` TypeScript program**, so the
+51 expected not-yet-migrated errors (web-only APIs, `#shared`/`#server`/`#app`
+aliases, Nuxt auto-import globals, `@nuxt/ui` types) failed the webpack phase
+before Gradle ran — even though only migrated pages are bundled. `ts-loader`
+itself already runs `transpileOnly: true`, so this only removed in-build
+*reporting*, not the bundle. `webpack.config.cjs` now deletes
+`ForkTsCheckerWebpackPlugin` (order 20); remove it once migration is complete.
+Web-side type-checking (`pnpm lint` / `vue-tsc`) is unaffected.
+
+### 2. Stale app id in `webpack.config.cjs`
+`ensureWebpackConfig` only writes `webpack.config.cjs` **once**, so after the
+app id changed to `org.abidewomen.connect`, the `NuxtNativeAppIdentifierPlugin`
+literal still said `org.nuxtnative.app` — a mismatch between the runtime
+identifier and the Gradle `applicationId`. Fixed to `org.abidewomen.connect`.
+This literal must be kept in sync whenever the app id changes.
+
+### 3. Manifest merger conflict on `networkSecurityConfig`
+`nuxt-native init` adds a **debug** overlay at
+`App_Resources/Android/src/debug/AndroidManifest.xml` that sets
+`android:networkSecurityConfig="@xml/network_security_config"`, but the
+hello-world `App_Resources` `src/main` manifest already sets
+`android:networkSecurityConfig="@xml/network_security"`. Manifest merger failed
+with *"Attribute application@networkSecurityConfig ... is also present"*. Fixed
+by adding `xmlns:tools` + `tools:replace="android:networkSecurityConfig"` to the
+debug overlay so debug builds use the cleartext config and release keeps main's.
+(`writeIfNotManaged` skips files containing nuxt-native's marker, so the edit
+survives future `nuxt-native init` runs.)
+
+### 4. Root cause of the SBG failure: native deps were in `devDependencies`
+Gradle's *Static Binding Generator* failed with
+`Class not found org.nativescript.widgets.image.Worker.OnImageLoadedListener`.
+Investigation: `@nativescript/android`'s runtime AARs (`nativescript-optimized*`)
+ship only `com/tns` glue + asmdex + NanoHTTPD — the `org.nativescript.widgets.*`
+UI classes and `com.tns.NativeScriptActivity` live in **`@nativescript/core`**'s
+`platforms/android/widgets-release.aar`. The NativeScript CLI builds
+`platforms/android/dependencies.json` from the project's **`dependencies`**
+(not `devDependencies`); ours listed every NativeScript package under
+`devDependencies`, so `dependencies.json` was `[]` and the widgets AAR was never
+added to the build/SBG classpath.
+
+Fix: move `nuxt-native`, `nativescript-vue`, `@nativescript/core` and
+`@nativescript/android` from `devDependencies` → `dependencies` (matching
+nuxt-native's own scaffold, which puts these under `dependencies` and only
+`@nativescript/webpack` + `typescript` under `devDependencies`). After a
+`pnpm install`, `ns` regenerates `dependencies.json` with the core entry and the
+widgets AAR is included.
+
+### Smoke build (verified pipeline without migrating the whole app)
+Because the generated route manifest dynamically imports **every** page, the
+native build can't compile until all pages are migrated. To verify the pipeline
+now, a minimal native-only page lives at `app/native-smoke/pages/index.vue`
+(under `app/`, so its components still get registered, but not in `app/pages`,
+so the web build ignores it). `scripts/native-smoke-generate.mjs`
+(`pnpm native:smoke:prepare`) regenerates `.nuxt-native/` from that page. Run
+`pnpm native:smoke:android` to generate + build. Normal `nuxt-native build`/`dev`
+regenerate `.nuxt-native/` from the real `app/pages` as usual.
+
+### Emulator
+An AVD exists (`Medium_Phone_API_37.0`, x86_64, API 37, `/dev/kvm` present).
+The emulator's default SwiftShader GL path **segfaults on this host**
+(Fedora 44, emulator 37.2.12): `-gpu swiftshader_indirect` and `-gpu off` both
+crash `qemu-system-x86_64` a few seconds into boot (headless and windowed), while
+`-gpu angle_indirect` (ANGLE on Mesa/llvmpipe) boots cleanly:
+
+```bash
+export ANDROID_HOME=~/Android/Sdk
+export PATH=$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH
+emulator -avd Medium_Phone_API_37.0 -no-window -no-boot-anim \
+  -no-audio -gpu angle_indirect &
+adb wait-for-device
+# wait for sys.boot_completed=1, then:
+adb install -r platforms/android/app/build/outputs/apk/debug/app-debug.apk
+adb shell am start -n org.abidewomen.connect/com.tns.NativeScriptActivity
+```
+
+Windowed launches from Android Studio's flatpak aborted in Qt platform
+integration (`QGuiApplicationPrivate::createPlatformIntegration`); use a normal
+terminal with `DISPLAY=:0`/XWayland, or stay headless and drive via `adb`
+(`adb exec-out screencap -p > shot.png` to inspect the UI).
