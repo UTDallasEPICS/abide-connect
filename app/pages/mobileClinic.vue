@@ -1,12 +1,14 @@
 <template>
   <DefaultLayout title="Mobile Clinic">
-    <StackLayout :style="{ padding: spacing.lg }">
-      <NText variant="h2" text="Mobile Clinic" :style="{ marginBottom: spacing.sm }" />
-      <NText variant="caption" text="Native · Phase 4 (stub)" :style="{ marginBottom: spacing.xl }" />
-      <NCard>
-        <NText variant="body" text="Map + clinic events will be ported here (map is a blocker in web; needs native mapping)." />
-      </NCard>
-    </StackLayout>
+    <ScrollView>
+      <StackLayout :style="{ padding: spacing.lg }">
+        <NText variant="h2" text="Mobile Clinic" :style="{ marginBottom: spacing.sm }" />
+        <NText variant="body" text="Find upcoming mobile clinic dates and locations." :style="{ marginBottom: spacing.md }" />
+        <NCard>
+          <NText variant="body" text="Clinic schedule information coming soon." />
+        </NCard>
+      </StackLayout>
+    </ScrollView>
   </DefaultLayout>
 </template>
 
