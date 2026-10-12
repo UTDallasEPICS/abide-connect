@@ -3,17 +3,22 @@
     <ScrollView>
       <StackLayout :style="{ padding: spacing.lg }">
         <NText variant="h2" text="All Events" :style="{ marginBottom: spacing.sm }" />
-        <NText variant="caption" :text="`Events (${events.length})`" :style="{ marginBottom: spacing.md }" />
+        <NText variant="body" text="Browse upcoming events in the community." :style="{ marginBottom: spacing.md }" />
         <NButton text="Refresh" @tap="load" :style="{ marginBottom: spacing.md }" />
-        <NCard v-for="event in events" :key="event.id" :style="{ marginBottom: spacing.md }">
-          <StackLayout>
-            <NText variant="h3" :text="event.title" :style="{ marginBottom: spacing.xs }" />
-            <NText variant="caption" :text="event.startTime" :style="{ marginBottom: spacing.xs }" />
-            <NText variant="caption" :text="event.location" :style="{ marginBottom: spacing.xs }" />
-          </StackLayout>
-        </NCard>
-        <NText v-if="loading" text="Loading..." />
-        <NText v-if="error" :text="error" :style="{ color: colors.danger }" />
+        <StackLayout v-if="loading" :style="{ alignItems: 'center', padding: spacing.lg }">
+          <NSpinner size="lg" />
+        </StackLayout>
+        <NText v-else-if="error" :color="colors.danger" :text="error" :style="{ marginBottom: spacing.md }" />
+        <StackLayout v-else>
+          <NCard v-for="event in events" :key="event.id" :style="{ marginBottom: spacing.md }">
+            <StackLayout>
+              <NText variant="h3" :text="event.title" :style="{ marginBottom: spacing.xs }" />
+              <NText variant="caption" :text="formatDateTime(event.startTime)" :style="{ marginBottom: spacing.xs }" />
+              <NText variant="caption" :text="event.location" :style="{ marginBottom: spacing.xs }" />
+            </StackLayout>
+          </NCard>
+          <NText v-if="events.length === 0" text="No events found." :style="{ alignSelf: 'center', padding: spacing.md }" />
+        </StackLayout>
       </StackLayout>
     </ScrollView>
   </DefaultLayout>
@@ -32,14 +37,23 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    const res = await apiFetch<any>('/api/events/list', { query: { filter: 'all', page: 1, limit: 10 } })
-    events.value = res?.events || []
+    const res = await apiFetch<any>('/api/events/list')
+    events.value = Array.isArray(res?.events) ? res.events : []
   } catch (e: any) {
-    error.value = e?.message || 'Failed'
+    error.value = e?.message || 'Failed to load events'
   } finally {
     loading.value = false
   }
 }
 
 onMounted(load)
+
+function formatDateTime(iso: string) {
+  try {
+    const d = new Date(iso)
+    return d.toLocaleString()
+  } catch {
+    return iso
+  }
+}
 </script>
