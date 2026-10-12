@@ -1,19 +1,30 @@
 <script setup lang="ts">
 /**
- * Secondary layout for flows (back button, no bottom nav)
- * Migrated for Nuxt Native
+ * The `secondary` layout, native.
+ *
+ * A detour screen (login, a form) rather than a tab destination: app bar with
+ * a back control and no bottom nav, via `AppShell variant="secondary"`.
+ *
+ *     <SecondaryLayout title="Sign in"> … </SecondaryLayout>
  */
+import AppShell from '~/components/native/AppShell.vue'
+
+withDefaults(defineProps<{
+  title?: string
+  backText?: string
+  scrollable?: boolean
+}>(), {
+  backText: 'Back',
+})
 </script>
 
 <template>
-  <GridLayout rows="auto, *" columns="*" class="page">
-    <GridLayout row="0" columns="*" class="action-bar">
-      <NavSecondaryTop />
-    </GridLayout>
-    <ScrollView row="1">
-      <StackLayout>
-        <slot />
-      </StackLayout>
-    </ScrollView>
-  </GridLayout>
+  <AppShell
+    variant="secondary"
+    :title="title"
+    :back-text="backText"
+    :scrollable="scrollable"
+  >
+    <slot />
+  </AppShell>
 </template>

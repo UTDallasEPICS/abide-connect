@@ -1,0 +1,5 @@
+[
+  "index.vue",
+  "auth/login.vue",
+  "unauthorized.vue"
+]

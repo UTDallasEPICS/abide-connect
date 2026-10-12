@@ -1,22 +1,27 @@
 <script setup lang="ts">
 /**
- * Default app shell: top bar, page, and mobile bottom nav.
- * Migrated for Nuxt Native (NativeScript) - uses layout containers.
+ * The `default` layout, native.
+ *
+ * There is no `<NuxtLayout>` natively, so a "layout" is just a wrapper a page
+ * imports and surrounds itself with. This one is the app chrome: app bar plus
+ * the bottom tab bar, via `AppShell variant="default"`.
+ *
+ *     <DefaultLayout title="Abide Connect"> … </DefaultLayout>
  */
+import AppShell from '~/components/native/AppShell.vue'
+
+defineProps<{
+  title?: string
+  scrollable?: boolean
+}>()
 </script>
 
 <template>
-  <GridLayout rows="auto, *, auto" columns="*" class="page">
-    <GridLayout row="0" columns="*" class="action-bar">
-      <NavTop />
-    </GridLayout>
-    <ScrollView row="1">
-      <StackLayout>
-        <slot />
-      </StackLayout>
-    </ScrollView>
-    <GridLayout row="2" columns="*" class="bottom-bar">
-      <NavBottom />
-    </GridLayout>
-  </GridLayout>
+  <AppShell
+    variant="default"
+    :title="title"
+    :scrollable="scrollable"
+  >
+    <slot />
+  </AppShell>
 </template>

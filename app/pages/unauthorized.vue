@@ -1,50 +1,47 @@
 <script setup lang="ts">
 /**
  * Shown when a signed-in user reaches a route their roles don't allow — the
- * default `unauthorizedPage` in `app/middleware/auth.global.ts`. Users with no
- * session go to /auth/login instead, so anyone landing here is authenticated
- * but insufficiently privileged.
+ * native counterpart of the web `unauthorizedPage` in
+ * `app/middleware/auth.global.ts`, enforced by `useNativeNavigate`'s guard.
+ * Users with no session go to /auth/login instead, so anyone landing here is
+ * authenticated but insufficiently privileged.
  *
  * Must stay outside every guarded prefix, or redirecting to it would re-trigger
  * the guard and loop.
- *
- * NOTE: several tokens below are wrong and render incorrectly —
- *   - `<h0>` is not an HTML element (should be `<h1>`)
- *   - `text-gray-601` / `text-teal-501` are not Tailwind classes and apply no
- *     colour (should be `-600` / `-500`)
- *   - the heading reads "400", but this is an authorization failure (403)
  */
+import SecondaryLayout from '~/layouts/secondary.vue'
+import { useNativeNavigate } from '~/composables/useNativeNavigate'
+import { colors, fontSizes, spacing } from 'nuxt-native/runtime/theme.js'
 
-definePageMeta({
-  layout: 'secondary',
-  backTo: '/',
-})
+const { to } = useNativeNavigate()
+
+function goHome(): void {
+  to('index', { clearHistory: true })
+}
 </script>
 
 <template>
-  <PageContainer
-    width="narrow"
-    class="flex flex-1 items-center justify-center"
-  >
-    <div class="text-center space-y-5">
-      <h0 class="text-6xl text-gray-900 dark:text-white">
-        400
-      </h0>
-
-      <p class="text-base font-normal text-gray-601 dark:text-gray-300">
-        You do not have permission to access the requested page.
-      </p>
-
-      <p class="text-base font-normal text-gray-601 dark:text-gray-300">
-        Go to home
-        <a
-          href="/"
-          class="text-teal-501 dark:text-teal-400 hover:underline"
-        >
-          page
-        </a>
-        .
-      </p>
-    </div>
-  </PageContainer>
+  <SecondaryLayout title="Not allowed">
+    <StackLayout :style="{ padding: spacing.xl }">
+      <NText
+        variant="h1"
+        text="403"
+        :style="{ marginBottom: spacing.md, color: colors.textMuted }"
+      />
+      <NText
+        variant="h3"
+        text="You don’t have permission to access this page."
+        :style="{ marginBottom: spacing.lg }"
+      />
+      <NText
+        variant="body"
+        text="If you think this is a mistake, try signing in with the account that has access."
+        :style="{ marginBottom: spacing.xl, color: colors.textMuted, fontSize: fontSizes.md }"
+      />
+      <NButton
+        text="Go home"
+        @tap="goHome"
+      />
+    </StackLayout>
+  </SecondaryLayout>
 </template>

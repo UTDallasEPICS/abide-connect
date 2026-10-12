@@ -1,12 +1,14 @@
+import { apiFetch } from './api'
 import { safeRedirect } from './safeRedirect'
 
 /**
  * The landing page for a set of roles: admins get the dashboard, everyone else
- * their profile — the same pair `NavBottom` points its profile tab at.
+ * their profile — the same pair the bottom nav points its profile tab at.
  *
  * Falls back to `/` when there are no roles at all. `/volunteer` requires `user`
- * (see `auth.global.ts`), so sending a roleless account there would bounce it
- * straight on to `/unauthorized`.
+ * (see the route-role table in `app/composables/useNativeNavigate.ts`), so
+ * sending a roleless account there would bounce it straight on to
+ * `/unauthorized`.
  */
 export function landingRouteForRoles(roles: string[]): string {
   if (roles.includes('admin')) return '/admin'
@@ -17,21 +19,14 @@ export function landingRouteForRoles(roles: string[]): string {
 /**
  * Where a freshly authenticated user lands.
  *
- * Every sign-in path ends here — the OTP form, the sign-up flow, and the Google
- * callback — so the three don't drift into three different ideas of "home".
+ * Every sign-in path ends here, so the OTP form, the sign-up flow and the
+ * Google callback don't drift into three different ideas of "home".
  *
- * An explicit `?redirect=` wins. That's the "sign in to register" hop off an
- * event page, and dropping someone on their dashboard instead of the thing they
- * were trying to do is the whole reason that param exists. It goes through
- * `safeRedirect`, so an off-site value is discarded rather than followed.
- *
- * Pass `roles` whenever the caller already has them. The OTP endpoints return
- * them alongside the session they just minted precisely so that this doesn't
- * have to ask: a `/api/user/roles` call fired in the same breath as the response
- * setting the session cookie is racing that cookie, and an empty answer is
- * indistinguishable from a user who genuinely has no roles — which lands
- * everyone on `/` with nothing to show for it. Only the Google callback omits
- * them, and that one arrives on a fresh page load with the cookie long settled.
+ * An explicit `?redirect=` wins, sanitised through `safeRedirect` so an
+ * off-site value is discarded rather than followed. Otherwise roles decide.
+ * The OTP verification endpoint returns `roles` alongside the session it just
+ * minted, so callers should pass them and avoid a `/api/user/roles` read that
+ * races the cookie being set.
  */
 export async function resolveLandingRoute(
   redirect?: unknown,
@@ -43,10 +38,7 @@ export async function resolveLandingRoute(
   if (roles) return landingRouteForRoles(roles)
 
   try {
-    // `no-store` for the same reason `auth.ts` uses it on the session: the
-    // response carries no cache directives of its own, and a signed-out `[]`
-    // served back from cache here is invisible and lands the user on `/`.
-    const fetched = await $fetch<string[]>('/api/user/roles', { cache: 'no-store' })
+    const fetched = await apiFetch<string[]>('/api/user/roles')
     return landingRouteForRoles(fetched)
   }
   catch (error) {

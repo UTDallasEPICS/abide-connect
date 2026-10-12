@@ -7,10 +7,21 @@ module.exports = (env) => {
   require('nativescript-vue/nativescript.webpack')(webpack)
 
   webpack.chainWebpack((config) => {
-    config.resolve.alias.set(
-      '#build/nuxt-native/route-manifest.mjs$',
-      path.resolve(__dirname, '.nuxt-native/route-manifest.mjs')
-    )
+    config.resolve.alias
+      .set(
+        '#build/nuxt-native/route-manifest.mjs$',
+        path.resolve(__dirname, '.nuxt-native/route-manifest.mjs')
+      )
+    // `~`/`@` are Nuxt's `srcDir` aliases. @nativescript/webpack's base config
+    // points both at the *entry* directory (`.nuxt-native`), which is wrong for
+    // a Nuxt project: pages author `~/components/...` / `~/lib/...` expecting
+    // the app source root (`app/`, Nuxt 4's default srcDir). Overriding them
+    // here is what lets migrated pages keep Nuxt-style imports unchanged.
+    // (`@/...` only — a scoped package like `@nativescript/core` is untouched,
+    // since the alias requires the `@/` separator.)
+    config.resolve.alias
+      .set('~', path.resolve(__dirname, 'app'))
+      .set('@', path.resolve(__dirname, 'app'))
   })
 
   // Auto-import for composables (useWebSocket, useCamera, a project's own

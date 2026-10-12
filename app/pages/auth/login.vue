@@ -1,66 +1,55 @@
 <script setup lang="ts">
-import type { FormSubmitEvent } from '@nuxt/ui'
-import {
-  requestOtpFields,
-  requestOtpSchema,
-  type RequestOtpSchema,
-  verifyOtpFields,
-  verifyOtpSchema,
-  type VerifyOtpSchema,
-} from '~/types/auth/login.type'
-import { errorMessage as toErrorMessage } from '~/lib/errorMessage'
-import { resolveLandingRoute } from '~/lib/landingRoute'
-
 /**
- * Email-OTP login, as a two-step form on one route: request a code, then enter
- * it. `step` drives which schema and fields render.
+ * Email-OTP login, native.
+ *
+ * Two-step form on one route: request a code, then enter it. Same endpoints and
+ * same landing logic as the web page (`app/lib/landingRoute.ts`), but the form
+ * is hand-built from `NInput`/`NButton` because the web's `UAuthForm` +
+ * `@nuxt/ui` field schemas don't exist natively.
+ *
+ * `?redirect=` arrives as a **prop**, not a query: `useNativeNavigate` pushes
+ * routes with `$navigateTo(component, { props })`, so a caller passes
+ * `{ params: { redirect: '/events/42' } }` and this component receives it.
  *
  * Only for existing accounts — the OTP plugin runs with `disableSignUp: true`,
  * so requesting a code for an unknown address fails rather than registering.
- * New users go through /auth/sign-up.
- *
- * A `?redirect=` query param survives the whole flow, including the hop to
- * sign-up: pages that turn a signed-out visitor away (an event's "Sign in to
- * register", say) set it so the user lands back where they were instead of on
- * their dashboard. Without one, `resolveLandingRoute` picks the landing page
- * from the user's roles; it also sanitises the param, so an off-site value is
- * discarded rather than followed.
- *
- * The 30s resend cooldown is client-side only — it keeps the button from being
- * hammered, but `/api/auth/request-otp` has no throttle of its own, so it isn't
- * enforcement.
  */
+import { computed, onUnmounted, ref } from 'vue'
+import SecondaryLayout from '~/layouts/secondary.vue'
+import { apiFetch } from '~/lib/api'
+import { errorMessage as toErrorMessage } from '~/lib/errorMessage'
+import { resolveLandingRoute } from '~/lib/landingRoute'
+import { useSession } from '~/composables/useSession'
+import { useUserRoles } from '~/composables/useUserRoles'
+import { useNativeNavigate } from '~/composables/useNativeNavigate'
+import { colors, fontSizes, spacing } from 'nuxt-native/runtime/theme.js'
 
-definePageMeta({
-  layout: 'secondary',
-  backTo: '/',
-})
+const props = defineProps<{ redirect?: string }>()
 
-const route = useRoute()
-const signUpLink = computed(() => ({
-  path: '/auth/sign-up',
-  query: route.query.redirect ? { redirect: route.query.redirect } : undefined,
-}))
+const router = useNativeNavigate()
 
 const isLoading = ref(false)
 const errorMessage = ref<string | null>(null)
 const step = ref<'request' | 'verify'>('request')
-const pendingEmail = ref<string>('')
+const email = ref('')
+const otp = ref('')
+const pendingEmail = ref('')
 
 const resendCooldown = ref(0)
 const isResending = ref(false)
-const resendError = ref<string | null>(null)
 let cooldownTimer: ReturnType<typeof setInterval> | null = null
 
-function startCooldown() {
+const resendLabel = computed(() => (
+  resendCooldown.value > 0 ? `Resend in ${resendCooldown.value}s` : 'Resend code'
+))
+
+function startCooldown(): void {
   resendCooldown.value = 30
   if (cooldownTimer) clearInterval(cooldownTimer)
   cooldownTimer = setInterval(() => {
-    if (resendCooldown.value > 0) {
-      resendCooldown.value--
-    }
-    else {
-      clearInterval(cooldownTimer!)
+    if (resendCooldown.value > 0) resendCooldown.value--
+    else if (cooldownTimer) {
+      clearInterval(cooldownTimer)
       cooldownTimer = null
     }
   }, 1000)
@@ -70,21 +59,31 @@ onUnmounted(() => {
   if (cooldownTimer) clearInterval(cooldownTimer)
 })
 
-async function onRequestOtp(event: FormSubmitEvent<RequestOtpSchema>) {
+function validateEmail(value: string): boolean {
+  return /.+@.+\..+/.test(value.trim())
+}
+
+async function onRequestOtp(): Promise<void> {
   if (isLoading.value) return
-  isLoading.value = true
   errorMessage.value = null
 
+  if (!validateEmail(email.value)) {
+    errorMessage.value = 'Enter a valid email address.'
+    return
+  }
+
+  isLoading.value = true
   try {
-    await $fetch('/api/auth/request-otp', {
+    await apiFetch('/api/auth/request-otp', {
       method: 'POST',
-      body: { email: event.data.email },
+      body: { email: email.value.trim() },
     })
-    pendingEmail.value = event.data.email
+    pendingEmail.value = email.value.trim()
+    otp.value = ''
     step.value = 'verify'
     startCooldown()
   }
-  catch (error: unknown) {
+  catch (error) {
     errorMessage.value = toErrorMessage(error)
   }
   finally {
@@ -92,25 +91,33 @@ async function onRequestOtp(event: FormSubmitEvent<RequestOtpSchema>) {
   }
 }
 
-async function onVerifyOtp(event: FormSubmitEvent<VerifyOtpSchema>) {
+async function onVerifyOtp(): Promise<void> {
   if (isLoading.value) return
-  isLoading.value = true
   errorMessage.value = null
 
+  if (!/^\d{6}$/.test(otp.value)) {
+    errorMessage.value = 'Enter the 6-digit code.'
+    return
+  }
+
+  isLoading.value = true
   try {
     // `roles` comes back with the session so the landing page can be picked
     // without a second request racing the cookie this response is setting.
-    const { roles } = await $fetch<{ roles: string[] }>('/api/auth/verify-otp', {
+    const { roles } = await apiFetch<{ roles: string[] }>('/api/auth/verify-otp', {
       method: 'POST',
-      body: {
-        email: pendingEmail.value,
-        otp: event.data.otp,
-      },
+      body: { email: pendingEmail.value, otp: otp.value },
     })
-    await nextTick()
-    await navigateTo(await resolveLandingRoute(route.query.redirect, roles))
+
+    // Let the shared composables pick up the new cookie/roles for the shell.
+    await useSession().refresh(true)
+    await useUserRoles().refresh(true)
+
+    const landing = await resolveLandingRoute(props.redirect, roles)
+    const target = router.exists(landing) ? landing : 'index'
+    await router.to(target, { clearHistory: true })
   }
-  catch (error: unknown) {
+  catch (error) {
     errorMessage.value = toErrorMessage(error)
   }
   finally {
@@ -118,138 +125,112 @@ async function onVerifyOtp(event: FormSubmitEvent<VerifyOtpSchema>) {
   }
 }
 
-async function resendOtp() {
+async function resendOtp(): Promise<void> {
   if (!pendingEmail.value || resendCooldown.value > 0 || isResending.value) return
   isResending.value = true
-  resendError.value = null
+  errorMessage.value = null
   try {
-    await $fetch('/api/auth/request-otp', {
+    await apiFetch('/api/auth/request-otp', {
       method: 'POST',
       body: { email: pendingEmail.value },
     })
     startCooldown()
   }
-  catch (err: unknown) {
-    resendError.value = toErrorMessage(err)
+  catch (error) {
+    errorMessage.value = toErrorMessage(error)
   }
   finally {
     isResending.value = false
   }
 }
 
-function goBack() {
+function goBack(): void {
   step.value = 'request'
   errorMessage.value = null
+  otp.value = ''
   if (cooldownTimer) clearInterval(cooldownTimer)
+  cooldownTimer = null
   resendCooldown.value = 0
 }
 </script>
 
 <template>
-  <PageContainer
-    width="form"
-    class="flex flex-1 flex-col items-center justify-center"
-  >
-    <UAuthForm
-      v-if="step === 'request'"
-      class="w-full"
-      :schema="requestOtpSchema"
-      :fields="requestOtpFields"
-      title="Welcome back!"
-      icon="i-lucide-mail"
-      :submit="{ label: 'Send code', block: true, color: 'neutral', loading: isLoading, disabled: isLoading }"
-      @submit="onRequestOtp"
-    >
-      <template #description>
-        Don't have an account?
-        <ULink
-          :to="signUpLink"
-          class="text-primary font-medium"
-        >
-          Sign up
-        </ULink>.
-      </template>
-      <template #validation>
-        <UAlert
-          v-if="errorMessage"
-          color="error"
-          icon="i-lucide-info"
-          :title="errorMessage"
-        />
-      </template>
-      <template #footer>
-        By signing in, you agree to our
-        <ULink
-          to="#"
-          class="text-primary font-medium"
-        >
-          Terms of Service
-        </ULink>.
-        <div class="mt-4 text-center">
-          <ULink
-            to="/auth/staff-login"
-            class="text-muted font-medium text-sm"
-          >
-            Staff Login
-          </ULink>
-        </div>
-      </template>
-    </UAuthForm>
+  <SecondaryLayout title="Sign in">
+    <StackLayout :style="{ padding: spacing.lg }">
+      <NText
+        variant="h2"
+        :text="step === 'request' ? 'Welcome back!' : 'Check your email'"
+        :style="{ marginBottom: spacing.sm }"
+      />
+      <NText
+        variant="body"
+        :text="step === 'request'
+          ? 'Sign in with a one-time code sent to your email.'
+          : `We sent a 6-digit code to ${pendingEmail}.`"
+        :style="{ marginBottom: spacing.xl, color: colors.textMuted, fontSize: fontSizes.md }"
+      />
 
-    <UAuthForm
-      v-else
-      class="w-full max-w-md"
-      :schema="verifyOtpSchema"
-      :fields="verifyOtpFields"
-      title="Check your email"
-      icon="i-lucide-shield-check"
-      :submit="{ label: 'Verify code', block: true, color: 'neutral', loading: isLoading, disabled: isLoading }"
-      @submit="onVerifyOtp"
-    >
-      <template #description>
-        We sent a 6-digit code to <strong>{{ pendingEmail }}</strong>.
-        <ULink
-          class="text-primary font-medium cursor-pointer"
-          @click="goBack"
-        >
-          Wrong email?
-        </ULink>
-      </template>
-      <template #validation>
-        <UAlert
-          v-if="errorMessage"
-          color="error"
-          icon="i-lucide-info"
-          :title="errorMessage"
-        />
-      </template>
-      <template #footer>
-        <div class="flex flex-col items-center gap-2 w-full">
-          <div class="text-sm">
-            <span
-              v-if="resendCooldown > 0"
-              class="text-muted"
-            >Resend code in {{ resendCooldown }}s</span>
-            <UButton
-              v-else
-              variant="link"
-              size="sm"
-              :loading="isResending"
-              class="p-0"
-              @click="resendOtp"
-            >
-              Resend code
-            </UButton>
-          </div>
-          <UAlert
-            v-if="resendError"
-            color="error"
-            icon="i-lucide-info"
-            :title="resendError"
-            class="w-full"
+      <NCard>
+        <StackLayout v-if="step === 'request'">
+          <NInput
+            v-model="email"
+            label="Email"
+            placeholder="you@example.com"
           />
-        </div>
-      </template>
-    </UAuthForm>
-  </PageContainer>
+          <NButton
+            text="Send code"
+            :loading="isLoading"
+            :disabled="isLoading"
+            :style="{ marginTop: spacing.lg }"
+            @tap="onRequestOtp"
+          />
+        </StackLayout>
+
+        <StackLayout v-else>
+          <NInput
+            v-model="otp"
+            label="Verification code"
+            placeholder="123456"
+            :max-length="6"
+          />
+          <NButton
+            text="Verify"
+            :loading="isLoading"
+            :disabled="isLoading"
+            :style="{ marginTop: spacing.lg }"
+            @tap="onVerifyOtp"
+          />
+          <GridLayout
+            columns="*, auto"
+            :style="{ marginTop: spacing.md }"
+          >
+            <NButton
+              col="0"
+              text="Use a different email"
+              variant="ghost"
+              size="sm"
+              :disabled="isResending"
+              @tap="goBack"
+            />
+            <NButton
+              col="1"
+              :text="resendLabel"
+              variant="ghost"
+              size="sm"
+              :disabled="resendCooldown > 0 || isResending"
+              @tap="resendOtp"
+            />
+          </GridLayout>
+        </StackLayout>
+
+        <NText
+          v-if="errorMessage"
+          variant="caption"
+          :color="colors.danger"
+          :text="errorMessage"
+          :style="{ marginTop: spacing.md }"
+        />
+      </NCard>
+    </StackLayout>
+  </SecondaryLayout>
 </template>

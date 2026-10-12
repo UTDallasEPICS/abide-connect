@@ -15,8 +15,9 @@
     "postinstall": "nuxt prepare",
     "db:generate": "prisma generate",
     "push:keys": "web-push generate-vapid-keys",
-    "native:smoke:prepare": "node scripts/native-smoke-generate.mjs",
-    "native:smoke:android": "node scripts/native-smoke-generate.mjs && npx --yes nativescript build android"
+    "native:prepare": "node scripts/native-generate.mjs",
+    "native:android": "node scripts/native-generate.mjs && npx --yes nativescript build android",
+    "native:android:release": "node scripts/native-generate.mjs && npx --yes nativescript build android --release"
   },
   "dependencies": {
     "@internationalized/date": "^3.10.0",
