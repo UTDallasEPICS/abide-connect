@@ -1,0 +1,36 @@
+// You can add your native dependencies here
+dependencies {
+//  implementation 'androidx.multidex:multidex:2.0.1'
+}
+
+android {
+  // Matches the only Android platform installed in the build environment
+  // (platforms/android-37.0). NativeScript's Gradle helper resolves
+  // `android-37` to the minor-versioned `android-37.0` directory.
+  // Runtime floor for @nativescript/android 9.1.1 is minSdk 21
+  // (NS_DEFAULT_MIN_SDK_VERSION=21); we keep the template's 24 default.
+  compileSdkVersion 37
+  buildToolsVersion "36.0.0"
+  // ndkVersion ""
+
+  defaultConfig {
+    minSdkVersion 24
+    targetSdkVersion 37
+
+    // Version Information
+    versionCode 1
+    versionName "1.0.0"
+    
+    generatedDensities = []
+  }
+
+  aaptOptions {
+    additionalParameters "--no-version-vectors"
+  }
+}
+
+// nuxt-native: websocket support (OkHttp) — see nuxt-native's docs
+dependencies {
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+}
+// nuxt-native: end websocket support (OkHttp)

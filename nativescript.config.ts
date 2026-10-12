@@ -1,7 +1,7 @@
 import type { NativeScriptConfig } from '@nativescript/core'
 
 export default {
-  id: "org.nuxtnative.app",
+  id: "org.abidewomen.connect",
   appPath: '.nuxt-native',
   appResourcesPath: 'App_Resources',
   main: ".nuxt-native/app.js",

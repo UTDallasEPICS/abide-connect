@@ -1,10 +1,12 @@
 allowBuilds:
+  '@nativescript/core': true
   "@parcel/watcher": true
   "@prisma/engines": true
   better-sqlite3: true
+  core-js-pure: true
   esbuild: true
   prisma: true
   unrs-resolver: true
   vue-demi: true
 publicHoistPattern:
-- "*"
+  - "*"
