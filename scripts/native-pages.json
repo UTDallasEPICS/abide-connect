@@ -1,5 +1,10 @@
 [
   "index.vue",
   "auth/login.vue",
-  "unauthorized.vue"
+  "unauthorized.vue",
+  "events/index.vue",
+  "events/list.vue",
+  "mobileClinic.vue",
+  "volunteer/index.vue",
+  "settings.vue"
 ]
