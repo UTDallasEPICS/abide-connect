@@ -345,6 +345,17 @@ Before implementation, please clarify:
 
 10. **Testing scope**: Do you want feature parity with web app for first native release, or MVP subset?
 
+
+## Clarifications (From Discussion)
+
+1. **Backend**: Use base URL `https://abide-connect-stage.npts.tech`. **Delay API base URL configuration until late** - there have been issues getting it to work locally before. Focus on scaffolding and core migration first, add base URL wiring in later phases.
+
+2. **Push notifications**: Keep schemas the same if possible; extract/overload fields for MVP if needed. Not a hard requirement. Can be handled flexibly.
+
+3. **Maps/Push/Charts/Tailwind/Carousel/Deep Linking/Repo/Testing scope**: All as discussed - defer where noted, start with Android, prefer style helpers, evaluate deep linking lightly, MVP subset.
+
+4. **Overall approach**: Same repo (`native-test` branch), Android-first, MVP subset initially, style helpers preferred, simplified reports on mobile acceptable.
+
 ## 12. Next Steps
 
 1. **Review this plan** - confirm/adjust based on answers to questions above
