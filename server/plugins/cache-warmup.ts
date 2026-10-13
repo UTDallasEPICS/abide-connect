@@ -7,7 +7,9 @@
 const PUBLIC_ROUTES = [
   '/',
   '/mobileClinic',
-  '/api/events/upcoming',
+  // The landing page requests this exact bounded query. Warming the
+  // query-less URL would populate a different Nitro cache key.
+  '/api/events/upcoming?limit=9',
   '/api/events/today',
   '/api/events/week',
   '/api/events/by-day',
@@ -15,15 +17,27 @@ const PUBLIC_ROUTES = [
   '/api/mobile-clinic/schedule',
 ]
 
-const LANDING_IMAGES = [
+const HERO_IMAGES = [
   '/images/image2.jpg',
   '/images/image1.png',
   '/images/image3.JPG',
+]
+
+const SERVICE_IMAGES = [
   '/images/PrenatalCare.png',
   '/images/PostpartumCare.png',
   '/images/ChildbirthEducation.png',
   '/images/Donate.png',
 ]
+
+const HERO_VARIANTS = [
+  // Phone requests (320px/375px/640px candidates) converge on this key.
+  '640x360',
+  // The observed desktop HAR requests this 2048px candidate.
+  '2048x1152',
+]
+
+const SERVICE_VARIANT = '512x480'
 
 const WARMUP_TIMEOUT_MS = 15_000
 const STARTUP_TIMEOUT_MS = 30_000
@@ -34,16 +48,21 @@ function localOrigin(): string {
   return `http://127.0.0.1:${port}`
 }
 
+function encodedPath(path: string): string {
+  return path
+    .split('/')
+    .map(segment => encodeURIComponent(segment))
+    .join('/')
+}
+
 function imageURLs(origin: string): string[] {
-  return LANDING_IMAGES.map((path) => {
-    // 640 is the smallest canonical IPX width and warms the most common
-    // mobile/landing-page variant without multiplying startup work.
-    const encodedPath = path
-      .split('/')
-      .map(segment => encodeURIComponent(segment))
-      .join('/')
-    return `${origin}/_ipx/f_webp&q_80&s_640x640${encodedPath}`
-  })
+  const heroURLs = HERO_IMAGES.flatMap(path => HERO_VARIANTS.map(size =>
+    `${origin}/_ipx/f_webp&q_80&s_${size}${encodedPath(path)}`,
+  ))
+  const serviceURLs = SERVICE_IMAGES.map(path =>
+    `${origin}/_ipx/f_webp&q_80&s_${SERVICE_VARIANT}${encodedPath(path)}`,
+  )
+  return [...heroURLs, ...serviceURLs]
 }
 
 async function fetchWithTimeout(url: string): Promise<Response> {
@@ -110,7 +129,7 @@ async function warmCaches() {
   const images = await warmURLs(imageURLs(origin))
   console.info(
     `[cache-warmup] routes ${routes.succeeded}/${PUBLIC_ROUTES.length}, `
-    + `images ${images.succeeded}/${LANDING_IMAGES.length}`,
+    + `images ${images.succeeded}/${HERO_IMAGES.length * HERO_VARIANTS.length + SERVICE_IMAGES.length}`,
   )
 }
 
