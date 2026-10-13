@@ -27,7 +27,9 @@
 import { ref, onMounted } from 'vue'
 import DefaultLayout from '~/layouts/default.vue'
 import { spacing, colors } from 'nuxt-native/runtime/theme.js'
-import { apiFetch } from '~/lib/api'
+import { useApi } from '~/composables/useApi'
+
+const { get } = useApi()
 
 const events = ref<any[]>([])
 const loading = ref(false)
@@ -37,7 +39,7 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    const res: any = await apiFetch('/api/events/list')
+    const res: any = await get('/api/events/list')
     events.value = res?.events || []
   } catch (e: any) {
     error.value = String(e?.message || e || 'Error')
