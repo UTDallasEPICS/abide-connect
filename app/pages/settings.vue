@@ -145,6 +145,8 @@ const pushUnavailableReason = computed(() => {
       return 'To get notifications on iPhone or iPad, add Abide Connect to your Home Screen first, then open it from there.'
     case 'unsupported':
       return 'This browser doesn\'t support push notifications.'
+    case 'native-app':
+      return 'Push notifications aren\'t available in the app yet. Open Abide Connect in your browser to turn them on.'
     default:
       return null
   }

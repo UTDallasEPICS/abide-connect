@@ -5,6 +5,8 @@
  * The server half lives in server/utils/push.ts and server/api/push/*.
  */
 
+import { isNativeApp } from '~/lib/nativeApp'
+
 /** Push services want the VAPID key as a Uint8Array, not the base64url string. */
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
@@ -19,8 +21,9 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
  * - `unsupported` — browser can't do Web Push at all
  * - `requires-install` — iOS Safari in a tab: push only works once added to the home screen
  * - `not-configured` — server has no VAPID keys configured
+ * - `native-app` — inside the Capacitor shell, whose WebView has no Web Push
  */
-export type PushSupport = 'unknown' | 'supported' | 'unsupported' | 'requires-install' | 'not-configured'
+export type PushSupport = 'unknown' | 'supported' | 'unsupported' | 'requires-install' | 'not-configured' | 'native-app'
 
 export function usePushNotifications() {
   const config = useRuntimeConfig()
@@ -34,6 +37,9 @@ export function usePushNotifications() {
   function detectSupport(): PushSupport {
     if (!import.meta.client) return 'unknown'
     if (!vapidPublicKey) return 'not-configured'
+    // Neither WKWebView nor Android's WebView implements the Push API, and
+    // iOS's UA would otherwise be read as "Safari, not yet installed".
+    if (isNativeApp()) return 'native-app'
 
     const hasApis = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
     if (hasApis) return 'supported'
