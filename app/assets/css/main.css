@@ -8,6 +8,20 @@
 html {
   scrollbar-gutter: stable
 }
+
+/*
+ * Safe-area insets: the notch / status bar and the home indicator. The page
+ * draws under them (`viewport-fit=cover` in nuxt.config.ts, and the native
+ * app's WebView fills the screen), so the fixed nav bars and the layouts'
+ * offsets add these on. Zero in an ordinary browser tab.
+ *
+ * Capacitor's Android WebView doesn't always report `env()` correctly, so the
+ * `--safe-area-inset-*` values Capacitor injects there win when present.
+ */
+:root {
+  --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+}
 @layer base {
   /* Default text uses Poppins; */
   html, body {

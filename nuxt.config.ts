@@ -12,6 +12,15 @@ export default defineNuxtConfig({
   devtools: {
     enabled: true,
   },
+  app: {
+    head: {
+      // `viewport-fit=cover` lets the page run under the notch and home
+      // indicator — the native app's WebView is full-screen, and an installed
+      // PWA on iOS benefits too. The nav bars pad themselves by the safe-area
+      // insets in exchange (see `--safe-top` in main.css).
+      viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
+    },
+  },
   css: [
     '~/assets/css/main.css',
     '~/assets/css/carousel-theme.css',

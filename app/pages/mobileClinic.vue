@@ -8,7 +8,7 @@
     <!-- Map Section -->
     <div
       id="mapbox"
-      class="fixed inset-x-0 top-19 bottom-12 overflow-hidden"
+      class="fixed inset-x-0 top-[calc(4.75rem+var(--safe-top))] bottom-[calc(3rem+var(--safe-bottom))] overflow-hidden"
     >
       <div
         id="map"
@@ -41,7 +41,7 @@
     >
       <template #content>
         <div
-          class="overflow-y-auto space-y-2 px-2 pb-16"
+          class="overflow-y-auto space-y-2 px-2 pb-[calc(4rem+var(--safe-bottom))]"
         >
           <EventTile
             v-if="upcomingEvents.length === 0"
@@ -101,8 +101,8 @@ const zoom = ref(15)
 // things inside it — a sheet teleported to `<body>` is a sibling of the whole
 // app and paints over the nav no matter what z-index either one carries. The
 // `z-40` keeps it above maplibre's own controls (`z-index: 2`) and below both
-// nav bars (top `z-50`, bottom `z-60`); the list's `pb-16` clears the 48px nav
-// so no tile is stranded behind it.
+// nav bars (top `z-50`, bottom `z-60`); the list's bottom padding clears the
+// 48px nav (plus any safe-area inset) so no tile is stranded behind it.
 //
 // The stops are sized so each drag step reveals exactly one more row instead of
 // a row and a fraction of the next. Measured against the sheet's own top edge:
@@ -113,17 +113,32 @@ const zoom = ref(15)
 // viewport floor, -48 for the bottom nav across its foot. Rounding up by 8
 // lands the cut inside the gap between rows rather than on a row edge.
 //
+// Under a home indicator (the native app, an installed PWA on a notched
+// iPhone) the nav is taller by the safe-area inset, so that is added on too.
+// It's only knowable in the browser, hence the measurement on mount; the
+// server renders the stops for an inset of zero.
+//
 // This is also why the sheet is forced to `max-h-full` above: the drawer
 // theme's own `max-h-[96%]` would make the usable height a function of the
 // viewport, so the rows would drift out of alignment on any other screen size.
 const ROW_PITCH = 90
 const SHEET_CHROME = 22 + 16 + 8 + 16
-const snapPoints = [1, 2, 3].map(rows => String(SHEET_CHROME + rows * ROW_PITCH))
+const safeBottom = ref(0)
+const snapPoints = computed(() => [1, 2, 3].map(rows => String(SHEET_CHROME + safeBottom.value + rows * ROW_PITCH)))
+
+function measureSafeBottom() {
+  const probe = document.createElement('div')
+  probe.style.cssText = 'position:fixed;visibility:hidden;height:var(--safe-bottom)'
+  document.body.appendChild(probe)
+  safeBottom.value = probe.offsetHeight
+  probe.remove()
+}
 
 const upcomingEvents = ref([])
 
 // Load both events and mobile clinic schedule on mount
 onMounted(async () => {
+  measureSafeBottom()
   console.log('✅ Page mounted - Loading events and mobile clinic schedule')
   await loadEvents()
   await loadMobileClinicSchedule()

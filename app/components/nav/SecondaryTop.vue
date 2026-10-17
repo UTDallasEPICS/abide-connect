@@ -12,7 +12,7 @@
  * the bar carries whatever the page registered with `useNavActions`, same as
  * there.
  *
- * Height and chrome match `NavTop` (h-19, translucent, shadow on scroll) so the
+ * Height and chrome match `NavTop` (4.75rem plus the safe-area inset, translucent, shadow on scroll) so the
  * two headers read as the same bar.
  */
 const isScrolled = ref(false)
@@ -35,7 +35,7 @@ onUnmounted(() => {
       root: 'border-none',
     }"
     :toggle="false"
-    class="fixed top-0 z-50 h-19 w-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg transition-shadow duration-200"
+    class="fixed top-0 z-50 h-[calc(4.75rem+var(--safe-top))] pt-(--safe-top) w-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg transition-shadow duration-200"
     :class="isScrolled ? 'shadow-sm' : 'shadow-none'"
   >
     <template #left>
