@@ -14,9 +14,17 @@
     "test:watch": "vitest",
     "postinstall": "nuxt prepare",
     "db:generate": "prisma generate",
-    "push:keys": "web-push generate-vapid-keys"
+    "push:keys": "web-push generate-vapid-keys",
+    "cap:sync": "cap sync",
+    "cap:ios": "cap open ios",
+    "cap:android": "cap open android"
   },
   "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/browser": "8.0.5",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/ios": "8.5.3",
     "@internationalized/date": "^3.10.0",
     "@nuxt/fonts": "^0.14.0",
     "@nuxt/image": "^2.1.0",
@@ -38,6 +46,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@capacitor/cli": "8.5.3",
     "@iconify-json/heroicons": "^1.2.3",
     "@iconify-json/lucide": "^1.2.105",
     "@nuxt/eslint": "^1.15.0",

@@ -86,6 +86,19 @@ Two admin-only pages over `Volunteer_Hour_Log`: `/admin/reports` (operational �
 - **Settings, not constants.** The volunteer hourly rate (Independent Sector republishes it annually), its cited source, and the lapse threshold live in the `AppSetting` key/value table behind `server/utils/appSettings.ts` — the only module that reads it. The funder page warns while the rate is still the built-in default.
 - **Charts are hand-drawn SVG**, no charting library: `app/lib/chart.ts` (scales, ticks, paths, formatting) plus `app/components/reports/*`. Colours come from the `--viz-*` tokens at the bottom of `app/assets/css/main.css`, whose two series hues are validated for CVD separation and contrast against the actual card surfaces (white / gray-800) — re-validate before changing them. Two conventions worth keeping: never a second y-axis (headcount is its own panel under the hours plot, sharing the x-axis), and every chart ships a table view, since a tooltip is not an accessible way to read a value. Chart cards carry `min-w-0` because a grid item's default `min-width: auto` lets a fixed-width SVG stretch the card past a phone's viewport.
 
+### Native app (Capacitor)
+
+`ios/` and `android/` are a Capacitor 8 shell (`capacitor.config.js`, app id `org.abidewomen.connect`). It does **not** bundle the web app: the WebView loads the deployed site from `CAPACITOR_SERVER_URL`, so the app is first-party to the server and cookies, SSR and the API work unchanged, and a deploy updates the app without a store release. Only `capacitor/www/` (an offline fallback page, `server.errorPath`) ships inside the binary.
+
+```bash
+CAPACITOR_SERVER_URL=https://<deployed-host> pnpm cap:sync   # bake the URL into both native projects
+pnpm cap:ios / pnpm cap:android                             # open in Xcode / Android Studio
+```
+
+The URL is read from the shell environment by the Capacitor CLI (not from `.env`) at sync time; unset, it's `http://localhost:3000` (Android emulator: use `http://10.0.2.2:3000`). The config is `.js` exporting `'module.exports'` because the CLI compiles a `.ts` config to CommonJS, which Node rejects in this `"type": "module"` package.
+
+- Plugin JS ships with the site but the native half ships with the binary, so adding or bumping a `@capacitor/*` plugin needs a store release, and the site must keep working against binaries already installed.
+
 ## Architecture
 
 This is a Nuxt 4 app, so the app source root is `app/` (pages, components, layouts, middleware, lib, types), while `server/` holds Nitro server routes/middleware/utils and is a separate root — cross-referencing it from `app/` code goes through the `#server` path alias (e.g. `import { auth } from '#server/utils/auth'`), not a relative path.
