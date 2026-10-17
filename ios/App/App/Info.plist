@@ -66,5 +66,17 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<!-- Return trip of the Google sign-in, which runs in the system browser (server/utils/nativeHandoff.ts) -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>org.abidewomen.connect</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>org.abidewomen.connect</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

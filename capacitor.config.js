@@ -26,6 +26,9 @@ import { writeFileSync } from 'node:fs'
  * iOS simulator. The Android emulator sees the host machine as 10.0.2.2, so
  * sync with `CAPACITOR_SERVER_URL=http://10.0.2.2:3000` there.
  */
+// Also the URL scheme the native Google sign-in returns on, so it has to stay
+// in step with `NATIVE_APP_SCHEME` in shared/utils/nativeApp.ts and the scheme
+// registered in ios/App/App/Info.plist and android/app/src/main/AndroidManifest.xml.
 const APP_ID = 'org.abidewomen.connect'
 
 const serverUrl = (process.env.CAPACITOR_SERVER_URL ?? 'http://localhost:3000').replace(/\/$/, '')

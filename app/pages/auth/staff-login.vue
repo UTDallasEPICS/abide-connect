@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { Browser } from '@capacitor/browser'
 import { authClient } from '#server/utils/auth-client'
 import { forceAccountPicker } from '~/lib/googleSignIn'
+import { beginNativeHandoff, isNativeApp } from '~/lib/nativeApp'
 
 /**
  * Staff sign-in. Not really a page — `onMounted` fires the Google OAuth
@@ -17,6 +19,12 @@ import { forceAccountPicker } from '~/lib/googleSignIn'
  * `forceAccountPicker` adjust it — better-auth's `signIn.social` takes
  * `scopes`/`loginHint` but has no `prompt` option to pass through.
  * `isLoading` starts true because the redirect begins on mount.
+ *
+ * In the native app Google won't sign anyone in inside the WebView, so the
+ * flow is opened in the system browser instead and comes back through
+ * `/auth/native/*` and the `native-app` plugin, which finishes the sign-in.
+ * `?failed` is how that plugin reports a handoff that didn't take; it stops
+ * this page from reopening the browser straight away on top of the error.
  */
 
 definePageMeta({
@@ -24,12 +32,24 @@ definePageMeta({
   backTo: '/auth/login',
 })
 
+const route = useRoute()
 const isLoading = ref(true)
 const errorMessage = ref<string | null>(null)
+
+async function signInInSystemBrowser() {
+  const challenge = await beginNativeHandoff()
+  const url = new URL('/auth/native/google', window.location.origin)
+  url.searchParams.set('challenge', challenge)
+  await Browser.open({ url: url.toString() })
+}
 
 async function signInWithGoogle() {
   isLoading.value = true
   errorMessage.value = null
+  if (isNativeApp()) {
+    await signInInSystemBrowser()
+    return
+  }
   const { data, error } = await authClient.signIn.social({
     provider: 'google',
     // Google needs a fixed return URL, but the right landing page depends on
@@ -48,7 +68,23 @@ async function signInWithGoogle() {
   }
 }
 
-onMounted(signInWithGoogle)
+// The user closed the browser sheet. If they finished signing in first, the
+// plugin is already navigating away; otherwise, offer the button again.
+let browserFinished: { remove: () => Promise<void> } | undefined
+onMounted(async () => {
+  if (isNativeApp()) {
+    browserFinished = await Browser.addListener('browserFinished', () => {
+      isLoading.value = false
+    })
+    if (route.query.failed) {
+      errorMessage.value = 'Signing in didn\'t finish. Please try again.'
+      isLoading.value = false
+      return
+    }
+  }
+  await signInWithGoogle()
+})
+onUnmounted(() => browserFinished?.remove())
 </script>
 
 <template>
@@ -57,7 +93,7 @@ onMounted(signInWithGoogle)
     class="flex flex-1 flex-col items-center justify-center"
   >
     <div
-      v-if="!errorMessage"
+      v-if="isLoading"
       class="flex flex-col items-center gap-3"
     >
       <UIcon
@@ -86,6 +122,7 @@ onMounted(signInWithGoogle)
           </p>
         </div>
         <UAlert
+          v-if="errorMessage"
           color="error"
           icon="i-lucide-info"
           :title="errorMessage"
