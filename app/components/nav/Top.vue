@@ -46,7 +46,7 @@ onUnmounted(() => {
       root: 'border-none',
     }"
     :toggle="false"
-    class="fixed top-0 z-50 py-5 h-auto w-full dark:bg-gray-900 transition-shadow duration-200 bg-white/90 backdrop-blur-lg"
+    class="fixed top-0 z-50 pt-[calc(1.25rem+var(--safe-top))] pb-5 h-auto w-full dark:bg-gray-900 transition-shadow duration-200 bg-white/90 backdrop-blur-lg"
     :class="isScrolled ? 'shadow-sm' : 'shadow-none'"
   >
     <template #left>

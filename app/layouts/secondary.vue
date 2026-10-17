@@ -8,7 +8,7 @@
  *
  * The wrapper owns the offset that clears the fixed header, so pages render
  * from y=0 of the slot and don't each invent their own `mt-19` / `pt-20`. The
- * `pt-25` / `pb-16` pair is `default`'s, so the two shells start and end a page
+ * top/bottom offset pair (safe-area insets included) is `default`'s, so the two shells start and end a page
  * identically even though there's no bottom bar here to clear.
  *
  * `main` is a flex column that fills the viewport, so a page that wants to
@@ -20,7 +20,7 @@
 <template>
   <div class="flex min-h-screen w-full flex-col bg-white dark:bg-gray-900">
     <NavSecondaryTop />
-    <main class="flex flex-1 flex-col pt-25 pb-16">
+    <main class="flex flex-1 flex-col pt-[calc(6.25rem+var(--safe-top))] pb-[calc(4rem+var(--safe-bottom))]">
       <slot />
     </main>
   </div>

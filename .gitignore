@@ -28,3 +28,6 @@ prisma/dev.db
 
 .vscode/*
 server/utils/generated/
+
+# Capacitor: written by capacitor.config.ts on every `cap` command
+capacitor/www/server-url.js
