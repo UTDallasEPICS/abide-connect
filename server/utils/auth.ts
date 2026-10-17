@@ -4,6 +4,7 @@ import prisma from './prisma'
 import { emailOTP } from 'better-auth/plugins/email-otp'
 import { createAuthMiddleware } from 'better-auth/api'
 import { buildOtpEmail } from './otp-email'
+import { nativeHandoff } from './nativeHandoff'
 import nodemailer from 'nodemailer'
 
 /**
@@ -153,5 +154,8 @@ export const auth = betterAuth({
         }
       },
     }),
+    // Google sign-in for the native app, which has to run in the system
+    // browser and be carried back into the WebView.
+    nativeHandoff(),
   ],
 })
