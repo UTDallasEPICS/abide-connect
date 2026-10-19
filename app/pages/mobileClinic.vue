@@ -8,7 +8,7 @@
     <!-- Map Section -->
     <div
       id="mapbox"
-      class="fixed inset-x-0 top-[calc(4.75rem+var(--safe-top))] bottom-[calc(3rem+var(--safe-bottom))] overflow-hidden"
+      class="fixed inset-x-0 top-[calc(4.75rem+var(--safe-top))] bottom-[calc(var(--nav-bottom-h)+var(--safe-bottom))] overflow-hidden"
     >
       <div
         id="map"
@@ -41,7 +41,7 @@
     >
       <template #content>
         <div
-          class="overflow-y-auto space-y-2 px-2 pb-[calc(4rem+var(--safe-bottom))]"
+          class="overflow-y-auto space-y-2 px-2 pb-[calc(var(--nav-bottom-h)+1rem+var(--safe-bottom))]"
         >
           <EventTile
             v-if="upcomingEvents.length === 0"
@@ -102,35 +102,37 @@ const zoom = ref(15)
 // app and paints over the nav no matter what z-index either one carries. The
 // `z-40` keeps it above maplibre's own controls (`z-index: 2`) and below both
 // nav bars (top `z-50`, bottom `z-60`); the list's bottom padding clears the
-// 48px nav (plus any safe-area inset) so no tile is stranded behind it.
+// nav (`--nav-bottom-h` plus any safe-area inset) so no tile is stranded
+// behind it.
 //
 // The stops are sized so each drag step reveals exactly one more row instead of
 // a row and a fraction of the next. Measured against the sheet's own top edge:
 // 22px of handle (`mt-4` + `h-1.5`), then rows on a 90px pitch (74px tall — a
 // `h-12` thumbnail plus `py-3` and a border — with 16px between them), the
 // first offset a further 16px by its own margin. A snap point of S leaves
-// `S - 32` of that usable: +16 because the sheet sits `bottom-4` off the
-// viewport floor, -48 for the bottom nav across its foot. Rounding up by 8
-// lands the cut inside the gap between rows rather than on a row edge.
+// `S + 16 - nav` of that usable: +16 because the sheet sits `bottom-4` off the
+// viewport floor, minus the bottom nav across its foot. The last row needs no
+// trailing gap (-16), and rounding up by 8 lands the cut inside the gap between
+// rows rather than on a row edge.
 //
-// Under a home indicator (the native app, an installed PWA on a notched
-// iPhone) the nav is taller by the safe-area inset, so that is added on too.
-// It's only knowable in the browser, hence the measurement on mount; the
-// server renders the stops for an inset of zero.
+// The nav's height is `--nav-bottom-h` plus the safe-area inset, which is
+// non-zero under a home indicator (the native app, an installed PWA on a
+// notched iPhone). The inset is only knowable in the browser, hence the
+// measurement on mount; the server renders the stops for the bare 56px bar.
 //
 // This is also why the sheet is forced to `max-h-full` above: the drawer
 // theme's own `max-h-[96%]` would make the usable height a function of the
 // viewport, so the rows would drift out of alignment on any other screen size.
 const ROW_PITCH = 90
-const SHEET_CHROME = 22 + 16 + 8 + 16
-const safeBottom = ref(0)
-const snapPoints = computed(() => [1, 2, 3].map(rows => String(SHEET_CHROME + safeBottom.value + rows * ROW_PITCH)))
+const SHEET_CHROME = 22 + 16 - 16 + 8 - 16
+const navBottom = ref(56)
+const snapPoints = computed(() => [1, 2, 3].map(rows => String(SHEET_CHROME + navBottom.value + rows * ROW_PITCH)))
 
-function measureSafeBottom() {
+function measureNavBottom() {
   const probe = document.createElement('div')
-  probe.style.cssText = 'position:fixed;visibility:hidden;height:var(--safe-bottom)'
+  probe.style.cssText = 'position:fixed;visibility:hidden;height:calc(var(--nav-bottom-h) + var(--safe-bottom))'
   document.body.appendChild(probe)
-  safeBottom.value = probe.offsetHeight
+  navBottom.value = probe.offsetHeight
   probe.remove()
 }
 
@@ -138,7 +140,7 @@ const upcomingEvents = ref([])
 
 // Load both events and mobile clinic schedule on mount
 onMounted(async () => {
-  measureSafeBottom()
+  measureNavBottom()
   console.log('✅ Page mounted - Loading events and mobile clinic schedule')
   await loadEvents()
   await loadMobileClinicSchedule()
