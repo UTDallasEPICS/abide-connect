@@ -20,7 +20,7 @@
 <template>
   <div class="flex min-h-screen w-full flex-col bg-white dark:bg-gray-900">
     <NavSecondaryTop />
-    <main class="flex flex-1 flex-col pt-[calc(6.25rem+var(--safe-top))] pb-[calc(4rem+var(--safe-bottom))]">
+    <main class="flex flex-1 flex-col pt-[calc(6.25rem+var(--safe-top))] pb-[calc(var(--nav-bottom-h)+1rem+var(--safe-bottom))]">
       <slot />
     </main>
   </div>

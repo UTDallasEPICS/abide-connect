@@ -7,10 +7,10 @@
  * `useUserRoles` resolves asynchronously, so the destination fills in once
  * roles arrive.
  *
- * NOTE: the buttons below carry `**flex-1**` / `**min-w-0**` in their class
- * attribute. Those aren't valid Tailwind classes — the asterisks are leftover
- * markdown emphasis, so neither rule applies and the tabs don't share width
- * evenly. Should be plain `flex-1 min-w-0`.
+ * The row is `--nav-bottom-h` (main.css) tall plus the safe-area inset, and
+ * each tab fills its share of the width and the row's full height, so the
+ * whole cell is the touch target rather than just the 24px icon. The tabs are
+ * icon-only, so each carries an `aria-label` for screen readers.
  */
 const { isAdmin } = useUserRoles()
 
@@ -21,21 +21,25 @@ const nav = computed(() => [
   {
     id: 1,
     icon: 'i-lucide-house',
+    label: 'Home',
     to: '/',
   },
   {
     id: 2,
     icon: 'i-lucide-calendar-days',
+    label: 'Events',
     to: '/events',
   },
   {
     id: 3,
     icon: 'i-lucide-hospital',
+    label: 'Mobile clinic',
     to: '/mobileClinic',
   },
   {
     id: 4,
     icon: 'i-lucide-square-user-round',
+    label: isAdmin.value ? 'Admin dashboard' : 'Profile',
     to: profileLink.value,
   },
 ])
@@ -43,7 +47,7 @@ const nav = computed(() => [
 
 <template>
   <UFooter
-    class="fixed bottom-0 left-0 right-0 z-60 flex justify-between items-center px-4 h-[calc(3rem+var(--safe-bottom))] pb-(--safe-bottom) border-t border-gray-200 dark:border-gray-700 dark:bg-gray-900 bg-white/90 backdrop-blur-lg"
+    class="fixed bottom-0 left-0 right-0 z-60 flex justify-between items-center px-4 h-[calc(var(--nav-bottom-h)+var(--safe-bottom))] pb-(--safe-bottom) border-t border-gray-200 dark:border-gray-700 dark:bg-gray-900 bg-white/90 backdrop-blur-lg"
   >
     <template #default>
       <UButton
@@ -51,9 +55,11 @@ const nav = computed(() => [
         :key="navItem.id"
         :icon="navItem.icon"
         :to="navItem.to"
+        :aria-label="navItem.label"
         color="neutral"
         variant="ghost"
-        class="**flex-1** **min-w-0** h-full mx-auto lg:mx-25"
+        size="xl"
+        class="flex-1 min-w-0 h-full justify-center lg:mx-25"
       />
     </template>
   </UFooter>

@@ -10,7 +10,7 @@
  * The wrapper owns the offsets that clear the two fixed bars, so pages render
  * from y=0 of the slot instead of each inventing their own `mt-20` / `pt-24` /
  * `pb-24`. The top offset is `NavTop`'s 4.75rem plus 1.5rem of breathing room;
- * the bottom is `NavBottom`'s 3rem plus 1rem. Both add the device's safe-area
+ * the bottom is `NavBottom`'s `--nav-bottom-h` plus 1rem. Both add the device's safe-area
  * inset (`--safe-top` / `--safe-bottom` in main.css), which the bars grow by
  * under a notch or home indicator. `secondary` uses the same pair, so the two
  * shells start and end a page identically.
@@ -24,7 +24,7 @@
 <template>
   <div class="flex min-h-screen w-full flex-col bg-white dark:bg-gray-900">
     <NavTop />
-    <main class="flex flex-1 flex-col pt-[calc(6.25rem+var(--safe-top))] pb-[calc(4rem+var(--safe-bottom))]">
+    <main class="flex flex-1 flex-col pt-[calc(6.25rem+var(--safe-top))] pb-[calc(var(--nav-bottom-h)+1rem+var(--safe-bottom))]">
       <slot />
     </main>
     <NavBottom />

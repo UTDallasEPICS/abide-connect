@@ -21,6 +21,15 @@ html {
 :root {
   --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
   --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+
+  /*
+   * Height of `NavBottom`'s tab row, before the safe-area inset. 56px clears
+   * both platforms' minimum touch target (Apple 44pt, Material 48dp) with room
+   * to spare, and sits between the iOS tab bar (49pt) and the Android one
+   * (64–80dp). The per-device difference — the home indicator or the gesture
+   * bar — is the inset, which the bar adds on top rather than eating into this.
+   */
+  --nav-bottom-h: 3.5rem;
 }
 @layer base {
   /* Default text uses Poppins; */
