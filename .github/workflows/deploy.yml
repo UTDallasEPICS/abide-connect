@@ -45,6 +45,8 @@ jobs:
           platforms: linux/arm64
           load: true
           tags: ${{ steps.login-ecr.outputs.registry }}/${{ vars.REPOSITORY }}:${{ inputs.environment }}
+          build-args: |
+            PREWARM_ROUTES=${{ vars.PREWARM_ROUTES || '/' }}
           cache-from: type=gha,scope=${{ inputs.environment }}
           cache-to: type=gha,mode=max,scope=${{ inputs.environment }},ignore-error=true
 

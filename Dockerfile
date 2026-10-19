@@ -17,11 +17,15 @@ RUN pnpm i --frozen-lockfile
 COPY . ./
 RUN pnpm prisma generate
 RUN pnpm run build
+ARG PREWARM_ROUTES=/
+RUN rm -rf .cache/ipx \
+  && PREWARM_ROUTES="$PREWARM_ROUTES" node scripts/prewarm-static-ipx.mjs
 
 
 # Deployment container
 FROM node:lts-alpine AS deployment
 WORKDIR /app
 COPY --from=builder /app/.output ./
+COPY --from=builder /app/.cache/ipx ./.cache/ipx
 EXPOSE 3000
 CMD ["node", "./server/index.mjs"]
