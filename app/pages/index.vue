@@ -89,7 +89,7 @@ watch(yourEventsStatus, (newStatus) => {
       console.error('Failed to load your events:', yourEventsFetchError.value)
     }
   }
-})
+}, { immediate: true })
 
 watch(showYourEventsSection, (shouldShow) => {
   if (shouldShow && yourEventsStatus.value === 'idle') {
@@ -116,6 +116,7 @@ const yourEvents = computed(() => yourEventsRaw.value.map(e => ({
 const showYourEventsBlock = computed(() =>
   showYourEventsSection.value && (yourEventsPending.value || yourEventsError.value || yourEvents.value.length > 0),
 )
+const showYourEventsSkeleton = computed(() => yourEventsPending.value && yourEvents.value.length === 0)
 
 // --- Cancel RSVP confirmation modal ---
 const cancelModalOpen = ref(false)
@@ -164,21 +165,38 @@ async function confirmCancelRsvp() {
 const pending = ref(true)
 const error = ref(false)
 
-const { data: upcomingEvents, error: fetchError, status } = useLazyFetch<UpcomingEvent[]>('/api/events/upcoming', {
+const { data: upcomingEvents, error: fetchError, status } = await useFetch<UpcomingEvent[]>('/api/events/upcoming', {
   query: { limit: 9 },
   default: () => [],
-  server: false,
 })
+
+// Keep the last public response across SPA page remounts. The fetch composable
+// can briefly expose its default empty array while a cached request is being
+// restored, which would otherwise replace the existing cards with skeletons.
+const cachedUpcomingEvents = useState<UpcomingEvent[] | null>(
+  'homepage-upcoming-events',
+  () => upcomingEvents.value.length > 0 ? upcomingEvents.value : null,
+)
 
 watch(status, (newStatus) => {
   if (newStatus === 'success' || newStatus === 'error') {
     pending.value = false
     error.value = newStatus === 'error'
+    if (newStatus === 'success') {
+      cachedUpcomingEvents.value = upcomingEvents.value
+    }
     if (newStatus === 'error') {
       console.error('Failed to load events:', fetchError.value)
     }
   }
-})
+}, { immediate: true })
+
+const displayedUpcomingEvents = computed(() =>
+  pending.value && cachedUpcomingEvents.value
+    ? cachedUpcomingEvents.value
+    : upcomingEvents.value,
+)
+const showUpcomingSkeleton = computed(() => pending.value && displayedUpcomingEvents.value.length === 0)
 
 // --- Training Events (volunteers who aren't approved yet) ---
 const showTrainingSection = computed(() => !!volunteer.value && volunteer.value.approvalStatus !== 'APPROVED')
@@ -209,6 +227,8 @@ watch(trainingStatus, (newStatus) => {
     }
   }
 })
+
+const showTrainingSkeleton = computed(() => trainingPending.value && trainingEvents.value.length === 0)
 
 watch(showTrainingSection, (shouldShow) => {
   if (shouldShow && trainingStatus.value === 'idle') {
@@ -262,13 +282,8 @@ watch(showTrainingSection, (shouldShow) => {
         class="mb-8"
       >
         <div class="flex items-center justify-between mb-2">
-          <div
-            v-if="yourEventsPending"
-            class="h-5 w-32 animate-pulse rounded bg-gray-200"
-          />
           <h3
-            v-else
-            class="uppercase font-gray-900"
+            class="uppercase text-gray-900 dark:text-gray-100"
           >
             Your Events
           </h3>
@@ -276,7 +291,7 @@ watch(showTrainingSection, (shouldShow) => {
 
         <div :class="oneRowMinHeight">
           <div
-            v-if="yourEventsPending"
+            v-if="showYourEventsSkeleton"
             class="flex flex-col gap-3"
           >
             <SecondaryEventCardSkeleton
@@ -291,7 +306,7 @@ watch(showTrainingSection, (shouldShow) => {
             Failed to load your events. Please try again later.
           </p>
 
-          <template v-if="!yourEventsPending && !yourEventsError">
+          <template v-if="!showYourEventsSkeleton">
             <div class="flex flex-col gap-3">
               <SecondaryEventCard
                 v-for="item in yourEvents"
@@ -312,15 +327,10 @@ watch(showTrainingSection, (shouldShow) => {
       <!-- Upcoming Events -->
       <section class="mb-8">
         <div class="flex items-center justify-between mb-2">
-          <div
-            v-if="pending"
-            class="h-5 w-40 animate-pulse rounded bg-gray-200"
-          />
           <h3
-            v-else
-            class="uppercase font-gray-900"
+            class="uppercase text-gray-900 dark:text-gray-100"
           >
-            Upcomming Events
+            Upcoming Events
           </h3>
           <UButton
             color="neutral"
@@ -339,7 +349,7 @@ watch(showTrainingSection, (shouldShow) => {
 
         <div :class="oneRowMinHeight">
           <div
-            v-if="pending"
+            v-if="showUpcomingSkeleton"
             class="flex gap-4 overflow-x-hidden"
           >
             <EventCardSkeleton
@@ -354,12 +364,12 @@ watch(showTrainingSection, (shouldShow) => {
             Failed to load events. Please try again later.
           </p>
 
-          <template v-if="!pending && !error">
+          <template v-if="!showUpcomingSkeleton">
             <UCarousel
-              v-if="upcomingEvents.length"
+              v-if="displayedUpcomingEvents.length"
               v-slot="{ item }"
               drag-free
-              :items="upcomingEvents"
+              :items="displayedUpcomingEvents"
               :ui="{
                 viewport: 'overflow-visible lg:overflow-x-hidden',
                 container: 'gap-1',
@@ -392,13 +402,8 @@ watch(showTrainingSection, (shouldShow) => {
         class="mb-8"
       >
         <div class="flex items-center justify-between mb-2">
-          <div
-            v-if="trainingPending"
-            class="h-5 w-36 animate-pulse rounded bg-gray-200"
-          />
           <h3
-            v-else
-            class="uppercase font-gray-900"
+            class="uppercase text-gray-900 dark:text-gray-100"
           >
             Training Events
           </h3>
@@ -419,7 +424,7 @@ watch(showTrainingSection, (shouldShow) => {
 
         <div :class="oneRowMinHeight">
           <div
-            v-if="trainingPending"
+            v-if="showTrainingSkeleton"
             class="flex gap-4 overflow-x-hidden"
           >
             <EventCardSkeleton
@@ -434,7 +439,7 @@ watch(showTrainingSection, (shouldShow) => {
             Failed to load training events. Please try again later.
           </p>
 
-          <template v-if="!trainingPending && !trainingError">
+          <template v-if="!showTrainingSkeleton">
             <UCarousel
               v-if="trainingEvents.length"
               v-slot="{ item }"
@@ -499,7 +504,7 @@ watch(showTrainingSection, (shouldShow) => {
 
     <PageContainer>
       <section>
-        <h3 class="uppercase font-gray-900 mb-4">
+        <h3 class="uppercase text-gray-900 dark:text-gray-100 mb-4">
           Services
         </h3>
         <div class="flex flex-col gap-4 sm:flex-row sm:gap-5">

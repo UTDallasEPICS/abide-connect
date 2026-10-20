@@ -83,6 +83,11 @@ import { formatShortDateTime } from '#shared/utils/eventTime'
  */
 import 'maplibre-gl/dist/maplibre-gl.css'
 
+definePageMeta({
+  // Preserve the MapLibre instance while navigating between app pages.
+  keepalive: true,
+})
+
 const mapStyle = '/mapstyles.json'
 // Downtown Dallas — the default view before any stop is selected.
 const center = ref([-96.77049780046936, 32.772891246510596])

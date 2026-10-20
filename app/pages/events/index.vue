@@ -104,6 +104,7 @@ const showYourEventsBlock = computed(
     showYourEventsSection.value &&
     (yourEventsPending.value || yourEventsError.value || yourEvents.value.length > 0)
 );
+const showYourEventsSkeleton = computed(() => yourEventsPending.value && yourEvents.value.length === 0);
 
 // --- Cancel RSVP ---
 function handleCancelRsvp(eventId: string) {
@@ -119,6 +120,8 @@ const {
   query: { limit: 20 },
 });
 const weekError = computed(() => !!weekFetchError.value);
+const showTodaySkeleton = computed(() => todayPending.value && !todayEvents.value?.length);
+const showWeekSkeleton = computed(() => weekPending.value && !weekEvents.value?.length);
 
 // --- Week Calendar: selected day + events happening that day ---
 const selectedDate = ref(new Date());
@@ -140,15 +143,14 @@ const { data: dayEvents, pending: dayEventsPending } = await useFetch<UpcomingEv
     <!-- Today's Events (carousel) -->
     <section class="mb-8">
       <div class="flex items-center justify-between mb-2">
-        <div v-if="todayPending" class="h-5 w-40 animate-pulse rounded bg-gray-200" />
-        <h3 v-else class="uppercase font-gray-900">Today's Events</h3>
+        <h3 class="uppercase text-gray-900 dark:text-gray-100">Today's Events</h3>
       </div>
 
       <!-- Loading skeleton -->
-      <div v-if="todayPending" class="aspect-[21/9] w-full animate-pulse rounded-2xl bg-gray-200" />
+      <div v-if="showTodaySkeleton" class="aspect-[21/9] w-full animate-pulse rounded-2xl bg-gray-200" />
       <!-- Error state -->
       <div
-        v-else-if="todayError"
+        v-else-if="todayError && !todayEvents?.length"
         class="flex aspect-[21/9] w-full items-center justify-center rounded-2xl bg-gray-50 text-sm text-red-400"
       >
         Failed to load today's events.
@@ -162,7 +164,7 @@ const { data: dayEvents, pending: dayEventsPending } = await useFetch<UpcomingEv
       </div>
       <!-- Carousel -->
       <UCarousel
-        v-else
+        v-else-if="todayEvents?.length"
         loop
         dots
         :items="todayEvents"
@@ -218,10 +220,9 @@ const { data: dayEvents, pending: dayEventsPending } = await useFetch<UpcomingEv
     <!-- Your Events -->
     <section v-if="showYourEventsBlock" class="mb-8">
       <div class="flex items-center justify-between mb-2">
-        <div v-if="yourEventsPending" class="h-5 w-32 animate-pulse rounded bg-gray-200" />
-        <h3 v-else class="uppercase font-gray-900">Your Events</h3>
+        <h3 class="uppercase text-gray-900 dark:text-gray-100">Your Events</h3>
         <UButton
-          v-if="!yourEventsPending"
+          v-if="!showYourEventsSkeleton"
           color="neutral"
           variant="outline"
           size="sm"
@@ -233,10 +234,10 @@ const { data: dayEvents, pending: dayEventsPending } = await useFetch<UpcomingEv
         </UButton>
       </div>
 
-      <div v-if="yourEventsPending" class="flex flex-col gap-3">
+      <div v-if="showYourEventsSkeleton" class="flex flex-col gap-3">
         <SecondaryEventCardSkeleton v-for="n in 2" :key="n" />
       </div>
-      <p v-else-if="yourEventsError" class="text-red-600 text-sm">
+      <p v-else-if="yourEventsError && yourEvents.length === 0" class="text-red-600 text-sm">
         Failed to load your events. Please try again later.
       </p>
       <div v-else class="flex flex-col gap-3">
@@ -258,10 +259,9 @@ const { data: dayEvents, pending: dayEventsPending } = await useFetch<UpcomingEv
     <!-- Events This Week -->
     <section class="mb-8">
       <div class="flex items-center justify-between mb-2">
-        <div v-if="weekPending" class="h-5 w-32 animate-pulse rounded bg-gray-200" />
-        <h3 v-else class="uppercase font-gray-900">Events This Week</h3>
+        <h3 class="uppercase text-gray-900 dark:text-gray-100">Events This Week</h3>
         <UButton
-          v-if="!weekPending"
+          v-if="!showWeekSkeleton"
           color="neutral"
           variant="outline"
           size="sm"
@@ -273,16 +273,16 @@ const { data: dayEvents, pending: dayEventsPending } = await useFetch<UpcomingEv
         </UButton>
       </div>
 
-      <div v-if="weekPending" class="flex flex-col gap-3">
+      <div v-if="showWeekSkeleton" class="flex flex-col gap-3">
         <SecondaryEventCardSkeleton v-for="n in 3" :key="n" />
       </div>
-      <p v-else-if="weekError" class="text-red-600 text-sm">
+      <p v-else-if="weekError && !weekEvents?.length" class="text-red-600 text-sm">
         Failed to load this week's events. Please try again later.
       </p>
       <p v-else-if="!weekEvents?.length" class="text-gray-400 font-normal">
         No event this week
       </p>
-      <div v-else class="flex flex-col gap-3">
+      <div v-else class="flex flex-col gap-3 transition-opacity duration-150" :class="weekPending ? 'opacity-70' : 'opacity-100'">
         <SecondaryEventCard
           v-for="item in weekEvents"
           :key="item.id"

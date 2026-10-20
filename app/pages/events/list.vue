@@ -29,7 +29,6 @@ interface EventsResponse {
 
 const PAGE_SIZE = 10
 const SEARCH_DEBOUNCE_MS = 200
-const LOADING_SCREEN_DELAY_MS = 100
 
 const selectedFilter = ref<EventFilter>('ALL')
 const debouncedSearch = ref('')
@@ -73,28 +72,9 @@ watch(data, (val) => {
   }
 })
 
-const showLoadingScreen = ref(false)
-let loadingScreenTimer: ReturnType<typeof setTimeout> | undefined
-
-watch(
-  pending,
-  (isPending) => {
-    clearTimeout(loadingScreenTimer)
-
-    if (isPending) {
-      loadingScreenTimer = setTimeout(() => {
-        showLoadingScreen.value = true
-      }, LOADING_SCREEN_DELAY_MS)
-    }
-    else {
-      showLoadingScreen.value = false
-    }
-  },
-  { immediate: true },
-)
-
 const events = computed(() => data.value?.events ?? [])
 const totalEvents = computed(() => data.value?.total ?? 0)
+const showLoadingScreen = computed(() => pending.value && events.value.length === 0)
 
 const colorMode = useColorMode()
 const paginationActiveBgColor = computed(() => (colorMode.value === 'dark' ? 'gray-700' : 'gray-200'))
@@ -150,7 +130,7 @@ const filters = computed(() => [
           </div>
 
           <div
-            v-else-if="error"
+            v-else-if="error && events.length === 0"
             class="flex flex-col items-center justify-center text-center py-16 px-6"
           >
             <p class="text-sm text-red-400 dark:text-red-400">
@@ -168,7 +148,8 @@ const filters = computed(() => [
 
           <div
             v-else
-            class="flex flex-col gap-3"
+            class="flex flex-col gap-3 transition-opacity duration-150"
+            :class="pending ? 'opacity-70' : 'opacity-100'"
           >
             <SecondaryEventCard
               v-for="item in events"
