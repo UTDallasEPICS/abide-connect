@@ -45,9 +45,13 @@ const globals = {
   defineEventHandler: <T>(handler: T) => handler,
   eventHandler: <T>(handler: T) => handler,
   getQuery: (event: FakeH3Event) => event.__query,
+  getValidatedQuery: async <T>(event: FakeH3Event, validate: (query: unknown) => T) => validate(event.__query),
   readBody: async (event: FakeH3Event) => event.__body,
   setHeader: (event: FakeH3Event, name: string, value: string) => {
     event.__responseHeaders[name.toLowerCase()] = value
+  },
+  setResponseStatus: (event: FakeH3Event, code: number) => {
+    event.context.responseStatus = code
   },
   getRouterParam: (event: FakeH3Event, name: string) =>
     (event.context.params as Record<string, string>)?.[name],
