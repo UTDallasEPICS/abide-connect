@@ -1,59 +1,13 @@
 import prisma from '#server/utils/prisma'
 import { createCalendarEvent, updateCalendarEvent } from '#server/utils/googleCalendar'
 import { requireRole } from '#server/utils/requireRole'
+import { geocodeLocation } from '#server/utils/geocode'
 import { eventTypeToFlags, isEventType } from '#shared/utils/eventType'
 import {
   assertEventAcceptsTimeSlots,
   assertTimeSlotsValid,
   parseTimeSlotPayload,
 } from '#server/utils/timeSlots'
-
-/**
- * Resolves a free-text address to coordinates via OpenStreetMap's Nominatim.
- *
- * Duplicated verbatim from `server/api/events/index.post.ts` — if you change
- * one, change the other, or lift both into `server/utils/`.
- *
- * Only called on a cache miss (`Location` rows are keyed by address and
- * reused), since Nominatim's usage policy caps unauthenticated callers at
- * roughly one request per second and requires the `User-Agent` sent below.
- */
-async function geocodeLocation(location: string) {
-  try {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`,
-      {
-        headers: {
-          'User-Agent': 'Abide-Connect/1.0',
-        },
-      },
-    )
-
-    if (!response.ok) {
-      console.warn(`Nominatim API error: ${response.status}`)
-      return null
-    }
-
-    const results = await response.json()
-
-    if (results.length === 0) {
-      console.warn(`No geocoding results found for: ${location}`)
-      return null
-    }
-
-    const topResult = results[0]
-
-    return {
-      latitude: parseFloat(topResult.lat),
-      longitude: parseFloat(topResult.lon),
-      address: location,
-    }
-  }
-  catch (error) {
-    console.error('❌ Geocoding error:', error)
-    return null
-  }
-}
 
 /**
  * Updates an event and keeps the shared Google Calendar in step. Staff only.
