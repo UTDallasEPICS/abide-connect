@@ -90,9 +90,9 @@ function populateDrafts() {
   generalDraft.phoneNumber = userData.value.phoneNumber ?? ''
   generalDraft.adminNote = userData.value.adminNote ?? ''
   generalDraft.isActive = userData.value.isActive ?? false
-  generalDraft.isJld = userData.value.volunteer?.isJld ?? false
   generalDraft.gender = userData.value.volunteer?.gender ?? ''
   generalDraft.ethinicity = userData.value.volunteer?.ethnicity ?? ''
+  generalDraft.isJld = userData.value.volunteer?.isJld ?? false
   generalDraft.languages = [...(userData.value.volunteer?.languages ?? [])]
   generalDraft.availabilities = [...(userData.value.volunteer?.availabilities ?? [])]
   generalDraft.volunteerAreas = [...(userData.value.volunteer?.volunteerAreas ?? [])]
