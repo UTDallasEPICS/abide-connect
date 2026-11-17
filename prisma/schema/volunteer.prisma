@@ -21,6 +21,15 @@ model Volunteer {
 
   approvalStatus ApprovalStatus @default(PENDING)
 
+  /// Marks a JLD volunteer: a sub-category of *approved* volunteers who can
+  /// see and sign up for JLD events (`Event.isJld`), which are hidden from
+  /// everyone else. Staff set it per person from member management.
+  ///
+  /// It narrows `approvalStatus` rather than replacing it — the flag on a
+  /// PENDING or REJECTED volunteer grants nothing until they are approved.
+  /// The rule lives in `canViewEventType` (`shared/utils/eventType.ts`).
+  isJld          Boolean @default(false)
+
   gender         Gender?
   ethinicity     Ethinicity?
   languages      Volunteer_Language[]

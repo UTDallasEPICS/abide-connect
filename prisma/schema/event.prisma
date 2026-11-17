@@ -1,10 +1,10 @@
 /// An event on the calendar.
 ///
-/// Audience is stored as three booleans but behaves as one exclusive choice —
+/// Audience is stored as four booleans but behaves as one exclusive choice —
 /// see `shared/utils/eventType.ts`, which owns the mapping. Don't set
-/// `allowVolunteers` / `allowAttendees` / `isTraining` by hand; go through
-/// `eventTypeToFlags()` so an event can't end up as both a training and a
-/// public event. Those flags are also what `canViewEvent` filters on, so a bad
+/// `allowVolunteers` / `allowAttendees` / `isTraining` / `isJld` by hand; go
+/// through `eventTypeToFlags()` so an event can't end up as both a training
+/// and a public event. Those flags are also what `canViewEvent` filters on, so a bad
 /// combination changes who can see the event.
 ///
 /// `calendarEventId` / `calendarURL` link to the mirrored entry on the shared
@@ -25,6 +25,9 @@ model Event {
   allowVolunteers Boolean
   allowAttendees  Boolean
   isTraining      Boolean @default(false)
+  /// A JLD event: volunteer-only, and visible only to approved volunteers
+  /// carrying `Volunteer.isJld` (and to staff).
+  isJld           Boolean @default(false)
   /// Marks that volunteer hour logs have been auto-created for this event, so
   /// the job can't double-log. Nothing writes it yet.
   logsGenerated   Boolean @default(false)
