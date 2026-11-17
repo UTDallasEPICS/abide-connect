@@ -43,6 +43,8 @@ export interface UserData {
     gender?: string
     ethnicity?: string
     isActive?: boolean
+    /** Staff-assigned JLD mark; see `Volunteer.isJld`. */
+    isJld?: boolean
     languages: string[]
     availabilities?: string[]
     volunteerAreas?: string[]

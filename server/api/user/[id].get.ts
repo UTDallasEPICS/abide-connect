@@ -83,6 +83,7 @@ export default defineEventHandler(async (event): Promise<UserData> => {
           gender: volunteer.gender ?? undefined,
           ethnicity: volunteer.ethinicity ?? undefined,
           isActive: volunteer.isActive,
+          isJld: volunteer.isJld,
           languages: volunteer.languages.map(l => l.language),
           availabilities: volunteer.availabilities.map(a => a.availability),
           volunteerAreas: volunteer.volunteerAreas.map(v => v.volunteerArea),
