@@ -69,7 +69,7 @@ const { data: roles } = await useFetch<string[]>('/api/user/roles', {
   headers,
   default: () => [],
 })
-const { data: myVolunteer } = await useFetch<{ approvalStatus?: string } | null>(
+const { data: myVolunteer } = await useFetch<{ approvalStatus?: string, isJld?: boolean } | null>(
   '/api/volunteer/me',
   { headers, default: () => null },
 )
@@ -99,6 +99,7 @@ const isSignedIn = computed(() => (roles.value?.length ?? 0) > 0)
 const viewer = computed<EventViewer>(() => ({
   isAdmin: isAdmin.value,
   volunteerStatus: (myVolunteer.value?.approvalStatus as VolunteerStatus) ?? 'NONE',
+  isJld: myVolunteer.value?.isJld ?? false,
 }))
 const eventType = computed(() => eventTypeFromFlags(event.value ?? {}))
 const hasEnded = computed(() =>
@@ -146,7 +147,8 @@ const hasTimeSlots = computed(() => timeSlots.value.length > 0)
 // type, so they can be removed deliberately rather than silently discarded.
 const acceptsTimeBlocks = computed(() =>
   editForm.value.eventType === 'VOLUNTEERS'
-  || editForm.value.eventType === 'VOLUNTEERS_AND_ATTENDEES',
+  || editForm.value.eventType === 'VOLUNTEERS_AND_ATTENDEES'
+  || editForm.value.eventType === 'JLD',
 )
 
 /**

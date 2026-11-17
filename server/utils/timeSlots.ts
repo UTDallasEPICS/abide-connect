@@ -111,7 +111,7 @@ export function assertTimeSlotsValid(slots: TimeSlotDraft[], window: SlotWindow)
 export function assertEventAcceptsTimeSlots(flags: Partial<EventAudienceFlags>): void {
   const type = eventTypeFromFlags(flags)
 
-  if (type !== 'VOLUNTEERS' && type !== 'VOLUNTEERS_AND_ATTENDEES') {
+  if (type !== 'VOLUNTEERS' && type !== 'VOLUNTEERS_AND_ATTENDEES' && type !== 'JLD') {
     throw createError({
       statusCode: 400,
       message: 'Time blocks can only be added to events that volunteers sign up for.',

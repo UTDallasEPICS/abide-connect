@@ -29,6 +29,7 @@ export default defineEventHandler(async (event) => {
   return {
     id: volunteer.id,
     approvalStatus: volunteer.approvalStatus,
+    isJld: volunteer.isJld,
     gender: volunteer.gender,
     ethinicity: volunteer.ethinicity,
     // `availability` (singular) matches the application form's field name.

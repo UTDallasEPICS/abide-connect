@@ -10,7 +10,7 @@ export interface RequestViewer extends EventViewer {
 /**
  * Resolves who is making the request, in the terms event visibility cares
  * about: are they staff, and what's their volunteer approval status. Used to
- * hide volunteer-only and training events from everyone else.
+ * hide volunteer-only, JLD and training events from everyone else.
  *
  * @example
  * const viewer = await getEventViewer(event)
@@ -32,7 +32,7 @@ export async function getEventViewer(event: H3Event): Promise<RequestViewer> {
     }),
     prisma.volunteer.findUnique({
       where: { userId: session.user.id },
-      select: { approvalStatus: true },
+      select: { approvalStatus: true, isJld: true },
     }),
   ])
 
@@ -40,5 +40,6 @@ export async function getEventViewer(event: H3Event): Promise<RequestViewer> {
     userId: session.user.id,
     isAdmin: userRoles.some(r => r.role.toLowerCase() === 'admin'),
     volunteerStatus: (volunteer?.approvalStatus as VolunteerStatus) ?? 'NONE',
+    isJld: volunteer?.isJld ?? false,
   }
 }
