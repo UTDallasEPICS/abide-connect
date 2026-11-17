@@ -6,7 +6,7 @@ import type { PlannedApplicant } from '#server/utils/volunteerImport'
 
 /**
  * Imports a volunteer-application CSV export. Admin only, and not linked from
- * anywhere in the app — see `app/pages/ingest.vue`.
+ * anywhere in the app — see `app/pages/ingest/index.vue`.
  *
  * Two modes over one code path: without `commit` it parses, plans and reports
  * what it *would* do, touching nothing; with `commit` it runs that same plan.
