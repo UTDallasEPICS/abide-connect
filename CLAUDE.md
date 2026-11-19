@@ -55,6 +55,15 @@ Copy `.env.example` to `.env` before running anything. Required vars: `BETTER_AU
 
 When an event is created/updated/deleted, `server/utils/googleCalendar.ts` mirrors it to a single shared Google Calendar (`GOOGLE_CALENDAR_ID`). Writes use the acting volunteer's Google OAuth token — obtained via `auth.api.getAccessToken({ body: { providerId: 'google', userId } })`, which refreshes using the stored refresh token — so the Google provider requests the `calendar.events` scope with `accessType: 'offline'` + `prompt: 'consent'` (in `auth.ts`). The Google event id is stored on `Event.calendarEventId` (and its link on `Event.calendarURL`) for later update/delete. Sync is **best-effort**: if the acting volunteer signed in with email OTP (no Google token) or the Calendar API fails, the DB operation still succeeds and the calendar is simply not updated.
 
+### Monday.com event import
+
+`/ingest/events` bulk-creates events from a CSV export of the Monday.com events board. It is the sibling of the volunteer-application importer at `/ingest` and follows the same shape: unlinked, admin-only via `requireRole` in the endpoint, and preview-then-commit over one code path so the preview is the import that runs.
+
+- `server/utils/eventImport.ts` is the pure half (rows in, a plan out). It finds the header row inside the board-name / group-heading scaffolding an export wraps around it, matches columns on a short list of likely names, and reads every date and time as Central wall-clock time.
+- `server/api/admin/ingest/events.post.ts` applies the plan. An event is identified by title + start, so re-running a file is a no-op and an event that already exists is never edited. Rows with no audience or address take the defaults chosen on the page; a row with no address and no default is skipped, since `Event.location` is required.
+- New addresses are geocoded through `server/utils/geocode.ts`, spaced a second apart for Nominatim's rate limit, so a commit takes about a second per address the app hasn't seen.
+- Imports are **not** mirrored to Google Calendar — the events already exist outside the app, and syncing would duplicate them. Editing an imported event later backfills its calendar entry.
+
 ### Web Push notifications
 
 Push is plain Web Push (VAPID) through the PWA's own service worker — no APNs certificate or FCM project. `pnpm push:keys` generates the `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` pair; the same pair must persist across restarts or every stored subscription is invalidated. With the keys unset, `pushConfigured` is false, sending is a no-op, and the settings toggle reports push as unavailable instead of erroring.
