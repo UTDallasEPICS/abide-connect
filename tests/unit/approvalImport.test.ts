@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { parseCsv } from '#server/utils/csv'
-import { planApprovalImport, resolveApprovalColumns, sameName } from '#server/utils/approvalImport'
+import { parseCsvRows } from '#server/utils/csv'
+import { findApprovalHeaderRow, planApprovalImport, resolveApprovalColumns, sameName } from '#server/utils/approvalImport'
 
 /**
  * Reading a "passed training" list.
@@ -10,10 +10,7 @@ import { planApprovalImport, resolveApprovalColumns, sameName } from '#server/ut
  * appearing twice, and cells that aren't an address at all.
  */
 
-const plan = (text: string) => {
-  const { headers, records } = parseCsv(text)
-  return planApprovalImport(records, headers)
-}
+const plan = (text: string) => planApprovalImport(parseCsvRows(text))
 
 describe('resolveApprovalColumns', () => {
   it('finds the columns of the volunteer application export', () => {
@@ -77,6 +74,33 @@ describe('planApprovalImport', () => {
 
   it('says so when the file has no email column at all', () => {
     expect(plan('Name,Phone\nRosa,555-0100').hasEmailColumn).toBe(false)
+  })
+
+  it('reads past a title line above the header, keeping file line numbers', () => {
+    const result = plan('Training cohort Nov 2026,,\n,,\nFull Name,Emergency Contact Email,Email Address\nRosa Delgado,mom@example.test,rosa@example.test\n,,\nDana Reyes,,')
+
+    expect(result.hasEmailColumn).toBe(true)
+    expect(result.totalRows).toBe(2)
+    expect(result.people).toEqual([{ rowNumber: 4, email: 'rosa@example.test', name: 'Rosa Delgado' }])
+    expect(result.rejected).toEqual([{ rowNumber: 6, email: '', errors: ['No email address.'] }])
+  })
+})
+
+describe('findApprovalHeaderRow', () => {
+  it('is the first row when the file starts with its header', () => {
+    expect(findApprovalHeaderRow([['Name', 'Email'], ['Rosa', 'rosa@example.test']])).toBe(0)
+  })
+
+  it('steps over a one-cell title that mentions email', () => {
+    expect(findApprovalHeaderRow([['Emails of everyone who passed'], ['Name', 'Email'], ['Rosa', 'r@example.test']])).toBe(1)
+  })
+
+  it('accepts a bare one-column list headed "Email"', () => {
+    expect(findApprovalHeaderRow([['Email'], ['a@example.test']])).toBe(0)
+  })
+
+  it('reports -1 when no row has an email column', () => {
+    expect(findApprovalHeaderRow([['Name', 'Phone'], ['Rosa', '555-0100']])).toBe(-1)
   })
 })
 

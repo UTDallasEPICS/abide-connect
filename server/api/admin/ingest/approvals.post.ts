@@ -1,6 +1,6 @@
 import prisma from '#server/utils/prisma'
 import { requireRole } from '#server/utils/requireRole'
-import { parseCsv } from '#server/utils/csv'
+import { parseCsvRows } from '#server/utils/csv'
 import { planApprovalImport, sameName } from '#server/utils/approvalImport'
 
 /**
@@ -71,14 +71,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 413, statusMessage: 'That file is larger than this importer accepts (2 MB).' })
   }
 
-  const { headers, records } = parseCsv(csv)
-  if (records.length === 0) {
-    throw createError({ statusCode: 400, statusMessage: 'The file has a header row but no records.' })
-  }
-
-  const plan = planApprovalImport(records, headers)
+  const plan = planApprovalImport(parseCsvRows(csv))
   if (!plan.hasEmailColumn) {
     throw createError({ statusCode: 400, statusMessage: 'No email column found — volunteers are matched by email address.' })
+  }
+  if (plan.totalRows === 0) {
+    throw createError({ statusCode: 400, statusMessage: 'The file has a header row but no records.' })
   }
 
   // One round-trip rather than a lookup per person; this endpoint is also the

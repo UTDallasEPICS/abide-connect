@@ -75,16 +75,53 @@ export interface ApprovalImportPlan {
   duplicateRows: number
 }
 
+const EXACT_EMAIL_HEADERS = new Set(['email', 'email address', 'e-mail'])
+
 /**
- * Plans a batch approval from parsed CSV records (see `parseCsv`).
+ * The index of the header row, or -1 when no row has an email column.
+ *
+ * Usually row 0, but a list saved out of Monday or a spreadsheet often has a
+ * title line ("Training cohort — Nov 2026") or a group heading above the real
+ * header. A row qualifies if it names an email column and either has another
+ * column beside it or names it exactly — so a one-cell title that happens to
+ * mention email ("Emails of everyone who passed") is stepped over, while a
+ * bare one-column "Email" list still works.
+ */
+export function findApprovalHeaderRow(rows: string[][]): number {
+  return rows.findIndex((row) => {
+    const email = resolveApprovalColumns(row).email
+    if (email === undefined) return false
+    const filled = row.filter(cell => cell.trim() !== '').length
+    return filled > 1 || EXACT_EMAIL_HEADERS.has(normalizeHeader(email))
+  })
+}
+
+/**
+ * Plans a batch approval from the raw rows of a CSV (see `parseCsvRows`).
  *
  * The same person listed twice is one approval, not an error — a list built
  * from several training sessions' sheets will repeat people.
  */
-export function planApprovalImport(records: Record<string, string>[], headers: string[]): ApprovalImportPlan {
-  const columns = resolveApprovalColumns(headers)
-  const read = (record: Record<string, string>, header: string | undefined) =>
-    header ? (record[header] ?? '').trim() : ''
+export function planApprovalImport(rows: string[][]): ApprovalImportPlan {
+  const headerIndex = findApprovalHeaderRow(rows)
+  const header = headerIndex === -1 ? [] : rows[headerIndex]!.map(h => h.trim())
+  const columns = resolveApprovalColumns(header)
+  const indexOf = (name: string | undefined) => (name === undefined ? -1 : header.indexOf(name))
+  const at = {
+    email: indexOf(columns.email),
+    name: indexOf(columns.name),
+    firstName: indexOf(columns.firstName),
+    lastName: indexOf(columns.lastName),
+  }
+
+  // Line numbers are kept from the file itself, so they still point at the
+  // right row when a title line or a blank line sits above it.
+  const records = headerIndex === -1
+    ? []
+    : rows
+        .map((cells, index) => ({ cells, rowNumber: index + 1 }))
+        .slice(headerIndex + 1)
+        .filter(({ cells }) => cells.some(c => c.trim() !== ''))
 
   const plan: ApprovalImportPlan = {
     totalRows: records.length,
@@ -96,10 +133,9 @@ export function planApprovalImport(records: Record<string, string>[], headers: s
 
   const seen = new Set<string>()
 
-  records.forEach((record, index) => {
-    // +2: one for the header row, one because rows are counted from 1.
-    const rowNumber = index + 2
-    const rawEmail = read(record, columns.email)
+  records.forEach(({ cells, rowNumber }) => {
+    const read = (index: number) => (index === -1 ? '' : (cells[index] ?? '').trim())
+    const rawEmail = read(at.email)
     const email = normalizeEmail(rawEmail)
 
     if (!email) {
@@ -116,8 +152,8 @@ export function planApprovalImport(records: Record<string, string>[], headers: s
     }
     seen.add(email)
 
-    const name = read(record, columns.name)
-      || [read(record, columns.firstName), read(record, columns.lastName)].filter(Boolean).join(' ')
+    const name = read(at.name)
+      || [read(at.firstName), read(at.lastName)].filter(Boolean).join(' ')
 
     plan.people.push({ rowNumber, email, name: name || null })
   })

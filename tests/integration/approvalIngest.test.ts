@@ -120,9 +120,20 @@ describe('commit', () => {
     expect(result.duplicateRows).toBe(1)
     expect(result.summary.approve).toBe(1)
   })
+
+  it('reads a list saved with a title line above the header', async () => {
+    const result = await run('Training cohort Nov 2026,\nName,Email\nRosa Delgado,rosa@example.test', true)
+
+    expect(result.summary.approve).toBe(1)
+    expect(await statusOf('rosa@example.test')).toBe('APPROVED')
+  })
 })
 
 describe('validation', () => {
+  it('rejects a header with no records under it', async () => {
+    await expect(run('Name,Email\n', false)).rejects.toMatchObject({ statusCode: 400 })
+  })
+
   it('rejects a file with no email column', async () => {
     await expect(run('Name,Phone\nRosa,555-0100', false)).rejects.toMatchObject({ statusCode: 400 })
   })
