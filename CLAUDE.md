@@ -86,6 +86,15 @@ Two admin-only pages over `Volunteer_Hour_Log`: `/admin/reports` (operational �
 - **Settings, not constants.** The volunteer hourly rate (Independent Sector republishes it annually), its cited source, and the lapse threshold live in the `AppSetting` key/value table behind `server/utils/appSettings.ts` — the only module that reads it. The funder page warns while the rate is still the built-in default.
 - **Charts are hand-drawn SVG**, no charting library: `app/lib/chart.ts` (scales, ticks, paths, formatting) plus `app/components/reports/*`. Colours come from the `--viz-*` tokens at the bottom of `app/assets/css/main.css`, whose two series hues are validated for CVD separation and contrast against the actual card surfaces (white / gray-800) — re-validate before changing them. Two conventions worth keeping: never a second y-axis (headcount is its own panel under the hours plot, sharing the x-axis), and every chart ships a table view, since a tooltip is not an accessible way to read a value. Chart cards carry `min-w-0` because a grid item's default `min-width: auto` lets a fixed-width SVG stretch the card past a phone's viewport.
 
+### Batch volunteer approval
+
+`/ingest/approvals` approves every volunteer named in a CSV of people who passed training — the bulk counterpart of `volunteer/[id]/approval.patch.ts`, and the same unlinked, admin-only, preview-then-commit shape as the application importer at `/ingest`.
+
+- `server/utils/approvalImport.ts` reads the list; `server/api/admin/ingest/approvals.post.ts` matches it and applies it.
+- Matching is by **email only** (`User.email`). A name column is optional and is only shown beside the matched account, with a warning when the two disagree — it is never used to find anyone.
+- It only ever moves a volunteer *to* `APPROVED`: already-approved rows are left alone (so re-running a file is a no-op), a previously `REJECTED` volunteer is approved but flagged, and nothing can be rejected or un-approved from here.
+- It never creates anything. An address with no account, or an account with no volunteer application, is reported and skipped.
+
 ### Native app (Capacitor)
 
 `ios/` and `android/` are a Capacitor 8 shell (`capacitor.config.js`, app id `org.abidewomen.connect`). It does **not** bundle the web app: the WebView loads the deployed site from `CAPACITOR_SERVER_URL`, so the app is first-party to the server and cookies, SSR and the API work unchanged, and a deploy updates the app without a store release. Only `capacitor/www/` (an offline fallback page, `server.errorPath`) ships inside the binary.
