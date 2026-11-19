@@ -17,17 +17,6 @@ interface UpcomingEvent {
   startTime: string;
 }
 
-interface UserUpcomingEvent {
-  id: string;
-  title: string;
-  startTime: string;
-  endTime: string;
-  address: string | null;
-  isTraining: boolean;
-  isVolunteer: boolean;
-  imageUrl: string | null;
-}
-
 function onSeeAllYourEventsClick() {
   navigateTo('/volunteer');
 }
@@ -52,39 +41,11 @@ const { data: user } = await useFetch('/api/user/me', { headers });
 
 const showYourEventsSection = computed(() => !!user.value);
 
-const yourEventsPending = ref(true);
-const yourEventsError = ref(false);
-
 const {
   data: yourEventsRaw,
+  pending: yourEventsPending,
   error: yourEventsFetchError,
-  status: yourEventsStatus,
-} = useLazyFetch<UserUpcomingEvent[]>('/api/user/upcoming-events', {
-  default: () => [],
-  server: false,
-  immediate: showYourEventsSection.value,
-});
-
-watch(yourEventsStatus, (newStatus) => {
-  if (newStatus === 'success' || newStatus === 'error') {
-    yourEventsPending.value = false;
-    yourEventsError.value = newStatus === 'error';
-    if (newStatus === 'error') {
-      console.error('Failed to load your events:', yourEventsFetchError.value);
-    }
-  }
-});
-
-watch(
-  showYourEventsSection,
-  (shouldShow) => {
-    if (shouldShow && yourEventsStatus.value === 'idle') {
-      yourEventsPending.value = true;
-      void refreshNuxtData('/api/user/upcoming-events');
-    }
-  },
-  { immediate: true }
-);
+} = useUserUpcomingEvents(user);
 
 const yourEvents = computed(() =>
   yourEventsRaw.value.map((e) => ({
@@ -98,6 +59,7 @@ const yourEvents = computed(() =>
     location: e.address ?? '',
   }))
 );
+const yourEventsError = computed(() => !!yourEventsFetchError.value);
 
 const showYourEventsBlock = computed(
   () =>

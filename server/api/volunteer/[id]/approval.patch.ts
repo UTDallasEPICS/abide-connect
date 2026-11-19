@@ -1,6 +1,6 @@
 import prisma from '#server/utils/prisma'
 import { requireRole } from '#server/utils/requireRole'
-import type { ApprovalStatus } from '#server/utils/generated/prisma/client'
+import type { ApprovalStatus } from '~~/prisma/generated/client'
 
 /**
  * Approves or denies a volunteer, promoting a pending volunteer to a full

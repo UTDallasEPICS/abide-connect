@@ -44,8 +44,8 @@ const emit = defineEmits(['cancel'])
 const formattedDateTime = computed(() => formatEventDateTime(props.startTime))
 
 // See app/composables/useEventImageProvider.ts — images served by the API
-// route can't go through ipx.
-const imageProvider = computed(() => eventImageProvider(props.image))
+// route use a native <img> rather than an unregistered Nuxt Image provider.
+const isDirectImage = computed(() => isDirectEventImage(props.image))
 
 const menuOpen = ref(false)
 const cardRef = ref(null)
@@ -101,8 +101,8 @@ const isLarge = computed(() => props.size === 'lg')
       >
         <!-- 4rem/5rem square thumbnail; 2x for retina is 160px. -->
         <NuxtImg
+          v-if="!isDirectImage"
           :src="image"
-          :provider="imageProvider"
           :alt="title"
           :width="160"
           :height="160"
@@ -113,6 +113,17 @@ const isLarge = computed(() => props.size === 'lg')
           draggable="false"
           class="h-full w-full select-none object-cover"
         />
+        <img
+          v-else
+          :src="image"
+          :alt="title"
+          width="160"
+          height="160"
+          loading="lazy"
+          decoding="async"
+          draggable="false"
+          class="h-full w-full select-none object-cover"
+        >
       </div>
       <div
         class="flex min-w-0 flex-1 flex-col justify-between"

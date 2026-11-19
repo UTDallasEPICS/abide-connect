@@ -44,8 +44,8 @@ const avatarInitials = computed(() => {
 })
 
 // See app/composables/useEventImageProvider.ts — images served by the API
-// route can't go through ipx.
-const imageProvider = computed(() => eventImageProvider(props.image))
+// route use a native <img> rather than an unregistered Nuxt Image provider.
+const isDirectImage = computed(() => isDirectEventImage(props.image))
 </script>
 
 <template>
@@ -72,8 +72,8 @@ const imageProvider = computed(() => eventImageProvider(props.image))
         are used, so they are always lazy.
       -->
       <NuxtImg
+        v-if="!isDirectImage"
         :src="image"
-        :provider="imageProvider"
         :alt="title"
         :width="448"
         :height="224"
@@ -84,6 +84,17 @@ const imageProvider = computed(() => eventImageProvider(props.image))
         draggable="false"
         class="h-full w-full select-none object-cover"
       />
+      <img
+        v-else
+        :src="image"
+        :alt="title"
+        width="448"
+        height="224"
+        loading="lazy"
+        decoding="async"
+        draggable="false"
+        class="h-full w-full select-none object-cover"
+      >
       <div
         class="absolute left-3 top-3 flex w-12 select-none flex-col items-center rounded-lg border border-gray-100 bg-white/90 py-1 backdrop-blur-lg dark:border-gray-600 dark:bg-gray-800/90"
       >

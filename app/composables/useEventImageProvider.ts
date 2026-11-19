@@ -10,12 +10,11 @@
  *    `public/`. ipx resolves relative paths against `public/`, so handing it
  *    this URL produces a 404 and a broken card.
  *
- * `'none'` passes the src through untouched while still letting the component
- * stay a single `<NuxtImg>` with consistent `loading` / `decoding` / sizing.
- * Uploaded images get their savings from the resize in
+ * API-served images must use a native `<img>`; `@nuxt/image` does not register
+ * a provider named `'none'`. Uploaded images get their savings from the resize in
  * `server/api/events/[id]/images/upload.post.ts` and the cache headers in the
  * matching `[name].get.ts` instead.
  */
-export function eventImageProvider(src: string): 'none' | undefined {
-  return src.startsWith('/api/') ? 'none' : undefined
+export function isDirectEventImage(src: string): boolean {
+  return src.startsWith('/api/')
 }

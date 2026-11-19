@@ -1,6 +1,6 @@
 import { parseZonedDate } from '#shared/utils/eventTime'
 import { requireRole } from '~~/server/utils/requireRole'
-import type { ApprovalStatus, VolunteerArea } from '#server/utils/generated/prisma/client'
+import type { ApprovalStatus, VolunteerArea } from '~~/prisma/generated/client'
 
 /**
  * `Prefer Not To Say` → `PREFER_NOT_TO_SAY`. Inverse of the `humanize` in

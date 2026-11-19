@@ -1,5 +1,5 @@
 import prisma from '#server/utils/prisma'
-import { Prisma } from '#server/utils/generated/prisma/client'
+import { Prisma } from '~~/prisma/generated/client'
 
 /**
  * DEAD CODE — superseded by `sign-up-verify.post.ts`. Nothing calls this.

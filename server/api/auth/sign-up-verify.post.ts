@@ -1,7 +1,7 @@
 import { auth } from '#server/utils/auth'
 import prisma from '#server/utils/prisma'
 import { activeRoles } from '#server/utils/userRoles'
-import { Prisma } from '#server/utils/generated/prisma/client'
+import { Prisma } from '~~/prisma/generated/client'
 import { normalizeEmail } from '#server/utils/normalizeEmail'
 import type { H3Event } from 'h3'
 import { appendHeader, setHeader } from 'h3'

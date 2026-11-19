@@ -1,6 +1,6 @@
 import { auth } from '#server/utils/auth'
 import prisma from '#server/utils/prisma'
-import { PushScope } from '#server/utils/generated/prisma/enums'
+import { PushScope } from '~~/prisma/generated/enums'
 
 /**
  * Updates the signed-in user's own profile and notification preferences.

@@ -8,8 +8,8 @@ import type {
   Certification,
   UserRole,
   VolunteerArea,
-} from './generated/prisma/client.ts'
-import { PrismaClient } from './generated/prisma/client.ts'
+} from '~~/prisma/generated/client'
+import { PrismaClient } from '~~/prisma/generated/client'
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
 
 /**

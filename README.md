@@ -89,7 +89,7 @@ Then, initialize prisma client.
 pnpm prisma generate
 ```
 
-The generated client will be placed in `/server/utils/generated/prisma`.
+The generated client will be placed in `/prisma/generated`.
 
 Next, migrate and seed the database.
 

@@ -10,6 +10,8 @@ import {
   type EventViewer,
   type VolunteerStatus,
 } from '#shared/utils/eventType'
+import ConfirmModal from '~/components/modals/ConfirmModal.vue'
+import { clearUserUpcomingEventsCache } from '~/composables/useUserUpcomingEvents'
 /**
  * Event detail page, doubling as the inline editor for admins.
  *
@@ -173,6 +175,9 @@ const rsvpCounts = computed(() => ({
 
 const signUpPending = ref(false)
 const signUpError = ref('')
+const cancelModalOpen = ref(false)
+const cancelError = ref<string | null>(null)
+const cancelTarget = ref<'volunteer' | 'attendee'>('attendee')
 // Where an unregistered visitor is sent to attend, and what brings them back
 // here once they have an account.
 const loginLink = computed(() => ({
@@ -192,6 +197,7 @@ async function signUpAsVolunteer() {
       body: { isVolunteer: true },
     })
     await Promise.all([refreshMyRsvp(), refreshRsvpCounts()])
+    clearUserUpcomingEventsCache()
   }
   catch (err) {
     signUpError.value = signUpErrorMessage(err, 'Could not sign you up. Please try again.')
@@ -214,6 +220,7 @@ async function registerToAttend() {
       body: { isVolunteer: false },
     })
     await Promise.all([refreshMyRsvp(), refreshRsvpCounts()])
+    clearUserUpcomingEventsCache()
   }
   catch (err) {
     signUpError.value = signUpErrorMessage(err, 'Could not register you. Please try again.')
@@ -222,15 +229,36 @@ async function registerToAttend() {
     signUpPending.value = false
   }
 }
-async function cancelSignUp() {
+const cancelModalTitle = computed(() =>
+  cancelTarget.value === 'volunteer' ? 'Cancel sign-up' : 'Unregister',
+)
+const cancelModalDescription = computed(() => {
+  const action = cancelTarget.value === 'volunteer'
+    ? 'cancel your sign-up for'
+    : 'unregister from'
+  return `Are you sure you want to ${action} ${event.value?.title ?? 'this event'}?`
+})
+function requestCancelSignUp() {
+  cancelTarget.value = isSignedUpToVolunteer.value ? 'volunteer' : 'attendee'
+  cancelError.value = null
+  cancelModalOpen.value = true
+}
+function handleCancelModalOpenUpdate(value: boolean) {
+  cancelModalOpen.value = value
+  if (!value) cancelError.value = null
+}
+async function confirmCancelSignUp() {
   signUpPending.value = true
   signUpError.value = ''
+  cancelError.value = null
   try {
     await $fetch(`/api/events/${eventId}/rsvp`, { method: 'DELETE', body: {} })
     await Promise.all([refreshMyRsvp(), refreshRsvpCounts()])
+    clearUserUpcomingEventsCache()
+    cancelModalOpen.value = false
   }
   catch (err) {
-    signUpError.value = signUpErrorMessage(err, 'Could not cancel your sign-up. Please try again.')
+    cancelError.value = signUpErrorMessage(err, 'Could not cancel your sign-up. Please try again.')
   }
   finally {
     signUpPending.value = false
@@ -815,7 +843,7 @@ const cardClass = 'rounded-2xl bg-white shadow-sm dark:bg-gray-800'
                   color="neutral"
                   size="sm"
                   :loading="signUpPending"
-                  @click="cancelSignUp"
+                  @click="requestCancelSignUp"
                 >
                   Cancel sign-up
                 </UButton>
@@ -842,7 +870,7 @@ const cardClass = 'rounded-2xl bg-white shadow-sm dark:bg-gray-800'
                     color="neutral"
                     size="sm"
                     :loading="signUpPending"
-                    @click="cancelSignUp"
+                    @click="requestCancelSignUp"
                   >
                     Cancel registration
                   </UButton>
@@ -955,6 +983,17 @@ const cardClass = 'rounded-2xl bg-white shadow-sm dark:bg-gray-800'
         </div>
       </PageContainer>
     </div>
+    <ConfirmModal
+      :open="cancelModalOpen"
+      :title="cancelModalTitle"
+      :description="cancelModalDescription"
+      :confirm-label="cancelModalTitle"
+      confirm-color="error"
+      :loading="signUpPending"
+      :error="cancelError"
+      @update:open="handleCancelModalOpenUpdate"
+      @confirm="confirmCancelSignUp"
+    />
   </div>
 </template>
 <style scoped>
@@ -998,4 +1037,3 @@ const cardClass = 'rounded-2xl bg-white shadow-sm dark:bg-gray-800'
 }
 
 </style>
-

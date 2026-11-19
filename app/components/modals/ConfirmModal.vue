@@ -49,7 +49,7 @@ function handleOpenUpdate(v: boolean) {
           class="text-red-700 dark:text-red-400 text-2xl mt-0.5"
         />
         <div class="flex flex-col gap-1">
-          <p class="font-normal text-sm text-gray-400 dark:text-gray-400">
+          <p class="font-normal text-sm text-gray-700 dark:text-gray-300">
             {{ description }}
           </p>
           <p

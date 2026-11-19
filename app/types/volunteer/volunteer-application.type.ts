@@ -1,5 +1,5 @@
 import * as z from 'zod'
-import { Gender, Availability, Ethinicity, Language, VolunteerArea, Certification } from '#server/utils/generated/prisma/enums'
+import { Gender, Availability, Ethinicity, Language, VolunteerArea, Certification } from '~~/prisma/generated/enums'
 import type { InputMenuItem, AuthFormField } from '@nuxt/ui'
 
 /**

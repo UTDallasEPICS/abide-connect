@@ -7,13 +7,14 @@
 // volunteer.prisma, event.prisma, and so on.
 //
 // After editing anything here, run `pnpm prisma generate` — the client is
-// emitted to `server/utils/generated/prisma` rather than node_modules, and the
+// emitted to `prisma/generated` rather than node_modules or Nitro's server
+// auto-import tree, and the
 // app imports types directly from that output, so stale generation shows up as
 // confusing type errors rather than a clear failure.
 
 generator client {
   provider               = "prisma-client"
-  output                 = "../../server/utils/generated/prisma"
+  output                 = "../generated"
   engineType             = "client"
   runtime                = "nodejs"
   moduleFormat           = "esm"

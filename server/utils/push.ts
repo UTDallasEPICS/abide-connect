@@ -1,6 +1,6 @@
 import webpush from 'web-push'
 import prisma from './prisma'
-import type { PushScope, PushSubscription } from './generated/prisma/client'
+import type { PushScope, PushSubscription } from '~~/prisma/generated/client'
 
 /**
  * Web Push (VAPID) delivery.
