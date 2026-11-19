@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import prisma from '#server/utils/prisma'
 import { zonedTime } from '#shared/utils/reportRange'
+import type { EventAudienceFlags } from '#shared/utils/eventType'
 import type { ApprovalStatus, VolunteerArea } from '#server/utils/generated/prisma/enums'
 import { createFakeEvent } from './h3-globals'
 
@@ -52,6 +53,8 @@ export interface VolunteerOptions {
   /** Defaults to APPROVED — the roster state the reports treat as countable. */
   approvalStatus?: ApprovalStatus
   isActive?: boolean
+  /** Staff-assigned JLD mark. */
+  isJld?: boolean
   areas?: VolunteerArea[]
   /** The account creation date, which is what the retention cohorts key on. */
   signedUpAt?: Date
@@ -82,6 +85,7 @@ export async function createVolunteer(options: VolunteerOptions = {}) {
       userId,
       isActive: options.isActive ?? true,
       approvalStatus: options.approvalStatus ?? 'APPROVED',
+      isJld: options.isJld ?? false,
     },
   })
 
@@ -146,6 +150,8 @@ export interface EventOptions {
   title?: string
   startTime: Date
   endTime: Date
+  /** Stored audience columns. Defaults to a plain volunteers-only event. */
+  flags?: Partial<EventAudienceFlags>
   /** Blocks drawn on the event, each with its own capacity. */
   slots?: { startTime: Date, endTime: Date, capacity: number, signedUp?: string[] }[]
   /** Volunteer ids attending an event that has no blocks. */
@@ -162,6 +168,7 @@ export async function createEvent(options: EventOptions) {
       locationId: await sharedLocation(),
       allowVolunteers: true,
       allowAttendees: false,
+      ...options.flags,
     },
   })
 

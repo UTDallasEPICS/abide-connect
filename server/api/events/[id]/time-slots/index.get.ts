@@ -30,6 +30,9 @@ export default defineEventHandler(async (event) => {
       allowVolunteers: true,
       allowAttendees: true,
       isTraining: true,
+      // Without this the row reads as a plain volunteer event and `canViewEvent`
+      // would hand a JLD event's blocks to every approved volunteer.
+      isJld: true,
     },
   })
 

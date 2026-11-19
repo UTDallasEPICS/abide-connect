@@ -50,7 +50,8 @@ const newEvent = ref(emptyEvent())
 // sign up. An attendees-only or training event gets no editor and sends none.
 const acceptsTimeBlocks = computed(() =>
   newEvent.value.eventType === 'VOLUNTEERS'
-  || newEvent.value.eventType === 'VOLUNTEERS_AND_ATTENDEES',
+  || newEvent.value.eventType === 'VOLUNTEERS_AND_ATTENDEES'
+  || newEvent.value.eventType === 'JLD',
 )
 
 const isSaving = ref(false)

@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
   //    professional credentials from the intake form.
   const volunteer = await prisma.volunteer.findUnique({
     where: { userId: session.user.id },
-    select: { id: true, approvalStatus: true, isActive: true },
+    select: { id: true, approvalStatus: true, isActive: true, isJld: true },
   })
 
   if (!volunteer) {
@@ -59,6 +59,7 @@ export default defineEventHandler(async (event) => {
           allowVolunteers: true,
           allowAttendees: true,
           isTraining: true,
+          isJld: true,
         },
       },
     },
@@ -74,6 +75,13 @@ export default defineEventHandler(async (event) => {
   // 4. Blocks are volunteer shifts, so the event has to be one volunteers
   //    sign up for.
   assertEventAcceptsTimeSlots(slot.event)
+
+  // 4 (cont). A JLD event's blocks are for JLD volunteers only. Answered with
+  //    the same 404 as a missing block, so a block id can't be used to confirm
+  //    that a JLD event exists.
+  if (slot.event.isJld && !volunteer.isJld) {
+    throw createError({ statusCode: 404, message: 'Time block not found' })
+  }
 
   // 5 (cont). The *block's* end, not the event's: on an all-day event the
   //    afternoon shifts stay claimable after the morning ones have passed.

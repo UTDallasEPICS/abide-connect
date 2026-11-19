@@ -66,6 +66,7 @@ const generalDraft = reactive<GeneralDraft>({
   phoneNumber: '',
   adminNote: '',
   isActive: false,
+  isJld: false,
   gender: '',
   ethinicity: '',
   languages: [],
@@ -91,6 +92,7 @@ function populateDrafts() {
   generalDraft.isActive = userData.value.volunteer?.isActive ?? false
   generalDraft.gender = userData.value.volunteer?.gender ?? ''
   generalDraft.ethinicity = userData.value.volunteer?.ethnicity ?? ''
+  generalDraft.isJld = userData.value.volunteer?.isJld ?? false
   generalDraft.languages = [...(userData.value.volunteer?.languages ?? [])]
   generalDraft.availabilities = [...(userData.value.volunteer?.availabilities ?? [])]
   generalDraft.volunteerAreas = [...(userData.value.volunteer?.volunteerAreas ?? [])]

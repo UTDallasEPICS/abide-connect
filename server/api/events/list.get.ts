@@ -1,6 +1,7 @@
 import { z } from 'zod'
-import { auth } from '#server/utils/auth'
 import prisma from '#server/utils/prisma'
+import { getEventViewer } from '#server/utils/eventViewer'
+import { isJldVolunteer } from '#shared/utils/eventType'
 
 /**
  * Paginated, searchable event list backing the public Events page.
@@ -9,7 +10,10 @@ import prisma from '#server/utils/prisma'
  * `filter=PAST` returns events whose endTime has already passed.
  *
  * Training events are excluded from results unless the caller is an admin,
- * or is a volunteer whose approvalStatus isn't APPROVED.
+ * or is a volunteer whose approvalStatus isn't APPROVED. JLD events are
+ * excluded unless the caller is an admin or an approved JLD volunteer. Both
+ * are `where` clauses rather than a filter over the page, so a hidden event
+ * can't be inferred from a short page or from the totals.
  *
  * `counts.all` is the total count of upcoming events regardless of the
  * current search term — it's meant to label the "ALL" filter button with a
@@ -29,27 +33,17 @@ const querySchema = z.object({
 export default defineEventHandler(async (event) => {
   const { filter, search, page, pageSize } = await getValidatedQuery(event, querySchema.parse)
 
-  const session = await auth.api.getSession({ headers: event.headers })
-  event.context.session = session
+  const viewer = await getEventViewer(event)
 
-  let canSeeTrainings = false
-  if (session?.user) {
-    const isAdmin = (session.user as { role?: string }).role === 'ADMIN'
-    if (isAdmin) {
-      canSeeTrainings = true
-    }
-    else {
-      const volunteer = await prisma.volunteer.findUnique({
-        where: { userId: session.user.id },
-        select: { approvalStatus: true },
-      })
-      canSeeTrainings = !!volunteer && volunteer.approvalStatus !== 'APPROVED'
-    }
-  }
+  const canSeeTrainings = viewer.isAdmin
+    || viewer.volunteerStatus === 'PENDING'
+    || viewer.volunteerStatus === 'REJECTED'
+  const canSeeJld = viewer.isAdmin || isJldVolunteer(viewer)
 
   const now = new Date()
 
   const trainingWhere = canSeeTrainings ? {} : { isTraining: false }
+  const jldWhere = canSeeJld ? {} : { isJld: false }
   const searchWhere = search ? { title: { contains: search } } : {}
 
   // Result set for whichever filter/search is currently active — this is
@@ -57,6 +51,7 @@ export default defineEventHandler(async (event) => {
   const activeWhere = {
     ...(filter === 'PAST' ? { endTime: { lt: now } } : { endTime: { gte: now } }),
     ...trainingWhere,
+    ...jldWhere,
     ...searchWhere,
   }
 
@@ -65,6 +60,7 @@ export default defineEventHandler(async (event) => {
   const allTotalWhere = {
     endTime: { gte: now },
     ...trainingWhere,
+    ...jldWhere,
   }
 
   const [total, allTotal, events] = await Promise.all([

@@ -1,14 +1,16 @@
 /**
  * An event's audience, expressed as a single exclusive choice.
  *
- * The database still stores the three boolean columns
- * (`allowVolunteers` / `allowAttendees` / `isTraining`), but nothing outside
- * this module should set them by hand — an event must be exactly one of these
- * four kinds, so a training session can never also be an attendee event.
+ * The database still stores the four boolean columns
+ * (`allowVolunteers` / `allowAttendees` / `isTraining` / `isJld`), but nothing
+ * outside this module should set them by hand — an event must be exactly one
+ * of these five kinds, so a training session can never also be an attendee
+ * event.
  */
 export const EVENT_TYPES = [
   'VOLUNTEERS_AND_ATTENDEES',
   'VOLUNTEERS',
+  'JLD',
   'ATTENDEES',
   'TRAINING',
 ] as const
@@ -19,6 +21,7 @@ export interface EventAudienceFlags {
   allowVolunteers: boolean
   allowAttendees: boolean
   isTraining: boolean
+  isJld: boolean
 }
 
 export const EVENT_TYPE_OPTIONS: {
@@ -40,6 +43,12 @@ export const EVENT_TYPE_OPTIONS: {
     icon: 'i-lucide-heart-handshake',
   },
   {
+    value: 'JLD',
+    label: 'JLD Volunteer Event',
+    description: 'Only visible to approved volunteers marked as JLD, who sign up with one tap.',
+    icon: 'i-lucide-badge-check',
+  },
+  {
     value: 'ATTENDEES',
     label: 'Allow Attendees',
     description: 'Open to the public for attendee registration only.',
@@ -55,11 +64,16 @@ export const EVENT_TYPE_OPTIONS: {
 
 /** The one authoritative mapping from type to stored columns. */
 const EVENT_TYPE_FLAGS: Record<EventType, EventAudienceFlags> = {
-  VOLUNTEERS_AND_ATTENDEES: { allowVolunteers: true, allowAttendees: true, isTraining: false },
-  VOLUNTEERS: { allowVolunteers: true, allowAttendees: false, isTraining: false },
-  ATTENDEES: { allowVolunteers: false, allowAttendees: true, isTraining: false },
+  VOLUNTEERS_AND_ATTENDEES: { allowVolunteers: true, allowAttendees: true, isTraining: false, isJld: false },
+  VOLUNTEERS: { allowVolunteers: true, allowAttendees: false, isTraining: false, isJld: false },
+  // A JLD event is a volunteer-only event with a narrower audience. It keeps
+  // `allowAttendees` false on purpose: the public feeds filter on that column
+  // in SQL, so a JLD event is excluded from them without each one having to
+  // know this type exists.
+  JLD: { allowVolunteers: true, allowAttendees: false, isTraining: false, isJld: true },
+  ATTENDEES: { allowVolunteers: false, allowAttendees: true, isTraining: false, isJld: false },
   // Training is a volunteer-only event with an approval step attached to it.
-  TRAINING: { allowVolunteers: true, allowAttendees: false, isTraining: true },
+  TRAINING: { allowVolunteers: true, allowAttendees: false, isTraining: true, isJld: false },
 }
 
 /** Narrows untrusted input (request bodies, query strings) to an `EventType`. */
@@ -79,6 +93,9 @@ export function eventTypeToFlags(type: EventType): EventAudienceFlags {
  */
 export function eventTypeFromFlags(flags: Partial<EventAudienceFlags> | null | undefined): EventType {
   if (flags?.isTraining) return 'TRAINING'
+  // Checked before the volunteer/attendee columns: reading a JLD row as a
+  // plain volunteer event would show it to every approved volunteer.
+  if (flags?.isJld) return 'JLD'
   if (flags?.allowVolunteers && flags?.allowAttendees) return 'VOLUNTEERS_AND_ATTENDEES'
   if (flags?.allowVolunteers) return 'VOLUNTEERS'
   return 'ATTENDEES'
@@ -95,14 +112,29 @@ export type VolunteerStatus = 'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED'
 export interface EventViewer {
   isAdmin: boolean
   volunteerStatus: VolunteerStatus
+  /**
+   * Whether staff have marked this volunteer as JLD. Only means anything
+   * alongside `volunteerStatus: 'APPROVED'` — use `isJldVolunteer`, which
+   * checks both, rather than reading this on its own.
+   */
+  isJld: boolean
 }
 
 /** The viewer to assume for logged-out requests — sees public events only. */
-export const ANONYMOUS_VIEWER: EventViewer = { isAdmin: false, volunteerStatus: 'NONE' }
+export const ANONYMOUS_VIEWER: EventViewer = { isAdmin: false, volunteerStatus: 'NONE', isJld: false }
+
+/**
+ * Whether the viewer is in the JLD sub-category: an *approved* volunteer who
+ * also carries the JLD mark. The mark on a pending or rejected volunteer
+ * grants nothing.
+ */
+export function isJldVolunteer(viewer: EventViewer): boolean {
+  return viewer.volunteerStatus === 'APPROVED' && viewer.isJld
+}
 
 /**
  * Whether an event of this type should be visible to a given viewer.
- * Volunteer-only and training events are hidden from everyone else.
+ * Volunteer-only, JLD and training events are hidden from everyone else.
  */
 export function canViewEventType(type: EventType, viewer: EventViewer): boolean {
   if (viewer.isAdmin) return true
@@ -113,6 +145,8 @@ export function canViewEventType(type: EventType, viewer: EventViewer): boolean 
       return true
     case 'VOLUNTEERS':
       return viewer.volunteerStatus === 'APPROVED'
+    case 'JLD':
+      return isJldVolunteer(viewer)
     case 'TRAINING':
       // A rejection is not a ban — unapproved volunteers can retry training.
       return viewer.volunteerStatus === 'PENDING' || viewer.volunteerStatus === 'REJECTED'
@@ -134,6 +168,9 @@ export function canViewEvent(flags: Partial<EventAudienceFlags>, viewer: EventVi
 export function canSignUpAsVolunteer(type: EventType, viewer: EventViewer): boolean {
   if (type === 'TRAINING') {
     return viewer.volunteerStatus === 'PENDING' || viewer.volunteerStatus === 'REJECTED'
+  }
+  if (type === 'JLD') {
+    return isJldVolunteer(viewer)
   }
   if (type === 'VOLUNTEERS' || type === 'VOLUNTEERS_AND_ATTENDEES') {
     return viewer.volunteerStatus === 'APPROVED'

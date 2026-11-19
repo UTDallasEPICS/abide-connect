@@ -73,7 +73,7 @@ const { data: roles } = await useFetch<string[]>('/api/user/roles', {
   headers,
   default: () => [],
 })
-const { data: myVolunteer } = await useFetch<{ approvalStatus?: string } | null>(
+const { data: myVolunteer } = await useFetch<{ approvalStatus?: string, isJld?: boolean } | null>(
   '/api/volunteer/me',
   { headers, default: () => null },
 )
@@ -103,6 +103,7 @@ const isSignedIn = computed(() => (roles.value?.length ?? 0) > 0)
 const viewer = computed<EventViewer>(() => ({
   isAdmin: isAdmin.value,
   volunteerStatus: (myVolunteer.value?.approvalStatus as VolunteerStatus) ?? 'NONE',
+  isJld: myVolunteer.value?.isJld ?? false,
 }))
 const eventType = computed(() => eventTypeFromFlags(event.value ?? {}))
 const hasEnded = computed(() =>
@@ -152,7 +153,8 @@ const hasTimeSlots = computed(() => timeSlots.value.length > 0)
 // type, so they can be removed deliberately rather than silently discarded.
 const acceptsTimeBlocks = computed(() =>
   editForm.value.eventType === 'VOLUNTEERS'
-  || editForm.value.eventType === 'VOLUNTEERS_AND_ATTENDEES',
+  || editForm.value.eventType === 'VOLUNTEERS_AND_ATTENDEES'
+  || editForm.value.eventType === 'JLD',
 )
 // Lightweight volunteer/attendee counts for the sidebar chip display.
 // NOTE: guessed endpoint — point this at whatever route actually serves
@@ -705,14 +707,14 @@ const cardClass = 'rounded-2xl bg-white shadow-sm dark:bg-gray-800'
               class="space-y-3"
             >
               <p
-                v-if="eventType === 'VOLUNTEERS' || eventType === 'TRAINING'"
+                v-if="eventType === 'VOLUNTEERS' || eventType === 'TRAINING' || eventType === 'JLD'"
                 class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
               >
                 <UIcon
                   name="i-lucide-lock"
                   class="w-4 h-4"
                 />
-                {{ eventTypeLabel(eventType) }} — only visible to volunteers
+                {{ eventTypeLabel(eventType) }} — only visible to {{ eventType === 'JLD' ? 'JLD volunteers' : 'volunteers' }}
               </p>
               <!-- Time blocks: replaces one-tap volunteering on events that
                    have them. Shown above the Register to Attend button since

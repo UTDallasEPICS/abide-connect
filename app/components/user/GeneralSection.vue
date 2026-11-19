@@ -21,6 +21,7 @@ export interface GeneralDraft {
   phoneNumber: string
   adminNote: string
   isActive: boolean
+  isJld: boolean
   gender: string
   ethinicity: string
   languages: string[]
@@ -126,13 +127,24 @@ const formattedCreatedAt = computed(() => {
       v-if="userData.volunteer && userData.roles.includes('Volunteer')"
       title="Volunteer Data"
     >
-      <DetailField
-        v-model="draft.isActive"
-        label="Active"
-        :value="userData.volunteer.isActive"
-        :editable="isEditMode"
-        type="checkbox"
-      />
+      <!-- Side by side from `sm` up; stacked on a phone. -->
+      <div class="flex flex-col sm:flex-row sm:gap-x-12">
+        <DetailField
+          v-model="draft.isActive"
+          label="Active"
+          :value="userData.volunteer.isActive"
+          :editable="isEditMode"
+          type="checkbox"
+        />
+        <!-- Grants access to JLD events, and only once the volunteer is approved. -->
+        <DetailField
+          v-model="draft.isJld"
+          label="JLD Volunteer"
+          :value="userData.volunteer.isJld"
+          :editable="isEditMode"
+          type="checkbox"
+        />
+      </div>
 
       <DetailField
         v-model="draft.gender"

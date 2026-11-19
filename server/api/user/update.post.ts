@@ -14,6 +14,7 @@ type UpdateUserBody = {
   phoneNumber?: string | null
   adminNote?: string | null
   isActive?: boolean
+  isJld?: boolean
 
   gender?: Gender | null
   ethinicity?: Ethinicity | null
@@ -54,7 +55,7 @@ function enumField<T extends string>(key: T, value: string | null | undefined) {
  * member-management screen.
  *
  * Admin only. The target is whatever `userId` the body names — including
- * staff-controlled fields like `adminNote` and `isActive` — so the
+ * staff-controlled fields like `adminNote`, `isActive` and `isJld` — so the
  * `requireRole` call below is the whole authorization check. Compare
  * `user/me.patch.ts`, which scopes the update to the session's own user and so
  * needs a session but no role.
@@ -111,6 +112,9 @@ export default defineEventHandler(async (event) => {
           ...field('emergencyContactName2', body.emergencyContactName2),
           ...field('emergencyContactPhone2', body.emergencyContactPhone2),
           ...(body.isActive !== undefined ? { isActive: body.isActive } : {}),
+          // Strictly a boolean: this flag decides who can see JLD events, so a
+          // truthy string from a hand-built request must not switch it on.
+          ...(typeof body.isJld === 'boolean' ? { isJld: body.isJld } : {}),
         },
       })
 

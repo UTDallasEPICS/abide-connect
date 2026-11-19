@@ -131,6 +131,8 @@ This is a Nuxt 4 app, so the app source root is `app/` (pages, components, layou
 
 Split by domain: `user.prisma` (RSVP-only guest `User`), `volunteer.prisma` (the authenticated `Volunteer` plus availability/certification/hour-log/language join tables), `event.prisma` (`Event`, `Event_Asset`, `RSVP`, `GuestRSVP`), `donation.prisma`, `location.prisma`, `mobileClinic.prisma`, `notification.prisma`. `schema.prisma` itself only defines the generator/datasource plus better-auth's own `Session`/`Account`/`Verification` models. `Session` and `Account` FK to `User` (the authenticated principal), not `Volunteer`; `Verification` has no FK at all, since sign-up issues an OTP before the account exists.
 
+**JLD volunteers and events.** JLD is a staff-assigned sub-category of approved volunteers (`Volunteer.isJld`, toggled on the member-management detail page) with its own event type (`JLD` in `shared/utils/eventType.ts`, stored as `Event.isJld`). A JLD event is visible to, and joinable by, only approved volunteers carrying the mark, plus staff — `isJldVolunteer` requires both, so the mark on a pending volunteer grants nothing. Two things keep it from leaking: it is stored with `allowAttendees: false`, which is what excludes it from the cached public feeds (they filter on that column in SQL), and any handler that `select`s the audience columns by hand before calling `canViewEvent` must include `isJld`, or the row reads as an ordinary volunteer event.
+
 Note the two distinct "attendee" concepts: `User` (guest, RSVP-capable, no login) vs `Volunteer` (authenticated, can log hours/certifications). A `Volunteer` can optionally link to a `User` record (`Volunteer.userId`).
 
 ### Server API (`server/api/`)
