@@ -1,3 +1,6 @@
+# better-sqlite3 12.9.0 lacks a Node 26 Alpine prebuild.
+overrides:
+  better-sqlite3: 12.11.1
 allowBuilds:
   "@parcel/watcher": true
   "@prisma/engines": true
