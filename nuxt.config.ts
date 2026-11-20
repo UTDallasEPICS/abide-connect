@@ -8,7 +8,6 @@ export default defineNuxtConfig({
     '@nuxt/image',
     'nuxt-maplibre',
     '@vite-pwa/nuxt',
-    'nuxt-cron',
   ],
   devtools: {
     enabled: true,
@@ -56,7 +55,6 @@ export default defineNuxtConfig({
       ],
     },
   },
-
   runtimeConfig: {
     public: {
       // VAPID public key, needed client-side to create a push subscription.
@@ -64,7 +62,6 @@ export default defineNuxtConfig({
       vapidPublicKey: process.env.VAPID_PUBLIC_KEY ?? '',
     },
   },
-
   /**
    * Response caching for the parts of the app that are the same for everybody.
    *
@@ -98,10 +95,13 @@ export default defineNuxtConfig({
     // mobileClinic.vue does all of its fetching in onMounted.
     '/mobileClinic': { swr: 300 },
   },
+  experimental: {
+    nitroAutoImports: true,
+  },
   compatibilityDate: '2025-07-15',
 
   nitro: {
-    storage: {
+    kv: {
       // File-backed cache for the ipx image handler (modules/ipx-cache.ts).
       // The `base` is relative: the fs driver resolves it against the process
       // cwd, which is the project root in dev and /app in the deployment
@@ -111,23 +111,18 @@ export default defineNuxtConfig({
         base: './.cache/ipx',
       },
     },
-    externals: {
-      // web-push and its ASN.1 dependencies are CommonJS. Left external,
-      // Nitro's dev server loads them through Node's ESM loader and every
-      // server route dies at module-compile time. Bundling the whole tree
-      // lets Rollup apply CJS interop consistently.
-      inline: ['web-push', 'asn1.js', 'bn.js'],
+    experimental: {
+      tasks: true,
+    },
+    scheduledTasks: {
+      '*/15 * * * *': ['eventReminders'],
+      '0 0 * * *': ['generateVolunteerLogs'],
     },
   },
   vite: {
     optimizeDeps: {
       include: ['maplibre-gl', 'vue3-carousel', 'better-auth/vue', 'zod', '@internationalized/date'],
     },
-  },
-  cron: {
-    runOnInit: true,
-    timeZone: 'America/Chicago',
-    jobsDir: 'cron',
   },
   eslint: {
     config: {

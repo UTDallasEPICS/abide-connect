@@ -1,3 +1,5 @@
+import { definePlugin } from 'nitro'
+
 /**
  * Populate the process-local Nitro and IPX caches after a production process
  * starts. This is deliberately best-effort: cache warming must never delay
@@ -133,7 +135,7 @@ async function warmCaches() {
   )
 }
 
-export default defineNitroPlugin(() => {
+export default definePlugin(() => {
   if (process.env.NODE_ENV !== 'production' && process.env.CACHE_WARMUP === '1') {
     void warmCaches()
     return

@@ -1,4 +1,4 @@
-import type { H3Event } from 'h3'
+import type { H3Event } from 'nitro/h3'
 import type { ApprovalStatus, VolunteerArea } from '~~/prisma/generated/enums'
 import type { DateRange, Granularity, RangePresetId } from '#shared/utils/reportRange'
 import type { HourStatusFilter, ResolvedRange } from '#shared/types/reports'

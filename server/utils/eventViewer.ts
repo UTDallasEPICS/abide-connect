@@ -1,4 +1,4 @@
-import type { H3Event } from 'h3'
+import type { H3Event } from 'nitro/h3'
 import { auth } from '#server/utils/auth'
 import prisma from '#server/utils/prisma'
 import { ANONYMOUS_VIEWER, type EventViewer, type VolunteerStatus } from '#shared/utils/eventType'

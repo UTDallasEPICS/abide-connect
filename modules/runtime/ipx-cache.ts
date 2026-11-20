@@ -1,7 +1,8 @@
 import { dirname, join, resolve } from 'node:path'
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { createIPX, createIPXFetchHandler, ipxFSStorage, parseIPXURL } from 'ipx'
-import { defineEventHandler, setResponseHeaders, setResponseStatus, toWebRequest } from 'h3'
+import { defineEventHandler, setResponseHeaders, setResponseStatus } from 'nitro/h3'
+import type { H3Event } from 'nitro/h3'
 import {
   ByteCappedLRU,
   IPX_BASE_URL,
@@ -84,7 +85,7 @@ function etagMatches(ifNoneMatch: string | null, etag: string | undefined) {
   return ifNoneMatch.split(',').some(tag => tag.trim() === etag)
 }
 
-function serve(entry: CachedImage, event: Parameters<Parameters<typeof defineEventHandler>[0]>[0], status = 200) {
+function serve(entry: CachedImage, event: H3Event, status = 200) {
   const { 'content-length': _staleLength, ...headers } = entry.headers
   headers['content-length'] = String(entry.body.byteLength)
   if (etagMatches(event.headers.get('if-none-match'), entry.headers.etag)) {
@@ -98,7 +99,7 @@ function serve(entry: CachedImage, event: Parameters<Parameters<typeof defineEve
 }
 
 export default defineEventHandler(async (event) => {
-  const request = toWebRequest(event)
+  const request = event.req
   const rawPath = event.path.split('?')[0]
   const cacheKey = canonicalizeIPXPath(rawPath)
 

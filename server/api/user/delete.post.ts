@@ -1,4 +1,4 @@
-import { readBody, defineEventHandler, createError } from 'h3'
+import { readBody, defineEventHandler, createError } from 'nitro/h3'
 import { requireRole } from '#server/utils/requireRole'
 
 /**

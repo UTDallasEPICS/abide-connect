@@ -10,7 +10,7 @@ import type { ReminderChannel, ReminderKind } from '~~/prisma/generated/client'
  * event you RSVP'd to, plus an optional emailed 24-hour reminder for users who
  * switched it on in /settings.
  *
- * Driven by `server/cron/eventReminders.ts`, which calls
+ * Driven by `server/tasks/eventReminders.ts`, which calls
  * `sendDueEventReminders()` on a short interval. Everything here is written to
  * be safe under repeated calls: a reminder is *claimed* by inserting an
  * `Event_Reminder` row before it's sent, so a job that runs twice inside the

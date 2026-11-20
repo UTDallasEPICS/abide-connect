@@ -11,3 +11,10 @@ allowBuilds:
   vue-demi: true
 publicHoistPattern:
 - "*"
+minimumReleaseAgeExclude:
+- "@nuxt/kit-nightly@5.0.0-2611192316-949dcf7"
+- "@nuxt/nitro-server-nightly@5.0.0-2611192316-949dcf7"
+- "@nuxt/schema-nightly@5.0.0-2611192316-949dcf7"
+- "@nuxt/vite-builder-nightly@5.0.0-2611192316-949dcf7"
+- "@nuxt/vite-server-nightly@5.0.0-2611192316-949dcf7"
+- nuxt-nightly@5.0.0-2611192316-949dcf7

@@ -1,4 +1,4 @@
-import { getQuery, defineEventHandler } from 'h3'
+import { getQuery, defineEventHandler } from 'nitro/h3'
 import { requireRole } from '#server/utils/requireRole'
 
 // ---- Config ----

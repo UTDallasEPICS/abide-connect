@@ -4,7 +4,7 @@
  *
  * WHY THIS EXISTS: Nitro keys its response cache on a hash of the whole
  * request URL, query string included
- * (`hash(event.node.req.originalUrl || event.node.req.url || event.path)` in
+ * (`hash(event.url)` in
  * nitropack's internal cache.mjs). Every distinct query string is therefore a
  * distinct cache entry, held in the in-memory cache for the TTL — and none of
  * the cached handlers reject junk parameters, they just fall back to a

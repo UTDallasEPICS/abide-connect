@@ -1,8 +1,8 @@
 import { auth } from '#server/utils/auth'
 import { normalizeEmail } from '#server/utils/normalizeEmail'
 import { activeRoles } from '#server/utils/userRoles'
-import type { H3Event } from 'h3'
-import { appendHeader, setHeader } from 'h3'
+import type { H3Event } from 'nitro/h3'
+import { appendHeader, setHeader } from 'nitro/h3'
 
 /**
  * Signs an existing user in with an emailed OTP — the second half of the login

@@ -3,8 +3,8 @@ import prisma from '#server/utils/prisma'
 import { activeRoles } from '#server/utils/userRoles'
 import { Prisma } from '~~/prisma/generated/client'
 import { normalizeEmail } from '#server/utils/normalizeEmail'
-import type { H3Event } from 'h3'
-import { appendHeader, setHeader } from 'h3'
+import type { H3Event } from 'nitro/h3'
+import { appendHeader, setHeader } from 'nitro/h3'
 
 /**
  * Copies better-auth's response headers onto our own response.

@@ -1,6 +1,6 @@
 import { auth } from '#server/utils/auth'
-import type { H3Event } from 'h3'
-import { appendHeader, setHeader } from 'h3'
+import type { H3Event } from 'nitro/h3'
+import { appendHeader, setHeader } from 'nitro/h3'
 
 /**
  * DEAD CODE — email + password sign-in. Nothing calls this, and it cannot

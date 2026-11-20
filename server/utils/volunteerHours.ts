@@ -4,7 +4,7 @@ import { slotDurationHours } from '#shared/utils/timeSlot'
  * How many hours each volunteer worked at an event.
  *
  * Pure and I/O-free so the arithmetic can be tested directly — the cron that
- * uses it (`server/cron/generateVolunteerLogs.ts`) only handles scheduling,
+ * uses it (`server/tasks/generateVolunteerLogs.ts`) only handles scheduling,
  * fetching and writing.
  */
 

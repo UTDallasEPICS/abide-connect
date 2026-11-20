@@ -2,7 +2,7 @@ import { auth } from '#server/utils/auth'
 import prisma from '#server/utils/prisma'
 import { revalidateGoogleGrant } from '#server/utils/idpRevalidation'
 import { enforceAdminSessionAge } from '#server/utils/sessionPolicy'
-import type { H3Event } from 'h3'
+import type { H3Event } from 'nitro/h3'
 
 /**
  * Enforces that the current request comes from a logged-in user with the
