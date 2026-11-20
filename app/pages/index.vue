@@ -24,17 +24,6 @@ interface UpcomingEvent {
   startTime: string
 }
 
-interface UserUpcomingEvent {
-  id: string
-  title: string
-  startTime: string
-  endTime: string
-  address: string | null
-  isTraining: boolean
-  isVolunteer: boolean
-  imageUrl: string | null
-}
-
 interface VolunteerMe {
   id: string
   approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED'
@@ -62,41 +51,12 @@ const { data: volunteer } = useLazyFetch<VolunteerMe | null>('/api/volunteer/me'
 
 const showYourEventsSection = computed(() => !!user.value)
 
-const yourEventsPending = ref(true)
-const yourEventsError = ref(false)
-
 const {
   data: yourEventsRaw,
+  pending: yourEventsPending,
   error: yourEventsFetchError,
-  status: yourEventsStatus,
-} = useLazyFetch<UserUpcomingEvent[]>('/api/user/upcoming-events', {
-  // Explicit key so the `refreshNuxtData` calls below actually find this
-  // fetch. Without one, useFetch keys itself on a hash of the URL and its
-  // options ("$f" + hash(...)), which no caller can spell — and since `user`
-  // now resolves client-side, `immediate` is always false on first render and
-  // the watch is the only thing that ever starts this request.
-  key: '/api/user/upcoming-events',
-  default: () => [],
-  server: false,
-  immediate: showYourEventsSection.value,
-})
-
-watch(yourEventsStatus, (newStatus) => {
-  if (newStatus === 'success' || newStatus === 'error') {
-    yourEventsPending.value = false
-    yourEventsError.value = newStatus === 'error'
-    if (newStatus === 'error') {
-      console.error('Failed to load your events:', yourEventsFetchError.value)
-    }
-  }
-}, { immediate: true })
-
-watch(showYourEventsSection, (shouldShow) => {
-  if (shouldShow && yourEventsStatus.value === 'idle') {
-    yourEventsPending.value = true
-    void refreshNuxtData('/api/user/upcoming-events')
-  }
-}, { immediate: true })
+  refresh: refreshYourEvents,
+} = useUserUpcomingEvents(user)
 
 const yourEvents = computed(() => yourEventsRaw.value.map(e => ({
   id: e.id,
@@ -108,6 +68,7 @@ const yourEvents = computed(() => yourEventsRaw.value.map(e => ({
   startTime: e.startTime,
   location: e.address ?? '',
 })))
+const yourEventsError = computed(() => !!yourEventsFetchError.value)
 
 // Whether the "Your Events" section (header included) should render at all:
 // signed in, and either still loading (don't know yet) or loaded with items.
@@ -150,7 +111,7 @@ async function confirmCancelRsvp() {
     await $fetch(`/api/events/${pendingCancelId.value}/rsvp`, { method: 'DELETE', body: {} })
     cancelModalOpen.value = false
     pendingCancelId.value = null
-    await refreshNuxtData('/api/user/upcoming-events')
+    await refreshYourEvents(true)
   }
   catch (err) {
     console.error('Failed to cancel RSVP:', err)
@@ -191,11 +152,13 @@ watch(status, (newStatus) => {
   }
 }, { immediate: true })
 
-const displayedUpcomingEvents = computed(() =>
-  pending.value && cachedUpcomingEvents.value
+const displayedUpcomingEvents = computed(() => {
+  const events = pending.value && cachedUpcomingEvents.value
     ? cachedUpcomingEvents.value
-    : upcomingEvents.value,
-)
+    : upcomingEvents.value
+  const registeredIds = new Set(yourEventsRaw.value.map(event => event.id))
+  return events.filter(event => !registeredIds.has(event.id))
+})
 const showUpcomingSkeleton = computed(() => pending.value && displayedUpcomingEvents.value.length === 0)
 
 // --- Training Events (volunteers who aren't approved yet) ---

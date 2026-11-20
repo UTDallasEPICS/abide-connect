@@ -25,7 +25,7 @@
 import { ORG_TIME_ZONE } from '#shared/utils/timeZone'
 import { zonedTime } from '#shared/utils/reportRange'
 import { normalizeEmail } from '#server/utils/normalizeEmail'
-import type { Gender, Ethinicity, Language, Availability, VolunteerArea, Certification } from '#server/utils/generated/prisma/client'
+import type { Gender, Ethinicity, Language, Availability, VolunteerArea, Certification } from '~~/prisma/generated/client'
 
 // --- Column resolution -----------------------------------------------------
 

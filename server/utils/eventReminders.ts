@@ -3,7 +3,7 @@ import { sendPushToUsers } from './push'
 import { buildEventReminderEmail } from './event-email'
 import { cancelUrlFor, eventEmailDetails, sendEventEmail } from './eventMailer'
 import { formatEventTime } from '#shared/utils/eventTime'
-import type { ReminderChannel, ReminderKind } from './generated/prisma/client'
+import type { ReminderChannel, ReminderKind } from '~~/prisma/generated/client'
 
 /**
  * Event sign-up reminders: a push notification 24 hours and 1 hour before an

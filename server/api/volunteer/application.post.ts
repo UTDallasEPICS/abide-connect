@@ -1,7 +1,7 @@
 import { auth } from '#server/utils/auth'
 import prisma from '#server/utils/prisma'
-import type { Gender, Ethinicity, Language, Availability, VolunteerArea, Certification } from '#server/utils/generated/prisma/client'
-import { Prisma } from '#server/utils/generated/prisma/client'
+import type { Gender, Ethinicity, Language, Availability, VolunteerArea, Certification } from '~~/prisma/generated/client'
+import { Prisma } from '~~/prisma/generated/client'
 
 /**
  * Submits a volunteer application for the signed-in user, creating the

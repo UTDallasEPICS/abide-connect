@@ -36,7 +36,7 @@ reporting stack only; the rest of the app is untested.
 
 ### Database (Prisma + SQLite)
 
-Schema lives across multiple files under `prisma/schema/` (not a single `schema.prisma`), configured via `prisma.config.ts`. The generated client is emitted to `server/utils/generated/prisma` (not `node_modules`), imported in `server/utils/prisma.ts` via a `PrismaClient` + `@prisma/adapter-better-sqlite3` singleton.
+Schema lives across multiple files under `prisma/schema/` (not a single `schema.prisma`), configured via `prisma.config.ts`. The generated client is emitted to `prisma/generated` (not `node_modules` or Nitro's `server/` auto-import tree), imported in `server/utils/prisma.ts` via a `PrismaClient` + `@prisma/adapter-better-sqlite3` singleton.
 
 ```bash
 pnpm prisma generate           # regenerate client after editing prisma/schema/*.prisma

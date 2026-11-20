@@ -7,7 +7,7 @@ import type {
   Availability,
   VolunteerArea,
   Certification,
-} from '#server/utils/generated/prisma/client'
+} from '~~/prisma/generated/client'
 
 type UpdateUserBody = {
   userId?: string

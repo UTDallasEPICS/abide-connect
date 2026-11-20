@@ -1,14 +1,14 @@
-import { PrismaClient } from './generated/prisma/client'
+import { PrismaClient } from '~~/prisma/generated/client'
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
 
 /**
  * The single shared Prisma client. Import this (`#server/utils/prisma`) rather
  * than constructing a `PrismaClient` anywhere else.
  *
- * The client is generated into `server/utils/generated/prisma` instead of
- * `node_modules` (see `prisma.config.ts`), which is why the import above is a
- * relative path and not `@prisma/client`. Re-run `pnpm prisma generate` after
- * editing anything in `prisma/schema/`.
+ * The client is generated into `prisma/generated` instead of `node_modules`
+ * (see `prisma.config.ts`), which is why the import above is a relative path
+ * and not `@prisma/client`. Re-run `pnpm prisma generate` after editing
+ * anything in `prisma/schema/`.
  */
 
 const prismaClientSingleton = () => {

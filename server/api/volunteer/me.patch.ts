@@ -1,6 +1,6 @@
 import { auth } from '#server/utils/auth'
 import prisma from '#server/utils/prisma'
-import { Gender, Ethinicity, Language, Availability, VolunteerArea, Certification } from '#server/utils/generated/prisma/enums'
+import { Gender, Ethinicity, Language, Availability, VolunteerArea, Certification } from '~~/prisma/generated/enums'
 
 /**
  * Lets a volunteer revise their own application from /settings.

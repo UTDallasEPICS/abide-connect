@@ -1,6 +1,6 @@
 import { parseZonedDate } from '#shared/utils/eventTime'
 import { requireRole } from '~~/server/utils/requireRole'
-import type { ApprovalStatus, VolunteerArea } from '#server/utils/generated/prisma/client'
+import type { ApprovalStatus, VolunteerArea } from '~~/prisma/generated/client'
 
 /**
  * Records volunteer hours on someone's behalf, from the admin member-detail

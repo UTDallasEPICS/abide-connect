@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import prisma from '#server/utils/prisma'
 import { zonedTime } from '#shared/utils/reportRange'
 import type { EventAudienceFlags } from '#shared/utils/eventType'
-import type { ApprovalStatus, VolunteerArea } from '#server/utils/generated/prisma/enums'
+import type { ApprovalStatus, VolunteerArea } from '~~/prisma/generated/enums'
 import { createFakeEvent } from './h3-globals'
 
 /**

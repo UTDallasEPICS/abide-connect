@@ -20,6 +20,14 @@ export default defineNuxtConfig({
       // PWA on iOS benefits too. The nav bars pad themselves by the safe-area
       // insets in exchange (see `--safe-top` in main.css).
       viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
+      link: [
+        {
+          rel: 'icon',
+          type: 'image/png',
+          href: '/icon-192.png',
+          sizes: '192x192',
+        },
+      ],
     },
   },
   css: [
